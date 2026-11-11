@@ -1,0 +1,132 @@
+[
+  {
+    "id": "amz_pos_01",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "in.amazon.mShop.android.shopping",
+    "title": "Amazon Pay: Money Received",
+    "text": "You received ₹250 from Rohan Mehta via UPI",
+    "shouldParse": true,
+    "expectedAmountPaise": 25000,
+    "expectedPayer": "Rohan Mehta"
+  },
+  {
+    "id": "amz_pos_02",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "in.amazon.mShop.android.shopping",
+    "title": "Amazon Pay",
+    "text": "₹50.00 credited to your Amazon Pay UPI account from kavita@apl",
+    "shouldParse": true,
+    "expectedAmountPaise": 5000,
+    "expectedPayer": "kav****a@apl"
+  },
+  {
+    "id": "amz_pos_03",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "in.amazon.mShop.android.shopping",
+    "title": "Payment Received",
+    "text": "Received ₹1,200. UPI Ref: 412377665544",
+    "shouldParse": true,
+    "expectedAmountPaise": 120000,
+    "expectedUpiRef": "412377665544"
+  },
+  {
+    "id": "amz_pos_04",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "in.amazon.mShop.android.shopping",
+    "title": "Money Added",
+    "text": "Rs. 500 received in your bank account",
+    "shouldParse": true,
+    "expectedAmountPaise": 50000
+  },
+  {
+    "id": "amz_pos_05",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "in.amazon.mShop.android.shopping",
+    "title": "Amazon Pay UPI",
+    "text": "Received ₹35 from Manish",
+    "shouldParse": true,
+    "expectedAmountPaise": 3500,
+    "expectedPayer": "Manish"
+  },
+  {
+    "id": "amz_pos_06",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "in.amazon.mShop.android.shopping",
+    "title": "Payment Alert",
+    "text": "₹75.50 received from Customer. RRN: 411133355577",
+    "shouldParse": true,
+    "expectedAmountPaise": 7550,
+    "expectedUpiRef": "411133355577"
+  },
+  {
+    "id": "amz_pos_07",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "in.amazon.mShop.android.shopping",
+    "title": "Amazon Pay",
+    "text": "Credited ₹150 from rahul@apl",
+    "shouldParse": true,
+    "expectedAmountPaise": 15000,
+    "expectedPayer": "rah****l@apl"
+  },
+  {
+    "id": "amz_pos_08",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "in.amazon.mShop.android.shopping",
+    "title": "Amazon Pay: ₹80 received",
+    "text": "Payment received from Sunil",
+    "shouldParse": true,
+    "expectedAmountPaise": 8000,
+    "expectedPayer": "Sunil"
+  },
+  {
+    "id": "amz_pos_09",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "in.amazon.mShop.android.shopping",
+    "title": "Amazon Pay UPI Alert",
+    "text": "Received INR 499 from Bank. Txn Id: 499911122233",
+    "shouldParse": true,
+    "expectedAmountPaise": 49900,
+    "expectedUpiRef": "499911122233"
+  },
+  {
+    "id": "amz_pos_10",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "in.amazon.mShop.android.shopping",
+    "title": "Payment Received",
+    "text": "₹20 credited to bank",
+    "shouldParse": true,
+    "expectedAmountPaise": 2000
+  },
+  {
+    "id": "amz_pos_11",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "in.amazon.mShop.android.shopping",
+    "title": "Amazon Pay",
+    "text": "Rs. 2,000 received from Anita Rao",
+    "shouldParse": true,
+    "expectedAmountPaise": 200000,
+    "expectedPayer": "Anita Rao"
+  },
+  {
+    "id": "amz_pos_12",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "in.amazon.mShop.android.shopping",
+    "title": "Amazon Pay",
+    "text": "Received ₹10.00 via UPI QR",
+    "shouldParse": true,
+    "expectedAmountPaise": 1000
+  }
+]
+

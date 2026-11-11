@@ -1,0 +1,80 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="240dp"
+    android:viewportWidth="240"
+    android:viewportHeight="240">
+
+    <!-- Speaker / Megaphone Body -->
+    <!-- Handle -->
+    <path
+        android:pathData="M80,140 L70,185 C69,190 73,194 78,194 L90,194 C95,194 99,190 98,185 L94,140"
+        android:fillColor="#FAFAF8"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Speaker Rear Cap -->
+    <path
+        android:pathData="M48,95 C48,84 55,80 62,80 L80,80 L80,145 L62,145 C55,145 48,141 48,130 Z"
+        android:fillColor="#FAFAF8"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Speaker Cone (Expanding Flare) -->
+    <path
+        android:pathData="M80,80 L145,52 C150,50 155,54 155,60 L155,165 C155,171 150,175 145,173 L80,145 Z"
+        android:fillColor="#FAFAF8"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Speaker Front Rim (Oval Bell) -->
+    <path
+        android:pathData="M155,60 C162,60 168,83 168,112 C168,141 162,165 155,165"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round" />
+
+    <!-- Sound waves from horn -->
+    <path
+        android:pathData="M178,85 C186,94 186,130 178,139"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round" />
+
+    <path
+        android:pathData="M192,72 C205,88 205,136 192,152"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round" />
+
+    <!-- Checkmark Badge: Circle with Orange Fill and White Checkmark -->
+    <path
+        android:pathData="M130,135 A34,34 0 1,0 130,203 A34,34 0 1,0 130,135 Z"
+        android:fillColor="#F25C2E" />
+
+    <path
+        android:pathData="M130,135 A34,34 0 1,0 130,203 A34,34 0 1,0 130,135 Z"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414" />
+
+    <!-- Bold Checkmark inside badge -->
+    <path
+        android:pathData="M116,168 L126,178 L146,156"
+        android:strokeWidth="4"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Accent sparkle -->
+    <path
+        android:pathData="M185,50 L185,58 M181,54 L189,54"
+        android:strokeWidth="3"
+        android:strokeColor="#F25C2E"
+        android:strokeLineCap="round" />
+
+</vector>

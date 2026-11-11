@@ -1,0 +1,84 @@
+[
+  {
+    "packageId": "com.google.android.apps.nbu.paisa.user",
+    "displayName": "Google Pay",
+    "enabled": true,
+    "parserId": "google_pay",
+    "verified": true
+  },
+  {
+    "packageId": "com.google.android.apps.nbu.paisa.merchant",
+    "displayName": "Google Pay for Business",
+    "enabled": true,
+    "parserId": "google_pay_business",
+    "verified": true
+  },
+  {
+    "packageId": "com.phonepe.app",
+    "displayName": "PhonePe",
+    "enabled": true,
+    "parserId": "phonepe",
+    "verified": true
+  },
+  {
+    "packageId": "net.one97.paytm",
+    "displayName": "Paytm",
+    "enabled": true,
+    "parserId": "paytm",
+    "verified": true
+  },
+  {
+    "packageId": "in.org.npci.upiapp",
+    "displayName": "BHIM",
+    "enabled": true,
+    "parserId": "bhim",
+    "verified": true
+  },
+  {
+    "packageId": "in.amazon.mShop.android.shopping",
+    "displayName": "Amazon Pay",
+    "enabled": true,
+    "parserId": "amazon_pay",
+    "verified": true
+  },
+  {
+    "packageId": "com.dreamplug.androidapp",
+    "displayName": "CRED",
+    "enabled": true,
+    "parserId": "cred",
+    "verified": true
+  },
+  {
+    "packageId": "com.phonepe.app.business",
+    "displayName": "PhonePe for Business",
+    "enabled": true,
+    "parserId": "phonepe_business",
+    "verified": false,
+    "comment": "TODO: Verify exact package ID on physical device with 'adb shell pm list packages | grep phonepe'"
+  },
+  {
+    "packageId": "com.phonepe.business",
+    "displayName": "PhonePe Business (Alt)",
+    "enabled": true,
+    "parserId": "phonepe_business",
+    "verified": false,
+    "comment": "TODO: Alternative candidate package ID for PhonePe Business"
+  },
+  {
+    "packageId": "net.one97.paytm.merchant",
+    "displayName": "Paytm for Business",
+    "enabled": true,
+    "parserId": "paytm_business",
+    "verified": false,
+    "comment": "TODO: Verify exact package ID on physical device with 'adb shell pm list packages | grep paytm'"
+  },
+  {
+    "packageId": "com.paytm.business",
+    "displayName": "Paytm Business (Alt)",
+    "enabled": true,
+    "parserId": "paytm_business",
+    "verified": false,
+    "comment": "TODO: Alternative candidate package ID for Paytm Business"
+  }
+]
+

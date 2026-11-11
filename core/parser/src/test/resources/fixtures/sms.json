@@ -1,0 +1,126 @@
+[
+  {
+    "id": "sms_pos_01",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "sender": "VK-HDFCBK",
+    "body": "Dear Customer, your A/C ending 1234 is credited with Rs 500.00 on 12-Nov-26 by UPI from rahul@oksbi. UPI Ref 412345678901 - HDFC Bank",
+    "shouldParse": true,
+    "expectedAmountPaise": 50000,
+    "expectedPayer": "rah****l@oksbi",
+    "expectedUpiRef": "412345678901"
+  },
+  {
+    "id": "sms_pos_02",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "sender": "AX-SBIINB",
+    "body": "Your A/C ending 5678 credited by INR 1,250.00 on 12Nov26 transfer from Priya Verma. UPI Ref: 499112233445 - SBI",
+    "shouldParse": true,
+    "expectedAmountPaise": 125000,
+    "expectedPayer": "Priya Verma",
+    "expectedUpiRef": "499112233445"
+  },
+  {
+    "id": "sms_pos_03",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "sender": "AD-ICICIB",
+    "body": "Acct 4321 credited with INR 35.00 on 12-Nov-26. Info: UPI/411223344556/Payment. Avbl Bal: INR 12,450.00",
+    "shouldParse": true,
+    "expectedAmountPaise": 3500
+  },
+  {
+    "id": "sms_pos_04",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "sender": "VM-KOTAKB",
+    "body": "Rs 2,500.00 received in your Kotak Bank A/c 8765 from Rohit Sharma via UPI Ref No: 400123998877.",
+    "shouldParse": true,
+    "expectedAmountPaise": 250000,
+    "expectedPayer": "Rohit Sharma",
+    "expectedUpiRef": "400123998877"
+  },
+  {
+    "id": "sms_pos_05",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "sender": "BZ-AXISBK",
+    "body": "Your Axis Bank A/c ending with 0987 has been credited with INR 100.00. UPI Ref 432109876543.",
+    "shouldParse": true,
+    "expectedAmountPaise": 10000,
+    "expectedUpiRef": "432109876543"
+  },
+  {
+    "id": "sms_pos_06",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "sender": "VK-PNBSMS",
+    "body": "PNB: A/c 1122 credited by Rs. 75.50 on 12/11/26 by UPI. Avl Bal Rs 5,432.00",
+    "shouldParse": true,
+    "expectedAmountPaise": 7550
+  },
+  {
+    "id": "sms_pos_07",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "sender": "BW-BOBTXN",
+    "body": "Bank of Baroda: ₹20,000 received in A/c 3344 from Amit Patel. Ref: 455667788990",
+    "shouldParse": true,
+    "expectedAmountPaise": 2000000,
+    "expectedPayer": "Amit Patel",
+    "expectedUpiRef": "455667788990"
+  },
+  {
+    "id": "sms_pos_08",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "sender": "IM-UNIONB",
+    "body": "Union Bank: Acct credited for INR 450.00 through UPI. Ref No: 477665544332",
+    "shouldParse": true,
+    "expectedAmountPaise": 45000,
+    "expectedUpiRef": "477665544332"
+  },
+  {
+    "id": "sms_pos_09",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "sender": "CP-CANBNK",
+    "body": "Canara Bank: Rs 15.00 credited to A/c 9988 from UPI customer.",
+    "shouldParse": true,
+    "expectedAmountPaise": 1500
+  },
+  {
+    "id": "sms_pos_10",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "sender": "VK-HDFCBK",
+    "body": "Payment of Rs 1,000.00 received from Suresh Kumar via UPI. Txn Id: 499881122334",
+    "shouldParse": true,
+    "expectedAmountPaise": 100000,
+    "expectedPayer": "Suresh Kumar",
+    "expectedUpiRef": "499881122334"
+  },
+  {
+    "id": "sms_pos_11",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "sender": "AX-SBIINB",
+    "body": "SBI: Received ₹50.00 in A/c 2345 from Pooja. UPI Ref: 488771122334",
+    "shouldParse": true,
+    "expectedAmountPaise": 5000,
+    "expectedPayer": "Pooja",
+    "expectedUpiRef": "488771122334"
+  },
+  {
+    "id": "sms_pos_12",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "sender": "AD-PAYTMB",
+    "body": "Paytm Bank: ₹80 credited to your account from customer. RRN: 412300445566",
+    "shouldParse": true,
+    "expectedAmountPaise": 8000,
+    "expectedUpiRef": "412300445566"
+  }
+]
+

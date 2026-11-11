@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">യുപിഐ സൗണ്ട്ബോക്സ്</string>
+    <string name="soundbox_listening">യുപിഐ സൗണ്ട്ബോക്സ് കേൾക്കുന്നു</string>
+    <string name="soundbox_paused">സൗണ്ട്ബോക്സ് താൽക്കാലികമായി നിർത്തി</string>
+    <string name="todays_collection">ഇന്നത്തെ ആകെ ശേഖരണം</string>
+    <string name="payments_count">%d പേയ്‌മെന്റുകൾ</string>
+    <string name="test_announcement_btn">ടെസ്റ്റ് അറിയിപ്പ് കേൾക്കുക</string>
+    <string name="scan_to_pay">ഏതൊരു യുപിഐ ആപ്പും ഉപയോഗിച്ച് സ്കാൻ ചെയ്ത് പണമടയ്ക്കുക</string>
+    <string name="counter_mode">കൗണ്ടർ മോഡ്</string>
+    <string name="keep_screen_awake">സ്ക്രീൻ ഓണാക്കി വെയ്ക്കുക</string>
+    <string name="history_title">പേയ്‌മെന്റ് ചരിത്രം</string>
+    <string name="reports_title">ശേഖരണ റിപ്പോർട്ടുകൾ</string>
+    <string name="settings_title">ക്രമീകരണങ്ങൾ</string>
+    <string name="my_qr_title">എന്റെ ക്യുആർ &amp; സ്റ്റാന്റി</string>
+    <string name="help_title">സഹായം</string>
+    <string name="diagnostics_title">ഡയഗ്നോസ്റ്റിക്സ്</string>
+</resources>
+

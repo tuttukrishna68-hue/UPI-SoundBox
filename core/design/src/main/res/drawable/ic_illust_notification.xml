@@ -1,0 +1,81 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="240dp"
+    android:viewportWidth="240"
+    android:viewportHeight="240">
+
+    <!-- Top bell loop -->
+    <path
+        android:pathData="M95,44 C95,35 105,35 105,44"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round" />
+
+    <!-- Notification Bell Body -->
+    <path
+        android:pathData="M100,45 C86,47 72,56 68,76 C65,96 55,124 45,134 C42,137 45,142 50,142 L150,142 C155,142 158,137 155,134 C145,124 135,96 132,76 C128,56 114,47 100,45 Z"
+        android:fillColor="#FAFAF8"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Bell Clapper / Pendulum -->
+    <path
+        android:pathData="M88,144 C88,156 112,156 112,144"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round" />
+
+    <!-- Ringing sound indicator lines left of bell -->
+    <path
+        android:pathData="M35,78 C30,86 30,98 35,106"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M24,70 C16,84 16,108 24,122"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round" />
+
+    <!-- Rupee Coin (overlapping bottom-right of bell) -->
+    <!-- Coin Orange Fill -->
+    <path
+        android:pathData="M165,120 A42,42 0 1,0 165,204 A42,42 0 1,0 165,120 Z"
+        android:fillColor="#F25C2E" />
+
+    <!-- Coin Outline -->
+    <path
+        android:pathData="M165,120 A42,42 0 1,0 165,204 A42,42 0 1,0 165,120 Z"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414" />
+
+    <!-- Inner Coin Rim -->
+    <path
+        android:pathData="M165,126 A36,36 0 1,0 165,198 A36,36 0 1,0 165,126 Z"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FFFFFF" />
+
+    <!-- Rupee symbol on coin (₹) -->
+    <path
+        android:pathData="M152,148 L178,148 M152,156 L178,156 M158,148 C168,148 174,152 174,160 C174,167 167,171 158,172 L176,188 M158,148 L158,184"
+        android:strokeWidth="3"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Sparkle Accents -->
+    <path
+        android:pathData="M195,95 L195,107 M189,101 L201,101"
+        android:strokeWidth="3"
+        android:strokeColor="#F25C2E"
+        android:strokeLineCap="round" />
+
+    <path
+        android:pathData="M130,28 L130,36 M126,32 L134,32"
+        android:strokeWidth="2.5"
+        android:strokeColor="#F25C2E"
+        android:strokeLineCap="round" />
+
+</vector>

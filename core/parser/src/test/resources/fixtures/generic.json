@@ -1,0 +1,133 @@
+[
+  {
+    "id": "gen_pos_01",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.anyupi.bank",
+    "title": "Payment Received",
+    "text": "You have received ₹150.00 from rohit@sbi. UPI Ref: 412300998877",
+    "shouldParse": true,
+    "expectedAmountPaise": 15000,
+    "expectedPayer": "roh****t@sbi",
+    "expectedUpiRef": "412300998877"
+  },
+  {
+    "id": "gen_pos_02",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.bank.app",
+    "title": "Credit Alert",
+    "text": "Your A/C has been credited with Rs. 2,400 from Sharma Ji",
+    "shouldParse": true,
+    "expectedAmountPaise": 240000,
+    "expectedPayer": "Sharma Ji"
+  },
+  {
+    "id": "gen_pos_03",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.unknown.pay",
+    "title": "Money in!",
+    "text": "₹80 received from Pooja. Ref: 499112233445",
+    "shouldParse": true,
+    "expectedAmountPaise": 8000,
+    "expectedPayer": "Pooja",
+    "expectedUpiRef": "499112233445"
+  },
+  {
+    "id": "gen_pos_04",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.other.wallet",
+    "title": "Payment Notification",
+    "text": "INR 500.00 credited to wallet",
+    "shouldParse": true,
+    "expectedAmountPaise": 50000
+  },
+  {
+    "id": "gen_pos_05",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.merchant.sound",
+    "title": "Payment Alert",
+    "text": "Received ₹10 from customer via UPI QR",
+    "shouldParse": true,
+    "expectedAmountPaise": 1000
+  },
+  {
+    "id": "gen_pos_06",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.neobank.app",
+    "title": "Transaction Update",
+    "text": "Credited ₹1,00,000 from Enterprise Corp. UPI Ref 400011122233",
+    "shouldParse": true,
+    "expectedAmountPaise": 10000000,
+    "expectedUpiRef": "400011122233"
+  },
+  {
+    "id": "gen_pos_07",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.generic.upi",
+    "title": "Alert",
+    "text": "Rs. 45.50 received in bank",
+    "shouldParse": true,
+    "expectedAmountPaise": 4550
+  },
+  {
+    "id": "gen_pos_08",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.generic.upi",
+    "title": "UPI Credit",
+    "text": "₹320 received from priya@icici",
+    "shouldParse": true,
+    "expectedAmountPaise": 32000,
+    "expectedPayer": "pri****a@icici"
+  },
+  {
+    "id": "gen_pos_09",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.generic.upi",
+    "title": "Payment",
+    "text": "Received ₹1,500 from Amit Patel. RRN: 477889900112",
+    "shouldParse": true,
+    "expectedAmountPaise": 150000,
+    "expectedPayer": "Amit Patel",
+    "expectedUpiRef": "477889900112"
+  },
+  {
+    "id": "gen_pos_10",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.generic.upi",
+    "title": "Credit Alert",
+    "text": "Your account is credited with ₹50",
+    "shouldParse": true,
+    "expectedAmountPaise": 5000
+  },
+  {
+    "id": "gen_pos_11",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.generic.upi",
+    "title": "Received money",
+    "text": "Rs 250.00 received from Suresh",
+    "shouldParse": true,
+    "expectedAmountPaise": 25000,
+    "expectedPayer": "Suresh"
+  },
+  {
+    "id": "gen_pos_12",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.generic.upi",
+    "title": "Payment Successful",
+    "text": "₹12.00 received via QR",
+    "shouldParse": true,
+    "expectedAmountPaise": 1200
+  }
+]
+

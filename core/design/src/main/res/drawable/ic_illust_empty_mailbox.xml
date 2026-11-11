@@ -1,0 +1,93 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="240dp"
+    android:viewportWidth="240"
+    android:viewportHeight="240">
+
+    <!-- Ground baseline -->
+    <path
+        android:pathData="M35,215 C80,213 160,215 205,214"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round" />
+
+    <!-- Mailbox Post -->
+    <path
+        android:pathData="M112,135 L112,214 M126,135 L126,214"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round" />
+
+    <!-- Mailbox Body (Dome Profile) -->
+    <!-- Side Tunnel Body -->
+    <path
+        android:pathData="M95,60 C95,58 135,50 178,65 C186,68 190,75 190,85 L190,130 C190,135 185,138 180,138 L95,138 Z"
+        android:fillColor="#FAFAF8"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Mailbox Front Opening (Arch) -->
+    <path
+        android:pathData="M52,138 L52,90 C52,65 72,55 95,55 C118,55 138,65 138,90 L138,138 Z"
+        android:fillColor="#E8E8EA"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Inner empty depth shadow -->
+    <path
+        android:pathData="M65,138 L65,95 C65,76 80,68 95,68 C110,68 125,76 125,95 L125,138"
+        android:strokeWidth="2"
+        android:strokeColor="#8A8A8F"
+        android:strokeLineCap="round" />
+
+    <!-- Open Front Door / Flap hanging down -->
+    <path
+        android:pathData="M52,138 C52,165 70,180 95,180 C120,180 138,165 138,138"
+        android:fillColor="#FAFAF8"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Flap handle / latch -->
+    <path
+        android:pathData="M88,172 L102,172"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round" />
+
+    <!-- Raised Mailbox Flag (Orange Spot Accent!) -->
+    <!-- Flagpole -->
+    <path
+        android:pathData="M165,100 L165,45"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round" />
+
+    <!-- Orange Flag -->
+    <path
+        android:pathData="M165,45 L192,45 C196,45 198,48 196,52 L185,62 L196,72 C198,76 196,79 192,79 L165,79 Z"
+        android:fillColor="#F25C2E"
+        android:strokeWidth="2.5"
+        android:strokeColor="#141414"
+        android:strokeLineJoin="round" />
+
+    <!-- Cute little bird or plant accent near ground -->
+    <path
+        android:pathData="M48,214 C48,205 54,198 62,202 C66,204 70,214 70,214"
+        android:strokeWidth="3"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round" />
+
+    <!-- Accent sparkle -->
+    <path
+        android:pathData="M40,55 L40,63 M36,59 L44,59"
+        android:strokeWidth="2.5"
+        android:strokeColor="#F25C2E"
+        android:strokeLineCap="round" />
+
+</vector>

@@ -1,0 +1,134 @@
+[
+  {
+    "id": "bhim_pos_01",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "in.org.npci.upiapp",
+    "title": "BHIM: Money Received",
+    "text": "Your account has been credited with ₹300.00 from rahul@upi. UPI Ref: 412300112233",
+    "shouldParse": true,
+    "expectedAmountPaise": 30000,
+    "expectedPayer": "rah****l@upi",
+    "expectedUpiRef": "412300112233"
+  },
+  {
+    "id": "bhim_pos_02",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "in.org.npci.upiapp",
+    "title": "BHIM Alert",
+    "text": "₹1,500.00 received from Sanjay Patil. Credited to Bank Account",
+    "shouldParse": true,
+    "expectedAmountPaise": 150000,
+    "expectedPayer": "Sanjay Patil"
+  },
+  {
+    "id": "bhim_pos_03",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "in.org.npci.upiapp",
+    "title": "Payment Credited",
+    "text": "Rs. 50 credited to your A/c. Ref No: 401122334455",
+    "shouldParse": true,
+    "expectedAmountPaise": 5000,
+    "expectedUpiRef": "401122334455"
+  },
+  {
+    "id": "bhim_pos_04",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "in.org.npci.upiapp",
+    "title": "BHIM UPI",
+    "text": "Received ₹4,200 from vikas@npci",
+    "shouldParse": true,
+    "expectedAmountPaise": 420000,
+    "expectedPayer": "vik****s@npci"
+  },
+  {
+    "id": "bhim_pos_05",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "in.org.npci.upiapp",
+    "title": "Money Received",
+    "text": "Payment of ₹25.50 received from Priya",
+    "shouldParse": true,
+    "expectedAmountPaise": 2550
+  },
+  {
+    "id": "bhim_pos_06",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "in.org.npci.upiapp",
+    "title": "BHIM Transaction Alert",
+    "text": "₹800 credited. RRN: 412399001122",
+    "shouldParse": true,
+    "expectedAmountPaise": 80000,
+    "expectedUpiRef": "412399001122"
+  },
+  {
+    "id": "bhim_pos_07",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "in.org.npci.upiapp",
+    "title": "BHIM: Credited",
+    "text": "Received INR 650 from Ashok",
+    "shouldParse": true,
+    "expectedAmountPaise": 65000,
+    "expectedPayer": "Ashok"
+  },
+  {
+    "id": "bhim_pos_08",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "in.org.npci.upiapp",
+    "title": "BHIM Notification",
+    "text": "Rs. 10.00 received from UPI customer",
+    "shouldParse": true,
+    "expectedAmountPaise": 1000
+  },
+  {
+    "id": "bhim_pos_09",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "in.org.npci.upiapp",
+    "title": "Money Credited",
+    "text": "₹12,000 received from Suresh Kumar. UPI Ref: 489911223344",
+    "shouldParse": true,
+    "expectedAmountPaise": 1200000,
+    "expectedPayer": "Suresh Kumar",
+    "expectedUpiRef": "489911223344"
+  },
+  {
+    "id": "bhim_pos_10",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "in.org.npci.upiapp",
+    "title": "BHIM",
+    "text": "Received ₹95 from neha@sbi",
+    "shouldParse": true,
+    "expectedAmountPaise": 9500,
+    "expectedPayer": "neh****a@sbi"
+  },
+  {
+    "id": "bhim_pos_11",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "in.org.npci.upiapp",
+    "title": "Payment Notification",
+    "text": "Credited ₹180.00 from Bank",
+    "shouldParse": true,
+    "expectedAmountPaise": 18000
+  },
+  {
+    "id": "bhim_pos_12",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "in.org.npci.upiapp",
+    "title": "BHIM: Payment Received",
+    "text": "₹250 received from Amit",
+    "shouldParse": true,
+    "expectedAmountPaise": 25000,
+    "expectedPayer": "Amit"
+  }
+]
+

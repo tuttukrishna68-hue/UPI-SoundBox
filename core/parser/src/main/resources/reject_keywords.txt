@@ -1,0 +1,32 @@
+you paid
+paid to
+sent to
+debited
+debited from
+request
+requested
+reminder
+reminding
+failed
+declined
+pending
+cancelled
+refund
+cashback
+reward
+offer
+scratch card
+bill due
+due date
+overdue
+otp
+verification code
+security code
+recharge successful
+autopay
+auto-debit
+mandate
+split bill
+statement
+summary of the day
+

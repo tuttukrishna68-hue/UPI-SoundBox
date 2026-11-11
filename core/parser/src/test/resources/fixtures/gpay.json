@@ -1,0 +1,170 @@
+[
+  {
+    "id": "gpay_pos_01",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.google.android.apps.nbu.paisa.user",
+    "title": "Rahul Sharma paid you ₹500.00",
+    "text": "UPI Ref: 412345678901",
+    "shouldParse": true,
+    "expectedAmountPaise": 50000,
+    "expectedPayer": "Rahul Sharma",
+    "expectedUpiRef": "412345678901"
+  },
+  {
+    "id": "gpay_pos_02",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.google.android.apps.nbu.paisa.user",
+    "title": "Priya Verma paid you ₹1,250",
+    "text": "Payment received in State Bank of India",
+    "shouldParse": true,
+    "expectedAmountPaise": 125000,
+    "expectedPayer": "Priya Verma"
+  },
+  {
+    "id": "gpay_pos_03",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.google.android.apps.nbu.paisa.user",
+    "title": "Received ₹50",
+    "text": "Received ₹50.00 from anand@oksbi. UPI Ref 309876543210",
+    "shouldParse": true,
+    "expectedAmountPaise": 5000,
+    "expectedPayer": "ana****d@oksbi",
+    "expectedUpiRef": "309876543210"
+  },
+  {
+    "id": "gpay_pos_04",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.google.android.apps.nbu.paisa.user",
+    "title": "Amit Kumar paid you ₹20,000",
+    "text": "Credited to your HDFC Bank A/c ending 1234",
+    "shouldParse": true,
+    "expectedAmountPaise": 2000000,
+    "expectedPayer": "Amit Kumar"
+  },
+  {
+    "id": "gpay_pos_05",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.google.android.apps.nbu.paisa.user",
+    "title": "₹10.50 received",
+    "text": "You received ₹10.50 from sunil@okaxis",
+    "shouldParse": true,
+    "expectedAmountPaise": 1050,
+    "expectedPayer": "sun****l@okaxis"
+  },
+  {
+    "id": "gpay_pos_06",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.google.android.apps.nbu.paisa.user",
+    "title": "Deepak Patel paid you Rs. 999.00",
+    "text": "UPI Ref No: 400123456789",
+    "shouldParse": true,
+    "expectedAmountPaise": 99900,
+    "expectedPayer": "Deepak Patel",
+    "expectedUpiRef": "400123456789"
+  },
+  {
+    "id": "gpay_pos_07",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.google.android.apps.nbu.paisa.merchant",
+    "title": "Payment received",
+    "text": "₹340.00 received from Suresh via Google Pay for Business",
+    "shouldParse": true,
+    "expectedAmountPaise": 34000
+  },
+  {
+    "id": "gpay_pos_08",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.google.android.apps.nbu.paisa.merchant",
+    "title": "₹2,500.00 received",
+    "text": "Payment received from Ramesh. RRN: 412399887766",
+    "shouldParse": true,
+    "expectedAmountPaise": 250000,
+    "expectedUpiRef": "412399887766"
+  },
+  {
+    "id": "gpay_pos_09",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.google.android.apps.nbu.paisa.user",
+    "title": "Sneha Roy paid you ₹150",
+    "text": "Payment received",
+    "shouldParse": true,
+    "expectedAmountPaise": 15000,
+    "expectedPayer": "Sneha Roy"
+  },
+  {
+    "id": "gpay_pos_10",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.google.android.apps.nbu.paisa.user",
+    "title": "Vijay Kumar paid you ₹1,00,000",
+    "text": "Credited with UPI Ref 410022334455",
+    "shouldParse": true,
+    "expectedAmountPaise": 10000000,
+    "expectedPayer": "Vijay Kumar",
+    "expectedUpiRef": "410022334455"
+  },
+  {
+    "id": "gpay_pos_11",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.google.android.apps.nbu.paisa.user",
+    "title": "Received Rs 75.50",
+    "text": "Paid you Rs 75.50 from kiran@okhdfcbank",
+    "shouldParse": true,
+    "expectedAmountPaise": 7550,
+    "expectedPayer": "kir****n@okhdfcbank"
+  },
+  {
+    "id": "gpay_pos_12",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.google.android.apps.nbu.paisa.user",
+    "title": "Rohan paid you INR 450",
+    "text": "Received in ICICI Bank",
+    "shouldParse": true,
+    "expectedAmountPaise": 45000,
+    "expectedPayer": "Rohan"
+  },
+  {
+    "id": "gpay_pos_13",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.google.android.apps.nbu.paisa.merchant",
+    "title": "₹15.00 credited",
+    "text": "Payment received via QR code",
+    "shouldParse": true,
+    "expectedAmountPaise": 1500
+  },
+  {
+    "id": "gpay_pos_14",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.google.android.apps.nbu.paisa.user",
+    "title": "GPay: Payment Received",
+    "text": "Credited ₹2,499.00 from Meera Nair. Txn Id: 433322110099",
+    "shouldParse": true,
+    "expectedAmountPaise": 249900,
+    "expectedUpiRef": "433322110099"
+  },
+  {
+    "id": "gpay_pos_15",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.google.android.apps.nbu.paisa.user",
+    "title": "Aarav Gupta paid you ₹80.00",
+    "text": "Received in Axis Bank",
+    "shouldParse": true,
+    "expectedAmountPaise": 8000,
+    "expectedPayer": "Aarav Gupta"
+  }
+]
+

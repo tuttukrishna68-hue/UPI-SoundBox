@@ -1,0 +1,163 @@
+[
+  {
+    "id": "phonepe_pos_01",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.phonepe.app",
+    "title": "Payment Received",
+    "text": "Payment of ₹100 from Suresh Rao is received. Txn Id: T241112100012",
+    "shouldParse": true,
+    "expectedAmountPaise": 10000,
+    "expectedPayer": "Suresh Rao"
+  },
+  {
+    "id": "phonepe_pos_02",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.phonepe.app",
+    "title": "Money received",
+    "text": "₹2,500 credited to your bank account from rohit@ybl",
+    "shouldParse": true,
+    "expectedAmountPaise": 250000,
+    "expectedPayer": "roh****t@ybl"
+  },
+  {
+    "id": "phonepe_pos_03",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.phonepe.app",
+    "title": "PhonePe: ₹45 received",
+    "text": "Transferred to Bank Account ending with 5678",
+    "shouldParse": true,
+    "expectedAmountPaise": 4500
+  },
+  {
+    "id": "phonepe_pos_04",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.phonepe.app",
+    "title": "Received ₹1,000",
+    "text": "Anil Sharma has sent you ₹1,000. UPI Ref: 412355667788",
+    "shouldParse": true,
+    "expectedAmountPaise": 100000,
+    "expectedUpiRef": "412355667788"
+  },
+  {
+    "id": "phonepe_pos_05",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.phonepe.app",
+    "title": "Payment successful",
+    "text": "₹350 received from Rajesh via PhonePe QR",
+    "shouldParse": true,
+    "expectedAmountPaise": 35000
+  },
+  {
+    "id": "phonepe_pos_06",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.phonepe.business",
+    "title": "Payment Received",
+    "text": "₹50 received via QR. RRN: 423456789012",
+    "shouldParse": true,
+    "expectedAmountPaise": 5000,
+    "expectedUpiRef": "423456789012"
+  },
+  {
+    "id": "phonepe_pos_07",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.phonepe.business",
+    "title": "New Payment: ₹1,200",
+    "text": "Credited from priya@ibl to your business account",
+    "shouldParse": true,
+    "expectedAmountPaise": 120000,
+    "expectedPayer": "pri****a@ibl"
+  },
+  {
+    "id": "phonepe_pos_08",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.phonepe.app",
+    "title": "Received Rs. 15.00",
+    "text": "From Manoj Kumar. UPI Ref No: 409988776655",
+    "shouldParse": true,
+    "expectedAmountPaise": 1500,
+    "expectedPayer": "Manoj Kumar",
+    "expectedUpiRef": "409988776655"
+  },
+  {
+    "id": "phonepe_pos_09",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.phonepe.app",
+    "title": "PhonePe",
+    "text": "₹12,450.50 credited from vikram@axl. Payment received.",
+    "shouldParse": true,
+    "expectedAmountPaise": 1245050,
+    "expectedPayer": "vik****m@axl"
+  },
+  {
+    "id": "phonepe_pos_10",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.phonepe.app",
+    "title": "Payment Alert",
+    "text": "₹99 received from Harish. Credited to account",
+    "shouldParse": true,
+    "expectedAmountPaise": 9900
+  },
+  {
+    "id": "phonepe_pos_11",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.phonepe.app",
+    "title": "PhonePe: Received ₹500",
+    "text": "Credited to Bank Account",
+    "shouldParse": true,
+    "expectedAmountPaise": 50000
+  },
+  {
+    "id": "phonepe_pos_12",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.phonepe.business",
+    "title": "Soundbox Notification",
+    "text": "Received ₹20.00 on PhonePe Business QR",
+    "shouldParse": true,
+    "expectedAmountPaise": 2000
+  },
+  {
+    "id": "phonepe_pos_13",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.phonepe.app",
+    "title": "Payment of Rs 720.00 received",
+    "text": "Received from Neha Sharma",
+    "shouldParse": true,
+    "expectedAmountPaise": 72000,
+    "expectedPayer": "Neha Sharma"
+  },
+  {
+    "id": "phonepe_pos_14",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.phonepe.app",
+    "title": "Money Added",
+    "text": "Rs. 3,000 received from Sanjay. UPI Ref: 488776655443",
+    "shouldParse": true,
+    "expectedAmountPaise": 300000,
+    "expectedUpiRef": "488776655443"
+  },
+  {
+    "id": "phonepe_pos_15",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.phonepe.app",
+    "title": "₹150 received",
+    "text": "Payment received from Divya",
+    "shouldParse": true,
+    "expectedAmountPaise": 15000
+  }
+]
+

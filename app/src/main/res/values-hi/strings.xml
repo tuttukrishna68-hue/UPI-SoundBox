@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">यूपीआई साउंडबॉक्स</string>
+    <string name="soundbox_listening">यूपीआई साउंडबॉक्स चालू है</string>
+    <string name="soundbox_paused">यूपीआई साउंडबॉक्स रोका गया</string>
+    <string name="todays_collection">आज का कुल संग्रह</string>
+    <string name="payments_count">%d भुगतान</string>
+    <string name="test_announcement_btn">टेस्ट घोषणा चलाएं</string>
+    <string name="scan_to_pay">किसी भी यूपीआई ऐप से स्कैन करके भुगतान करें</string>
+    <string name="counter_mode">काउंटर मोड</string>
+    <string name="keep_screen_awake">स्क्रीन चालू रखें</string>
+    <string name="history_title">भुगतान इतिहास</string>
+    <string name="reports_title">संग्रह रिपोर्ट</string>
+    <string name="settings_title">सेटिंग्स</string>
+    <string name="my_qr_title">मेरा क्यूआर कोड</string>
+    <string name="help_title">मदद और सहायता</string>
+    <string name="diagnostics_title">डायग्नोस्टिक्स</string>
+</resources>
+

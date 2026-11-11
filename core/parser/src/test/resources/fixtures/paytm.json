@@ -1,0 +1,165 @@
+[
+  {
+    "id": "paytm_pos_01",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "net.one97.paytm",
+    "title": "Paytm",
+    "text": "Received ₹500 from Ravi Kumar on Paytm. UPI Ref: 412388990011",
+    "shouldParse": true,
+    "expectedAmountPaise": 50000,
+    "expectedPayer": "Ravi Kumar",
+    "expectedUpiRef": "412388990011"
+  },
+  {
+    "id": "paytm_pos_02",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "net.one97.paytm",
+    "title": "Money received",
+    "text": "Rs. 1,500.50 credited from anjali@paytm to your bank account",
+    "shouldParse": true,
+    "expectedAmountPaise": 150050,
+    "expectedPayer": "anj****i@paytm"
+  },
+  {
+    "id": "paytm_pos_03",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "net.one97.paytm",
+    "title": "Paytm UPI",
+    "text": "Received ₹20 from mohit@ptsbi. RRN 411223344556",
+    "shouldParse": true,
+    "expectedAmountPaise": 2000,
+    "expectedPayer": "moh****t@ptsbi",
+    "expectedUpiRef": "411223344556"
+  },
+  {
+    "id": "paytm_pos_04",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "net.one97.paytm.merchant",
+    "title": "Paytm for Business",
+    "text": "Payment received: ₹80.00 from Customer via QR code",
+    "shouldParse": true,
+    "expectedAmountPaise": 8000
+  },
+  {
+    "id": "paytm_pos_05",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "net.one97.paytm.merchant",
+    "title": "Paytm Soundbox",
+    "text": "Paytm par ₹250 praapt hue. Received ₹250 on Paytm QR.",
+    "shouldParse": true,
+    "expectedAmountPaise": 25000
+  },
+  {
+    "id": "paytm_pos_06",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "net.one97.paytm",
+    "title": "Paytm Payments Bank",
+    "text": "Your account has been credited with INR 3,400 from Vinay. Txn Id: 499887766554",
+    "shouldParse": true,
+    "expectedAmountPaise": 340000,
+    "expectedUpiRef": "499887766554"
+  },
+  {
+    "id": "paytm_pos_07",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "net.one97.paytm",
+    "title": "Received ₹100",
+    "text": "Credited to wallet from UPI",
+    "shouldParse": true,
+    "expectedAmountPaise": 10000
+  },
+  {
+    "id": "paytm_pos_08",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "net.one97.paytm.merchant",
+    "title": "Business Payment",
+    "text": "Received ₹1,000.00 from Tarun. UPI Ref No: 477665544332",
+    "shouldParse": true,
+    "expectedAmountPaise": 100000,
+    "expectedPayer": "Tarun",
+    "expectedUpiRef": "477665544332"
+  },
+  {
+    "id": "paytm_pos_09",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "net.one97.paytm",
+    "title": "Money Received",
+    "text": "₹15 credited from Pooja",
+    "shouldParse": true,
+    "expectedAmountPaise": 1500
+  },
+  {
+    "id": "paytm_pos_10",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "net.one97.paytm",
+    "title": "Paytm: ₹450 received",
+    "text": "Credited to your linked bank account",
+    "shouldParse": true,
+    "expectedAmountPaise": 45000
+  },
+  {
+    "id": "paytm_pos_11",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "net.one97.paytm",
+    "title": "Received Rs 60",
+    "text": "From Karan Verma. Payment received.",
+    "shouldParse": true,
+    "expectedAmountPaise": 6000,
+    "expectedPayer": "Karan Verma"
+  },
+  {
+    "id": "paytm_pos_12",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "net.one97.paytm.merchant",
+    "title": "Paytm Merchant",
+    "text": "₹55.00 credited to settlement account. UPI Ref 466554433221",
+    "shouldParse": true,
+    "expectedAmountPaise": 5500,
+    "expectedUpiRef": "466554433221"
+  },
+  {
+    "id": "paytm_pos_13",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "net.one97.paytm",
+    "title": "Paytm UPI Alert",
+    "text": "Received ₹5,000 from deepak@ptaxis",
+    "shouldParse": true,
+    "expectedAmountPaise": 500000,
+    "expectedPayer": "dee****k@ptaxis"
+  },
+  {
+    "id": "paytm_pos_14",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "net.one97.paytm",
+    "title": "Payment Received",
+    "text": "Rs. 120.00 received from Megha",
+    "shouldParse": true,
+    "expectedAmountPaise": 12000,
+    "expectedPayer": "Megha"
+  },
+  {
+    "id": "paytm_pos_15",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "net.one97.paytm",
+    "title": "Paytm Alert",
+    "text": "Received ₹10.00 from UPI",
+    "shouldParse": true,
+    "expectedAmountPaise": 1000
+  }
+]
+

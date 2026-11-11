@@ -1,0 +1,132 @@
+package com.upisoundbox.core.design.theme
+
+import androidx.compose.material3.Typography
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import com.upisoundbox.core.design.R
+
+val Merriweather = FontFamily(
+    Font(R.font.merriweather_regular, FontWeight.Normal),
+    Font(R.font.merriweather_bold, FontWeight.Bold)
+)
+
+val PlusJakartaSans = FontFamily(
+    Font(R.font.plus_jakarta_sans_regular, FontWeight.Normal),
+    Font(R.font.plus_jakarta_sans_medium, FontWeight.Medium),
+    Font(R.font.plus_jakarta_sans_semibold, FontWeight.SemiBold),
+    Font(R.font.plus_jakarta_sans_bold, FontWeight.Bold)
+)
+
+val SoundboxTypography = Typography(
+    displayLarge = TextStyle(
+        fontFamily = Merriweather,
+        fontWeight = FontWeight.Bold,
+        fontSize = 56.sp,
+        lineHeight = 64.sp,
+        letterSpacing = (-0.5).sp,
+        fontFeatureSettings = "lnum, tnum"
+    ),
+    displayMedium = TextStyle(
+        fontFamily = Merriweather,
+        fontWeight = FontWeight.Bold,
+        fontSize = 44.sp,
+        lineHeight = 52.sp,
+        fontFeatureSettings = "lnum, tnum"
+    ),
+    displaySmall = TextStyle(
+        fontFamily = Merriweather,
+        fontWeight = FontWeight.Bold,
+        fontSize = 36.sp,
+        lineHeight = 44.sp,
+        fontFeatureSettings = "lnum, tnum"
+    ),
+    headlineLarge = TextStyle(
+        fontFamily = Merriweather,
+        fontWeight = FontWeight.Bold,
+        fontSize = 32.sp,
+        lineHeight = 40.sp,
+        fontFeatureSettings = "lnum, tnum"
+    ),
+    headlineMedium = TextStyle(
+        fontFamily = Merriweather,
+        fontWeight = FontWeight.Bold,
+        fontSize = 28.sp,
+        lineHeight = 36.sp,
+        fontFeatureSettings = "lnum, tnum"
+    ),
+    headlineSmall = TextStyle(
+        fontFamily = Merriweather,
+        fontWeight = FontWeight.Bold,
+        fontSize = 24.sp,
+        lineHeight = 32.sp,
+        fontFeatureSettings = "lnum, tnum"
+    ),
+    titleLarge = TextStyle(
+        fontFamily = PlusJakartaSans,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 22.sp,
+        lineHeight = 28.sp
+    ),
+    titleMedium = TextStyle(
+        fontFamily = PlusJakartaSans,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 16.sp,
+        lineHeight = 24.sp,
+        letterSpacing = 0.15.sp
+    ),
+    titleSmall = TextStyle(
+        fontFamily = PlusJakartaSans,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.1.sp
+    ),
+    bodyLarge = TextStyle(
+        fontFamily = PlusJakartaSans,
+        fontWeight = FontWeight.Normal,
+        fontSize = 16.sp,
+        lineHeight = 24.sp,
+        letterSpacing = 0.5.sp
+    ),
+    bodyMedium = TextStyle(
+        fontFamily = PlusJakartaSans,
+        fontWeight = FontWeight.Medium,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.25.sp
+    ),
+    bodySmall = TextStyle(
+        fontFamily = PlusJakartaSans,
+        fontWeight = FontWeight.Normal,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 0.4.sp
+    ),
+    labelLarge = TextStyle(
+        fontFamily = PlusJakartaSans,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.1.sp
+    ),
+    labelMedium = TextStyle(
+        fontFamily = PlusJakartaSans,
+        fontWeight = FontWeight.Medium,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 0.5.sp
+    ),
+    labelSmall = TextStyle(
+        fontFamily = PlusJakartaSans,
+        fontWeight = FontWeight.Medium,
+        fontSize = 11.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 0.5.sp
+    )
+)
+
+val LocalSoundboxTypography = staticCompositionLocalOf { SoundboxTypography }

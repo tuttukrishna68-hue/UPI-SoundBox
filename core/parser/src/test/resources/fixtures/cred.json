@@ -1,0 +1,112 @@
+[
+  {
+    "id": "cred_pos_01",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.dreamplug.androidapp",
+    "title": "CRED: Money Received",
+    "text": "₹450 received from arun@cred via CRED UPI",
+    "shouldParse": true,
+    "expectedAmountPaise": 45000,
+    "expectedPayer": "aru****n@cred"
+  },
+  {
+    "id": "cred_pos_02",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.dreamplug.androidapp",
+    "title": "CRED",
+    "text": "Credited with ₹1,200 from Rahul. UPI Ref: 412388771122",
+    "shouldParse": true,
+    "expectedAmountPaise": 120000,
+    "expectedPayer": "Rahul",
+    "expectedUpiRef": "412388771122"
+  },
+  {
+    "id": "cred_pos_03",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.dreamplug.androidapp",
+    "title": "CRED UPI Alert",
+    "text": "Received ₹50 from Vikram. Txn Id: 433344455566",
+    "shouldParse": true,
+    "expectedAmountPaise": 5000,
+    "expectedPayer": "Vikram",
+    "expectedUpiRef": "433344455566"
+  },
+  {
+    "id": "cred_pos_04",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.dreamplug.androidapp",
+    "title": "Payment Received",
+    "text": "Rs. 950 credited to your account",
+    "shouldParse": true,
+    "expectedAmountPaise": 95000
+  },
+  {
+    "id": "cred_pos_05",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.dreamplug.androidapp",
+    "title": "CRED: Received ₹25",
+    "text": "Payment received from Priya",
+    "shouldParse": true,
+    "expectedAmountPaise": 2500,
+    "expectedPayer": "Priya"
+  },
+  {
+    "id": "cred_pos_06",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.dreamplug.androidapp",
+    "title": "CRED Alert",
+    "text": "₹3,000 received. Ref No: 411220033445",
+    "shouldParse": true,
+    "expectedAmountPaise": 300000,
+    "expectedUpiRef": "411220033445"
+  },
+  {
+    "id": "cred_pos_07",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.dreamplug.androidapp",
+    "title": "CRED UPI",
+    "text": "Received INR 100 from deepak@axis",
+    "shouldParse": true,
+    "expectedAmountPaise": 10000,
+    "expectedPayer": "dee****k@axis"
+  },
+  {
+    "id": "cred_pos_08",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.dreamplug.androidapp",
+    "title": "Money Received",
+    "text": "₹85 credited from Customer",
+    "shouldParse": true,
+    "expectedAmountPaise": 8500
+  },
+  {
+    "id": "cred_pos_09",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.dreamplug.androidapp",
+    "title": "CRED: ₹2,400 received",
+    "text": "From Ankit via CRED pay",
+    "shouldParse": true,
+    "expectedAmountPaise": 240000,
+    "expectedPayer": "Ankit"
+  },
+  {
+    "id": "cred_pos_10",
+    "verified": false,
+    "note": "illustrative seed sample",
+    "package": "com.dreamplug.androidapp",
+    "title": "CRED",
+    "text": "Received ₹10.00 in Bank Account",
+    "shouldParse": true,
+    "expectedAmountPaise": 1000
+  }
+]
+

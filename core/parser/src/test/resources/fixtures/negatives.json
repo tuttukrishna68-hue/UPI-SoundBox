@@ -1,0 +1,204 @@
+[
+  {
+    "id": "neg_01",
+    "verified": false,
+    "note": "illustrative negative sample: debit",
+    "package": "com.google.android.apps.nbu.paisa.user",
+    "title": "You paid ₹500 to Swiggy",
+    "text": "Debited from State Bank of India",
+    "shouldParse": false,
+    "expectedReason": "Matched debit/noise keyword: 'you paid'"
+  },
+  {
+    "id": "neg_02",
+    "verified": false,
+    "note": "illustrative negative sample: sent to",
+    "package": "com.phonepe.app",
+    "title": "Paid to Zomato",
+    "text": "₹340 sent to Zomato Order",
+    "shouldParse": false,
+    "expectedReason": "Matched debit/noise keyword: 'paid to'"
+  },
+  {
+    "id": "neg_03",
+    "verified": false,
+    "note": "illustrative negative sample: payment request",
+    "package": "com.google.android.apps.nbu.paisa.user",
+    "title": "Payment Request",
+    "text": "Ramesh has requested ₹200 from you",
+    "shouldParse": false,
+    "expectedReason": "Matched debit/noise keyword: 'request'"
+  },
+  {
+    "id": "neg_04",
+    "verified": false,
+    "note": "illustrative negative sample: reminder",
+    "package": "com.phonepe.app",
+    "title": "Bill Reminder",
+    "text": "Your electricity bill of ₹1,450 is due tomorrow",
+    "shouldParse": false,
+    "expectedReason": "Matched debit/noise keyword: 'reminder'"
+  },
+  {
+    "id": "neg_05",
+    "verified": false,
+    "note": "illustrative negative sample: failed transaction",
+    "package": "net.one97.paytm",
+    "title": "Transaction Failed",
+    "text": "Payment of ₹150 to Merchant failed",
+    "shouldParse": false,
+    "expectedReason": "Matched debit/noise keyword: 'failed'"
+  },
+  {
+    "id": "neg_06",
+    "verified": false,
+    "note": "illustrative negative sample: declined",
+    "package": "in.org.npci.upiapp",
+    "title": "Payment Declined",
+    "text": "UPI payment of ₹800 declined by bank",
+    "shouldParse": false,
+    "expectedReason": "Matched debit/noise keyword: 'declined'"
+  },
+  {
+    "id": "neg_07",
+    "verified": false,
+    "note": "illustrative negative sample: pending",
+    "package": "com.google.android.apps.nbu.paisa.user",
+    "title": "Payment Pending",
+    "text": "₹50 payment to Uber is pending bank confirmation",
+    "shouldParse": false,
+    "expectedReason": "Matched debit/noise keyword: 'pending'"
+  },
+  {
+    "id": "neg_08",
+    "verified": false,
+    "note": "illustrative negative sample: refund initiated",
+    "package": "net.one97.paytm",
+    "title": "Refund Update",
+    "text": "Refund of ₹299 for your order is processed",
+    "shouldParse": false,
+    "expectedReason": "Matched debit/noise keyword: 'refund'"
+  },
+  {
+    "id": "neg_09",
+    "verified": false,
+    "note": "illustrative negative sample: cashback/reward promo",
+    "package": "com.phonepe.app",
+    "title": "Win Cashback!",
+    "text": "Get up to ₹100 cashback on your next electricity bill payment",
+    "shouldParse": false,
+    "expectedReason": "Matched debit/noise keyword: 'cashback'"
+  },
+  {
+    "id": "neg_10",
+    "verified": false,
+    "note": "illustrative negative sample: scratch card",
+    "package": "com.google.android.apps.nbu.paisa.user",
+    "title": "You earned a reward!",
+    "text": "You won a scratch card worth up to ₹500",
+    "shouldParse": false,
+    "expectedReason": "Matched debit/noise keyword: 'reward'"
+  },
+  {
+    "id": "neg_11",
+    "verified": false,
+    "note": "illustrative negative sample: bill due",
+    "package": "com.dreamplug.androidapp",
+    "title": "Credit Card Bill Due",
+    "text": "Your HDFC bill of ₹24,500 is due on 15-Nov",
+    "shouldParse": false,
+    "expectedReason": "Matched debit/noise keyword: 'bill due'"
+  },
+  {
+    "id": "neg_12",
+    "verified": false,
+    "note": "illustrative negative sample: OTP",
+    "package": "com.google.android.apps.nbu.paisa.user",
+    "title": "Verification Code",
+    "text": "Your OTP for UPI registration is 987654. Do not share.",
+    "shouldParse": false,
+    "expectedReason": "Matched debit/noise keyword: 'otp'"
+  },
+  {
+    "id": "neg_13",
+    "verified": false,
+    "note": "illustrative negative sample: recharge successful",
+    "package": "com.phonepe.app",
+    "title": "Recharge Successful",
+    "text": "Mobile recharge of ₹299 for 9876543210 is successful",
+    "shouldParse": false,
+    "expectedReason": "Matched debit/noise keyword: 'recharge successful'"
+  },
+  {
+    "id": "neg_14",
+    "verified": false,
+    "note": "illustrative negative sample: autopay / mandate",
+    "package": "net.one97.paytm",
+    "title": "Autopay Executed",
+    "text": "₹199 auto-debit for Netflix mandate successful",
+    "shouldParse": false,
+    "expectedReason": "Matched debit/noise keyword: 'autopay'"
+  },
+  {
+    "id": "neg_15",
+    "verified": false,
+    "note": "illustrative negative sample: SMS debit",
+    "sender": "VK-HDFCBK",
+    "body": "Your A/C 1234 is debited for Rs 1,500.00 on 12-Nov-26 by UPI. Avl Bal Rs 20,000",
+    "shouldParse": false,
+    "expectedReason": "Matched debit/noise keyword: 'debited'"
+  },
+  {
+    "id": "neg_16",
+    "verified": false,
+    "note": "illustrative negative sample: offer / discount",
+    "package": "in.amazon.mShop.android.shopping",
+    "title": "Special Offer for You",
+    "text": "Get flat ₹50 offer on grocery orders above ₹500",
+    "shouldParse": false,
+    "expectedReason": "Matched debit/noise keyword: 'offer'"
+  },
+  {
+    "id": "neg_17",
+    "verified": false,
+    "note": "illustrative negative sample: daily summary notification",
+    "package": "com.phonepe.business",
+    "title": "Summary of the day",
+    "text": "You received 45 payments totaling ₹8,900 today",
+    "shouldParse": false,
+    "expectedReason": "Matched debit/noise keyword: 'summary of the day'"
+  },
+  {
+    "id": "neg_18",
+    "verified": false,
+    "note": "illustrative negative sample: group summary notification",
+    "package": "com.google.android.apps.nbu.paisa.user",
+    "title": "Google Pay",
+    "text": "3 new notifications",
+    "isGroupSummary": true,
+    "shouldParse": false,
+    "expectedReason": "Group summary notification"
+  },
+  {
+    "id": "neg_19",
+    "verified": false,
+    "note": "illustrative negative sample: ongoing notification",
+    "package": "com.phonepe.app",
+    "title": "PhonePe is running",
+    "text": "Listening for transactions",
+    "isOngoing": true,
+    "shouldParse": false,
+    "expectedReason": "Ongoing notification"
+  },
+  {
+    "id": "neg_20",
+    "verified": false,
+    "note": "illustrative negative sample: no amount in text",
+    "package": "com.google.android.apps.nbu.paisa.user",
+    "title": "Payment received",
+    "text": "You received a new payment from friend",
+    "shouldParse": false,
+    "expectedReason": "Could not extract valid amount"
+  }
+]
+

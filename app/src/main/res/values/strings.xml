@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">UPI Soundbox</string>
+    <string name="soundbox_listening">UPI Soundbox Listening</string>
+    <string name="soundbox_paused">UPI Soundbox Paused</string>
+    <string name="todays_collection">TODAY\'S COLLECTION</string>
+    <string name="payments_count">%d Payments</string>
+    <string name="test_announcement_btn">Play Test Announcement</string>
+    <string name="scan_to_pay">SCAN &amp; PAY WITH ANY UPI APP</string>
+    <string name="counter_mode">Counter Mode</string>
+    <string name="keep_screen_awake">Keep Screen Awake</string>
+    <string name="history_title">Payment History</string>
+    <string name="reports_title">Collection Reports</string>
+    <string name="settings_title">Settings</string>
+    <string name="my_qr_title">My UPI QR &amp; Standee</string>
+    <string name="help_title">Ask Us Anything</string>
+    <string name="diagnostics_title">Diagnostics &amp; Health</string>
+</resources>
