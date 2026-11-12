@@ -31,6 +31,15 @@
         <package android:name="in.org.npci.upiapp" />
         <package android:name="in.amazon.mShop.android.shopping" />
         <package android:name="com.dreamplug.androidapp" />
+        <package android:name="com.naviapp" />
+        <package android:name="money.super.payments" />
+        <package android:name="com.whatsapp" />
+        <package android:name="com.mobikwik_new" />
+        <package android:name="com.popclub.android" />
+        <package android:name="indwin.c3.shareapp" />
+        <package android:name="com.fampay.in" />
+        <package android:name="com.nextbillion.groww" />
+        <package android:name="com.myairtelapp" />
     </queries>
 
     <application

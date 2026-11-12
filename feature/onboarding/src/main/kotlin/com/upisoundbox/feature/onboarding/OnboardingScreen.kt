@@ -655,72 +655,48 @@ private fun OnboardingVisualSlide2() {
         }
 
         // 4. Floating App 1: Google Pay (Top-Left)
-        Box(
+        Image(
+            painter = painterResource(id = R.drawable.ic_brand_gpay),
+            contentDescription = "Google Pay",
             modifier = Modifier
                 .offset(x = (-58).dp, y = (-58).dp)
                 .size(48.dp)
                 .clip(RoundedCornerShape(13.dp))
-                .background(Color.White)
-                .border(BorderStroke(1.dp, Color(0xFFE2E8F0)), RoundedCornerShape(13.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_brand_gpay),
-                contentDescription = "Google Pay",
-                modifier = Modifier.size(34.dp)
-            )
-        }
+                .border(BorderStroke(1.dp, Color(0x33FFFFFF)), RoundedCornerShape(13.dp))
+        )
 
         // 5. Floating App 2: PhonePe (Top-Right)
-        Box(
+        Image(
+            painter = painterResource(id = R.drawable.ic_brand_phonepe),
+            contentDescription = "PhonePe",
             modifier = Modifier
                 .offset(x = 58.dp, y = (-58).dp)
                 .size(48.dp)
                 .clip(RoundedCornerShape(13.dp))
-                .background(Color(0xFF5F259F))
-                .border(BorderStroke(1.dp, Color(0xFF7E38CE)), RoundedCornerShape(13.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_brand_phonepe),
-                contentDescription = "PhonePe",
-                modifier = Modifier.size(40.dp)
-            )
-        }
+                .border(BorderStroke(1.dp, Color(0x33FFFFFF)), RoundedCornerShape(13.dp))
+        )
 
         // 6. Floating App 3: Paytm (Bottom-Left)
-        Box(
+        Image(
+            painter = painterResource(id = R.drawable.ic_brand_paytm),
+            contentDescription = "Paytm",
             modifier = Modifier
                 .offset(x = (-58).dp, y = 58.dp)
                 .size(48.dp)
                 .clip(RoundedCornerShape(13.dp))
-                .background(Color.White)
-                .border(BorderStroke(1.dp, Color(0xFFE2E8F0)), RoundedCornerShape(13.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_brand_paytm),
-                contentDescription = "Paytm",
-                modifier = Modifier.size(38.dp)
-            )
-        }
+                .border(BorderStroke(1.dp, Color(0x33FFFFFF)), RoundedCornerShape(13.dp))
+        )
 
         // 7. Floating App 4: BHIM (Bottom-Right)
-        Box(
+        Image(
+            painter = painterResource(id = R.drawable.ic_brand_bhim),
+            contentDescription = "BHIM",
             modifier = Modifier
                 .offset(x = 58.dp, y = 58.dp)
                 .size(48.dp)
                 .clip(RoundedCornerShape(13.dp))
-                .background(Color.White)
-                .border(BorderStroke(1.dp, Color(0xFFE2E8F0)), RoundedCornerShape(13.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_brand_bhim),
-                contentDescription = "BHIM",
-                modifier = Modifier.size(36.dp)
-            )
-        }
+                .border(BorderStroke(1.dp, Color(0x33FFFFFF)), RoundedCornerShape(13.dp))
+        )
     }
 }
 

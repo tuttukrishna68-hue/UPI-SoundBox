@@ -21,10 +21,39 @@
     "verified": true
   },
   {
+    "packageId": "com.phonepe.app.business",
+    "displayName": "PhonePe for Business",
+    "enabled": true,
+    "parserId": "phonepe_business",
+    "verified": true
+  },
+  {
+    "packageId": "com.phonepe.business",
+    "displayName": "PhonePe Business (Alt)",
+    "enabled": true,
+    "parserId": "phonepe_business",
+    "verified": true
+  },
+  {
+    "net.one97.paytm": "Paytm",
     "packageId": "net.one97.paytm",
     "displayName": "Paytm",
     "enabled": true,
     "parserId": "paytm",
+    "verified": true
+  },
+  {
+    "packageId": "net.one97.paytm.merchant",
+    "displayName": "Paytm for Business",
+    "enabled": true,
+    "parserId": "paytm_business",
+    "verified": true
+  },
+  {
+    "packageId": "com.paytm.business",
+    "displayName": "Paytm Business (Alt)",
+    "enabled": true,
+    "parserId": "paytm_business",
     "verified": true
   },
   {
@@ -49,36 +78,66 @@
     "verified": true
   },
   {
-    "packageId": "com.phonepe.app.business",
-    "displayName": "PhonePe for Business",
+    "packageId": "com.naviapp",
+    "displayName": "Navi",
     "enabled": true,
-    "parserId": "phonepe_business",
-    "verified": false,
-    "comment": "TODO: Verify exact package ID on physical device with 'adb shell pm list packages | grep phonepe'"
+    "parserId": "generic",
+    "verified": true
   },
   {
-    "packageId": "com.phonepe.business",
-    "displayName": "PhonePe Business (Alt)",
+    "packageId": "money.super.payments",
+    "displayName": "super.money",
     "enabled": true,
-    "parserId": "phonepe_business",
-    "verified": false,
-    "comment": "TODO: Alternative candidate package ID for PhonePe Business"
+    "parserId": "generic",
+    "verified": true
   },
   {
-    "packageId": "net.one97.paytm.merchant",
-    "displayName": "Paytm for Business",
+    "packageId": "com.whatsapp",
+    "displayName": "WhatsApp Pay",
     "enabled": true,
-    "parserId": "paytm_business",
-    "verified": false,
-    "comment": "TODO: Verify exact package ID on physical device with 'adb shell pm list packages | grep paytm'"
+    "parserId": "generic",
+    "verified": true
   },
   {
-    "packageId": "com.paytm.business",
-    "displayName": "Paytm Business (Alt)",
+    "packageId": "com.mobikwik_new",
+    "displayName": "MobiKwik",
     "enabled": true,
-    "parserId": "paytm_business",
-    "verified": false,
-    "comment": "TODO: Alternative candidate package ID for Paytm Business"
+    "parserId": "generic",
+    "verified": true
+  },
+  {
+    "packageId": "com.popclub.android",
+    "displayName": "POP",
+    "enabled": true,
+    "parserId": "generic",
+    "verified": true
+  },
+  {
+    "packageId": "indwin.c3.shareapp",
+    "displayName": "slice",
+    "enabled": true,
+    "parserId": "generic",
+    "verified": true
+  },
+  {
+    "packageId": "com.fampay.in",
+    "displayName": "FamApp by Trio",
+    "enabled": true,
+    "parserId": "generic",
+    "verified": true
+  },
+  {
+    "packageId": "com.nextbillion.groww",
+    "displayName": "Groww",
+    "enabled": true,
+    "parserId": "generic",
+    "verified": true
+  },
+  {
+    "packageId": "com.myairtelapp",
+    "displayName": "Airtel",
+    "enabled": true,
+    "parserId": "generic",
+    "verified": true
   }
 ]
-

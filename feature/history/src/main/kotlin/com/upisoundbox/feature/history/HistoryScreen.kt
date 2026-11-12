@@ -135,7 +135,11 @@ fun HistoryScreen(
         }
     }
 
-    val availableApps = listOf("Google Pay", "PhonePe", "Paytm", "BHIM", "Amazon Pay", "CRED", "Bank SMS")
+    val availableApps = listOf(
+        "Google Pay", "PhonePe", "Paytm", "BHIM", "Navi", "super.money",
+        "CRED", "Amazon Pay", "WhatsApp Pay", "MobiKwik", "POP", "slice",
+        "FamApp", "Groww", "Airtel", "Bank SMS"
+    )
 
     Column(
         modifier = Modifier

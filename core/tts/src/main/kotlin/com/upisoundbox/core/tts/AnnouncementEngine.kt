@@ -353,6 +353,15 @@ class AnnouncementEngine(
                 "in.org.npci.upiapp" -> "BHIM"
                 "in.amazon.mShop.android.shopping" -> "Amazon Pay"
                 "com.dreamplug.androidapp" -> "CRED"
+                "com.naviapp" -> "Navi"
+                "money.super.payments" -> "super.money"
+                "com.whatsapp" -> "WhatsApp Pay"
+                "com.mobikwik_new" -> "MobiKwik"
+                "com.popclub.android" -> "POP"
+                "indwin.c3.shareapp" -> "slice"
+                "com.fampay.in" -> "FamApp"
+                "com.nextbillion.groww" -> "Groww"
+                "com.myairtelapp" -> "Airtel"
                 else -> if (pkg.startsWith("VK-") || pkg.startsWith("AX-") || pkg.startsWith("AD-")) "Bank SMS" else "UPI"
             }
         }
