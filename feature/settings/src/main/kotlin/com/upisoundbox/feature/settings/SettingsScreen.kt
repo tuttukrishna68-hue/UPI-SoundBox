@@ -350,7 +350,7 @@ fun SettingsScreen(
                         onClick = {
                             val intent = Intent(
                                 Intent.ACTION_VIEW,
-                                Uri.parse("https://github.com/tuttukrishna/upi-soundbox/releases")
+                                Uri.parse("https://github.com/tuttukrishna68-hue/UPI-SoundBox/releases")
                             ).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }
                             try {
                                 context.startActivity(intent)
