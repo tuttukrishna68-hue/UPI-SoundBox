@@ -155,7 +155,18 @@ class AnnouncementEngine(
         waitCalls: Boolean = true
     ): Boolean = withContext(Dispatchers.Main) {
         try {
-            ensureReady()
+            val ready = ensureReady()
+            if (!ready) {
+                // Still give the merchant an audible signal when speech data is unavailable.
+                if (playChime) {
+                    try {
+                        withTimeoutOrNull(700L) {
+                            chimePlayer.playChime(useAlarmStream)
+                        }
+                    } catch (_: Exception) {}
+                }
+                return@withContext false
+            }
             val engine = tts ?: return@withContext false
 
             // Wait if phone call is active
@@ -169,7 +180,9 @@ class AnnouncementEngine(
 
             // Target audio usage & stream
             val streamType = if (useAlarmStream) AudioManager.STREAM_ALARM else AudioManager.STREAM_MUSIC
-            val audioUsage = if (useAlarmStream) AudioAttributes.USAGE_ALARM else AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY
+            // MEDIA is honoured consistently by OEM speakers and Bluetooth routes.
+            // ACCESSIBILITY is ignored or muted by several merchant-phone builds.
+            val audioUsage = if (useAlarmStream) AudioAttributes.USAGE_ALARM else AudioAttributes.USAGE_MEDIA
 
             // Audio Attributes
             val audioAttributes = AudioAttributes.Builder()
@@ -225,18 +238,18 @@ class AnnouncementEngine(
                 }
             }
 
-            // Play pleasant audio chime
+            // Audio focus
+            val focusRequest = buildAudioFocusRequest(audioUsage)
+            try { requestAudioFocus(focusRequest, streamType) } catch (_: Exception) {}
+
+            // Play pleasant audio chime after focus is granted so it is not dropped by the OS.
             if (playChime) {
                 try {
-                    withTimeoutOrNull(500L) {
+                    withTimeoutOrNull(700L) {
                         chimePlayer.playChime(useAlarmStream)
                     }
                 } catch (_: Exception) {}
             }
-
-            // Audio focus
-            val focusRequest = buildAudioFocusRequest(audioUsage)
-            try { requestAudioFocus(focusRequest, streamType) } catch (_: Exception) {}
 
             // Volume management: Ensure soundbox is loud and clear (>= 85%)
             try {
@@ -283,7 +296,7 @@ class AnnouncementEngine(
             // Await speech completion with a 6-second timeout
             val success = withTimeoutOrNull(6000L) {
                 speechCompletion.await()
-            } ?: (speakResult == TextToSpeech.SUCCESS)
+            } ?: false
 
             // Grace period so hardware speaker finishes physical output buffer
             delay(350L)

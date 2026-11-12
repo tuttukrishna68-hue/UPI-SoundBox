@@ -4,6 +4,7 @@ import com.upisoundbox.core.data.preferences.SoundboxPreferences
 import com.upisoundbox.core.parser.AmountParser
 import com.upisoundbox.core.parser.NumberToWords
 import com.upisoundbox.core.parser.PaymentEvent
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -27,7 +28,12 @@ class AnnouncementQueue(
     private val preferences: SoundboxPreferences,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default)
 ) {
-    private val queueChannel = Channel<AnnouncementRequest>(Channel.UNLIMITED)
+    private data class QueuedRequest(
+        val request: AnnouncementRequest,
+        val completion: CompletableDeferred<Boolean>? = null
+    )
+
+    private val queueChannel = Channel<QueuedRequest>(Channel.UNLIMITED)
     private var lastAnnouncedText: String? = null
     private var lastAnnouncedLang: String = "en-IN"
 
@@ -40,8 +46,18 @@ class AnnouncementQueue(
         }
     }
 
-    fun enqueue(request: AnnouncementRequest) {
-        queueChannel.trySend(request)
+    fun enqueue(request: AnnouncementRequest): Boolean {
+        return queueChannel.trySend(QueuedRequest(request)).isSuccess
+    }
+
+    /**
+     * Enqueues a request and waits until the audio engine has actually attempted it.
+     * UI test buttons use this path so they never report success before playback starts.
+     */
+    suspend fun enqueueAndAwait(request: AnnouncementRequest): Boolean {
+        val completion = CompletableDeferred<Boolean>()
+        queueChannel.send(QueuedRequest(request, completion))
+        return completion.await()
     }
 
     suspend fun replayLast(): Boolean {
@@ -50,16 +66,17 @@ class AnnouncementQueue(
     }
 
     private suspend fun processQueue() {
-        for (request in queueChannel) {
-            try {
-                handleRequest(request)
+        for (queuedRequest in queueChannel) {
+            val success = try {
+                handleRequest(queuedRequest.request)
             } catch (_: Exception) {
-                // Keep the processing loop resilient to any error
+                false
             }
+            queuedRequest.completion?.complete(success)
         }
     }
 
-    private suspend fun handleRequest(request: AnnouncementRequest) {
+    private suspend fun handleRequest(request: AnnouncementRequest): Boolean {
         when (request) {
             is AnnouncementRequest.Test -> {
                 val lang = request.languageTag ?: preferences.languageTag.first()
@@ -78,25 +95,25 @@ class AnnouncementQueue(
 
                 lastAnnouncedText = rendered
                 lastAnnouncedLang = lang
-                engine.speak(rendered, lang, useAlarm, boost, chime, waitCalls)
+                return engine.speak(rendered, lang, useAlarm, boost, chime, waitCalls)
             }
 
             is AnnouncementRequest.Custom -> {
                 lastAnnouncedText = request.text
                 lastAnnouncedLang = request.languageTag
-                engine.speak(request.text, request.languageTag)
+                return engine.speak(request.text, request.languageTag)
             }
 
             is AnnouncementRequest.Payment -> {
                 // 1. Check if soundbox is active
-                if (!preferences.isSoundboxActive.first()) return
+                if (!preferences.isSoundboxActive.first()) return false
 
                 // 2. Check minimum amount
                 val minAmount = preferences.minAmountPaise.first()
-                if (request.event.amountPaise < minAmount) return
+                if (request.event.amountPaise < minAmount) return false
 
                 // 3. Check quiet hours
-                if (isInsideQuietHours()) return
+                if (isInsideQuietHours()) return false
 
                 // 4. Burst handling: collect any pending payments
                 val isBurstEnabled = preferences.isBurstModeEnabled.first()
@@ -107,22 +124,22 @@ class AnnouncementQueue(
                     // Wait a short window (e.g. 1.5 seconds) to see if more arrive
                     delay(1500)
                     if (burstBuffer.size >= burstThreshold) {
-                        announceBurst(burstBuffer.toList())
+                        val success = announceBurst(burstBuffer.toList())
                         burstBuffer.clear()
-                        return
+                        return success
                     } else if (burstBuffer.isNotEmpty()) {
                         val single = burstBuffer.removeAt(0)
-                        announceSingle(single)
-                        return
+                        return announceSingle(single)
                     }
                 } else {
-                    announceSingle(request.event)
+                    return announceSingle(request.event)
                 }
             }
         }
+        return false
     }
 
-    private suspend fun announceSingle(event: PaymentEvent) {
+    private suspend fun announceSingle(event: PaymentEvent): Boolean {
         val lang = preferences.languageTag.first()
         val template = preferences.phraseTemplate.first()
         val repeat = preferences.repeatCount.first()
@@ -142,9 +159,10 @@ class AnnouncementQueue(
         lastAnnouncedText = text
         lastAnnouncedLang = lang
 
+        var success = true
         repeat(repeat) { index ->
             // Only play chime on first repetition
-            engine.speak(
+            val attempt = engine.speak(
                 text = text,
                 languageTag = lang,
                 useAlarmStream = useAlarm,
@@ -152,13 +170,15 @@ class AnnouncementQueue(
                 playChime = chime && index == 0,
                 waitCalls = waitCalls
             )
+            success = attempt && success
             if (index < repeat - 1) {
                 delay(800)
             }
         }
+        return success
     }
 
-    private suspend fun announceBurst(events: List<PaymentEvent>) {
+    private suspend fun announceBurst(events: List<PaymentEvent>): Boolean {
         val lang = preferences.languageTag.first()
         val totalPaise = events.sumOf { it.amountPaise }
         val count = events.size
@@ -182,7 +202,7 @@ class AnnouncementQueue(
         lastAnnouncedText = burstText
         lastAnnouncedLang = lang
 
-        engine.speak(
+        return engine.speak(
             text = burstText,
             languageTag = lang,
             useAlarmStream = useAlarm,

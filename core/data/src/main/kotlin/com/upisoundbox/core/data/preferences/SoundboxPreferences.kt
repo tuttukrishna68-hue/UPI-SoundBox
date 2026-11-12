@@ -53,9 +53,10 @@ class SoundboxPreferences(private val context: Context) {
     val isSecureScreenEnabled: Flow<Boolean> = dataStore.data.map { it[KEY_SECURE_SCREEN] ?: false }
     val myUpiId: Flow<String> = dataStore.data.map { it[KEY_MY_UPI_ID] ?: "" }
     val myShopName: Flow<String> = dataStore.data.map { it[KEY_MY_SHOP_NAME] ?: "" }
-    val userName: Flow<String> = dataStore.data.map { it[KEY_USER_NAME] ?: "Budiarti" }
+    val userName: Flow<String> = dataStore.data.map { it[KEY_USER_NAME] ?: DEFAULT_USER_NAME }
     val themeMode: Flow<String> = dataStore.data.map { it[KEY_THEME_MODE] ?: "dark" }
     val fontScale: Flow<String> = dataStore.data.map { it[KEY_FONT_SCALE] ?: "compact" }
+    val lastSeenPaymentAt: Flow<Long> = dataStore.data.map { it[KEY_LAST_SEEN_PAYMENT_AT] ?: 0L }
 
     // Onboarding
     val isOnboardingCompleted: Flow<Boolean> = dataStore.data.map { it[KEY_ONBOARDING_DONE] ?: false }
@@ -134,7 +135,11 @@ class SoundboxPreferences(private val context: Context) {
     }
 
     suspend fun setUserName(name: String) {
-        dataStore.edit { it[KEY_USER_NAME] = name.trim().ifEmpty { "Budiarti" } }
+        dataStore.edit { it[KEY_USER_NAME] = name.trim().ifEmpty { DEFAULT_USER_NAME } }
+    }
+
+    suspend fun setLastSeenPaymentAt(timestamp: Long) {
+        dataStore.edit { it[KEY_LAST_SEEN_PAYMENT_AT] = timestamp.coerceAtLeast(0L) }
     }
 
     suspend fun setOnboardingCompleted(completed: Boolean) {
@@ -142,6 +147,7 @@ class SoundboxPreferences(private val context: Context) {
     }
 
     companion object {
+        const val DEFAULT_USER_NAME = "Merchant"
         const val DEFAULT_TEMPLATE_EN = "Received {amount} on {app} from {payer}"
         const val DEFAULT_TEMPLATE_HI = "{app} पर {payer} से {amount} प्राप्त हुए"
         const val DEFAULT_TEMPLATE_ML = "{app} വഴി {payer} ൽ നിന്ന് {amount} ലഭിച്ചു"
@@ -182,6 +188,7 @@ class SoundboxPreferences(private val context: Context) {
         private val KEY_USER_NAME = stringPreferencesKey("user_name")
         private val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
         private val KEY_FONT_SCALE = stringPreferencesKey("font_scale")
+        private val KEY_LAST_SEEN_PAYMENT_AT = longPreferencesKey("last_seen_payment_at")
         private val KEY_ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
     }
 }

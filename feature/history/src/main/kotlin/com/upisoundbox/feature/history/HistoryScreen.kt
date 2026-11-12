@@ -64,6 +64,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.upisoundbox.core.data.db.PaymentEntity
+import com.upisoundbox.core.data.preferences.SoundboxPreferences
 import com.upisoundbox.core.data.repository.PaymentRepository
 import com.upisoundbox.core.design.component.AmountDisplay
 import com.upisoundbox.core.design.component.AmountSize
@@ -91,6 +92,7 @@ import java.util.Locale
 fun HistoryScreen(
     repository: PaymentRepository,
     announcementQueue: AnnouncementQueue,
+    preferences: SoundboxPreferences,
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -104,6 +106,12 @@ fun HistoryScreen(
     var selectedDate by remember { mutableStateOf<LocalDate?>(today) }
 
     val allPayments by repository.getAllPayments().collectAsState(initial = emptyList())
+
+    // Opening the ledger is the read action for the notification bell. Persist the
+    // latest received timestamp so the badge disappears after the merchant sees it.
+    LaunchedEffect(allPayments.firstOrNull()?.receivedAt) {
+        allPayments.firstOrNull()?.receivedAt?.let { preferences.setLastSeenPaymentAt(it) }
+    }
 
     // Set of distinct dates that contain at least one payment
     val datesWithPayments = remember(allPayments) {

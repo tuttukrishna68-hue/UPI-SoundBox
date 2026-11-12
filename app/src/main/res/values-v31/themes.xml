@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.UpiSoundbox" parent="@android:style/Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">#FAFAF8</item>
-        <item name="android:windowSplashScreenBackground">#000000</item>
+        <item name="android:windowBackground">#00130D</item>
+        <item name="android:windowSplashScreenBackground">#00130D</item>
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash_icon</item>
-        <item name="android:windowSplashScreenIconBackgroundColor">#000000</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">#00130D</item>
     </style>
 </resources>
 

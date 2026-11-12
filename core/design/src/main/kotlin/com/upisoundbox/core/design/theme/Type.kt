@@ -23,7 +23,7 @@ val PlusJakartaSans = FontFamily(
 
 val SoundboxTypography = Typography(
     displayLarge = TextStyle(
-        fontFamily = Merriweather,
+        fontFamily = PlusJakartaSans,
         fontWeight = FontWeight.Bold,
         fontSize = 56.sp,
         lineHeight = 64.sp,
@@ -31,35 +31,35 @@ val SoundboxTypography = Typography(
         fontFeatureSettings = "lnum, tnum"
     ),
     displayMedium = TextStyle(
-        fontFamily = Merriweather,
+        fontFamily = PlusJakartaSans,
         fontWeight = FontWeight.Bold,
         fontSize = 44.sp,
         lineHeight = 52.sp,
         fontFeatureSettings = "lnum, tnum"
     ),
     displaySmall = TextStyle(
-        fontFamily = Merriweather,
+        fontFamily = PlusJakartaSans,
         fontWeight = FontWeight.Bold,
         fontSize = 36.sp,
         lineHeight = 44.sp,
         fontFeatureSettings = "lnum, tnum"
     ),
     headlineLarge = TextStyle(
-        fontFamily = Merriweather,
+        fontFamily = PlusJakartaSans,
         fontWeight = FontWeight.Bold,
         fontSize = 32.sp,
         lineHeight = 40.sp,
         fontFeatureSettings = "lnum, tnum"
     ),
     headlineMedium = TextStyle(
-        fontFamily = Merriweather,
+        fontFamily = PlusJakartaSans,
         fontWeight = FontWeight.Bold,
         fontSize = 28.sp,
         lineHeight = 36.sp,
         fontFeatureSettings = "lnum, tnum"
     ),
     headlineSmall = TextStyle(
-        fontFamily = Merriweather,
+        fontFamily = PlusJakartaSans,
         fontWeight = FontWeight.Bold,
         fontSize = 24.sp,
         lineHeight = 32.sp,

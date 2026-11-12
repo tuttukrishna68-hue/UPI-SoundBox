@@ -16,17 +16,26 @@ UPI Soundbox announces incoming UPI payments aloud within about one second. It w
 
 ## Install
 
-1. Download the latest APK from [Releases](../../releases)
+1. Download the latest APK from the [latest release](https://github.com/naukainsiders/UPI-SoundBox/releases/latest)
 2. On your phone, allow installation from unknown sources
 3. If the app is sideloaded, you may need to allow restricted settings (the app will guide you)
 4. Grant notification access when prompted
 5. Send a test payment and hear it announced!
 
+## Updates
+
+The `main` branch is the source of truth for the app. Every push runs the Android
+build and unit tests in GitHub Actions and publishes a downloadable APK artifact.
+Stable APKs are attached to [GitHub Releases](https://github.com/naukainsiders/UPI-SoundBox/releases).
+
+To get the newest development build, open the latest successful workflow run under
+[Actions](https://github.com/naukainsiders/UPI-SoundBox/actions) and download its `upi-soundbox-debug-apk` artifact.
+
 ## Build from Source
 
 ```bash
 # Clone
-git clone <repo-url> && cd SoundBox
+git clone https://github.com/naukainsiders/UPI-SoundBox.git && cd UPI-SoundBox
 
 # Build debug APK
 ./gradlew assembleDebug

@@ -320,14 +320,21 @@ fun VoiceSettingsScreen(
             PillButton(
                 text = "🔊 Play Test Announcement",
                 onClick = {
-                    announcementQueue.enqueue(
-                        AnnouncementRequest.Test(
-                            sampleAmountPaise = 50000L,
-                            samplePayer = "Rahul Sharma",
-                            languageTag = currentLangTag
+                    scope.launch {
+                        val success = announcementQueue.enqueueAndAwait(
+                            AnnouncementRequest.Test(
+                                sampleAmountPaise = 50000L,
+                                samplePayer = "Rahul Sharma",
+                                languageTag = currentLangTag
+                            )
                         )
-                    )
-                    Toast.makeText(context, "📢 Playing test announcement ($currentLangTag)...", Toast.LENGTH_SHORT).show()
+                        val message = if (success) {
+                            "📢 Test announcement played ($currentLangTag)"
+                        } else {
+                            "Audio unavailable. Check the phone's Text-to-Speech engine."
+                        }
+                        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                    }
                 },
                 modifier = Modifier.fillMaxWidth()
             )

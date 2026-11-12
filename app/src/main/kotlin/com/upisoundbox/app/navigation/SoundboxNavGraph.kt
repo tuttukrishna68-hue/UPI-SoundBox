@@ -16,17 +16,20 @@ import com.upisoundbox.feature.history.HistoryScreen
 import com.upisoundbox.feature.home.CounterModeScreen
 import com.upisoundbox.feature.home.HomeScreen
 import com.upisoundbox.feature.onboarding.OnboardingScreen
+import com.upisoundbox.feature.onboarding.ProfileSetupScreen
 import com.upisoundbox.feature.onboarding.SetupWizardScreen
 import com.upisoundbox.feature.onboarding.SplashScreen
 import com.upisoundbox.feature.qr.MyQrScreen
 import com.upisoundbox.feature.reports.ReportsScreen
 import com.upisoundbox.feature.settings.SettingsScreen
+import com.upisoundbox.feature.settings.ProfileScreen
 import com.upisoundbox.feature.settings.UpiAppsScreen
 import com.upisoundbox.feature.settings.VoiceSettingsScreen
 
 sealed class Screen(val route: String) {
     data object Splash : Screen("splash")
     data object Onboarding : Screen("onboarding")
+    data object ProfileSetup : Screen("profile_setup")
     data object SetupWizard : Screen("setup_wizard")
     data object Home : Screen("home")
     data object CounterMode : Screen("counter_mode")
@@ -35,6 +38,7 @@ sealed class Screen(val route: String) {
     data object VoiceSettings : Screen("voice_settings")
     data object UpiApps : Screen("upi_apps")
     data object Settings : Screen("settings")
+    data object Profile : Screen("profile")
     data object MyQR : Screen("my_qr")
     data object Help : Screen("help")
     data object Diagnostics : Screen("diagnostics")
@@ -73,8 +77,19 @@ fun SoundboxNavGraph(
         composable(Screen.Onboarding.route) {
             OnboardingScreen(
                 onFinish = {
-                    navController.navigate(Screen.SetupWizard.route) {
+                    navController.navigate(Screen.ProfileSetup.route) {
                         popUpTo(Screen.Onboarding.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+        composable(Screen.ProfileSetup.route) {
+            ProfileSetupScreen(
+                preferences = preferences,
+                onNavigateBack = { navController.popBackStack() },
+                onContinue = {
+                    navController.navigate(Screen.SetupWizard.route) {
+                        popUpTo(Screen.ProfileSetup.route) { inclusive = true }
                     }
                 }
             )
@@ -113,6 +128,7 @@ fun SoundboxNavGraph(
             HistoryScreen(
                 repository = repository,
                 announcementQueue = announcementQueue,
+                preferences = preferences,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
@@ -142,8 +158,15 @@ fun SoundboxNavGraph(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateVoiceSettings = { navController.navigate(Screen.VoiceSettings.route) },
                 onNavigateUpiApps = { navController.navigate(Screen.UpiApps.route) },
+                onNavigateProfile = { navController.navigate(Screen.Profile.route) },
                 onNavigateHelp = { navController.navigate(Screen.Help.route) },
                 onNavigateDiagnostics = { navController.navigate(Screen.Diagnostics.route) }
+            )
+        }
+        composable(Screen.Profile.route) {
+            ProfileScreen(
+                preferences = preferences,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
         composable(Screen.MyQR.route) {

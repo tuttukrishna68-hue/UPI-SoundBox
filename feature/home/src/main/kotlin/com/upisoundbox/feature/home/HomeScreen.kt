@@ -14,7 +14,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,23 +39,20 @@ import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Storefront
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -107,16 +103,17 @@ fun HomeScreen(
     val scope = rememberCoroutineScope()
 
     val isListening by preferences.isSoundboxActive.collectAsState(initial = true)
-    val userName by preferences.userName.collectAsState(initial = "Budiarti")
+    val userName by preferences.userName.collectAsState(initial = SoundboxPreferences.DEFAULT_USER_NAME)
     val fontScalePref by preferences.fontScale.collectAsState(initial = "compact")
     val todayTotalPaise by repository.getTodayTotal().collectAsState(initial = 0L)
     val todayCount by repository.getTodayCount().collectAsState(initial = 0)
     val monthlyTotalPaise by repository.getMonthlyTotal().collectAsState(initial = 0L)
     val yesterdayTotalPaise by repository.getYesterdayTotal().collectAsState(initial = 0L)
     val recentPayments by repository.getRecentPayments(20).collectAsState(initial = emptyList())
-
-    var showNameDialog by remember { mutableStateOf(false) }
-    var tempName by remember { mutableStateOf("") }
+    val lastSeenPaymentAt by preferences.lastSeenPaymentAt.collectAsState(initial = 0L)
+    val hasUnreadPayments = recentPayments.firstOrNull()?.receivedAt?.let {
+        it > lastSeenPaymentAt
+    } ?: false
 
     val isNotificationAccessGranted = remember {
         androidx.core.app.NotificationManagerCompat.getEnabledListenerPackages(context).contains(context.packageName)
@@ -215,53 +212,17 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Speaker / Listening Toggle Button (Next to Notification Bell)
-                        Box(
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    if (isListening) {
-                                        if (colors.isDark) Color(0xFF102E1E) else Color(0xFFE8F5E9)
-                                    } else {
-                                        colors.cardBackground
-                                    }
-                                )
-                                .border(
-                                    BorderStroke(
-                                        1.dp,
-                                        if (isListening) Color(0xFF10B981) else colors.cardBorder
-                                    ),
-                                    CircleShape
-                                )
-                                .clickable {
-                                    val newState = !isListening
-                                    scope.launch { preferences.setSoundboxActive(newState) }
-                                    Toast.makeText(
-                                        context,
-                                        if (newState) "🔊 Soundbox listening active" else "🔇 Soundbox listening paused",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = if (isListening) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
-                                contentDescription = if (isListening) "Soundbox Speaker Active" else "Soundbox Speaker Muted",
-                                tint = if (isListening) Color(0xFF10B981) else colors.textMuted,
-                                modifier = Modifier.size(19.dp)
-                            )
-                            if (isListening) {
-                                // Subtle pulsing green active dot at top-right
-                                Box(
-                                    modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .padding(top = 7.dp, end = 7.dp)
-                                        .size(6.dp)
-                                        .scale(dotPulse)
-                                        .background(Color(0xFF10B981), CircleShape)
-                                )
+                        SpeakerToggle(
+                            checked = isListening,
+                            onCheckedChange = { newState ->
+                                scope.launch { preferences.setSoundboxActive(newState) }
+                                Toast.makeText(
+                                    context,
+                                    if (newState) "🔊 Soundbox listening active" else "🔇 Soundbox listening paused",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
-                        }
+                        )
 
                         // Notification Bell Button
                         Box(
@@ -270,7 +231,14 @@ fun HomeScreen(
                                 .clip(CircleShape)
                                 .background(colors.cardBackground)
                                 .border(BorderStroke(1.dp, colors.cardBorder), CircleShape)
-                                .clickable { onNavigateHistory() },
+                                .clickable {
+                                    scope.launch {
+                                        recentPayments.firstOrNull()?.receivedAt?.let {
+                                            preferences.setLastSeenPaymentAt(it)
+                                        }
+                                    }
+                                    onNavigateHistory()
+                                },
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
@@ -279,17 +247,16 @@ fun HomeScreen(
                                 tint = colors.textPrimary,
                                 modifier = Modifier.size(18.dp)
                             )
-                            // Badge dot
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .padding(top = 9.dp, end = 9.dp)
-                                    .size(6.dp)
-                                    .background(
-                                        if (colors.isDark) Color(0xFF10B981) else Color(0xFFEF4444),
-                                        CircleShape
-                                    )
-                            )
+                            if (hasUnreadPayments) {
+                                // The badge represents unread ledger items, not a permanent decoration.
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(top = 9.dp, end = 9.dp)
+                                        .size(6.dp)
+                                        .background(Color(0xFF10B981), CircleShape)
+                                )
+                            }
                         }
 
                         // Settings Gear Button
@@ -377,96 +344,21 @@ fun HomeScreen(
                 }
             }
 
-            // 2. Hello Merchant Greeting Card (Luxury Glassmorphic Style)
+            // 2. Plain merchant greeting — intentionally not a card or editable surface.
             item {
-                Surface(
-                    shape = RoundedCornerShape(18.dp),
-                    color = colors.cardBackground,
-                    border = BorderStroke(1.dp, colors.cardBorder),
-                    shadowElevation = if (colors.isDark) 0.dp else 1.dp,
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable {
-                            tempName = userName
-                            showNameDialog = true
-                        }
+                        .padding(top = 6.dp, bottom = 6.dp)
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 13.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "Hello, $userName",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = colors.textPrimary,
-                                    fontSize = (19 * scaleMultiplier).sp
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Icon(
-                                    imageVector = Icons.Default.Edit,
-                                    contentDescription = "Edit Name",
-                                    tint = colors.textMuted.copy(alpha = 0.4f),
-                                    modifier = Modifier.size(13.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(3.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(6.dp)
-                                        .background(
-                                            if (isListening) Color(0xFF10B981) else Color(0xFF94A3B8),
-                                            CircleShape
-                                        )
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = if (isListening) "Soundbox active • Ready for payments" else "Soundbox paused",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = if (isListening) Color(0xFF10B981) else colors.textMuted,
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = (11.5 * scaleMultiplier).sp
-                                )
-                            }
-                        }
-
-                        // Merchant Avatar Squircle with live status dot
-                        Box(contentAlignment = Alignment.BottomEnd) {
-                            Box(
-                                modifier = Modifier
-                                    .size(42.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(if (colors.isDark) Color(0xFF102E1E) else Color(0xFFDCFCE7))
-                                    .border(
-                                        BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.5f)),
-                                        RoundedCornerShape(12.dp)
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = userName.firstOrNull()?.uppercase() ?: "B",
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (colors.isDark) Color.White else Color(0xFF065F46),
-                                    fontSize = 17.sp
-                                )
-                            }
-                            if (isListening) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(10.dp)
-                                        .scale(dotPulse)
-                                        .background(Color(0xFF10B981), CircleShape)
-                                        .border(BorderStroke(1.5.dp, colors.cardBackground), CircleShape)
-                                )
-                            }
-                        }
-                    }
+                    Text(
+                        text = "Hello, ${userName.ifBlank { SoundboxPreferences.DEFAULT_USER_NAME }}",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.textPrimary,
+                        fontSize = (28 * scaleMultiplier).sp,
+                        letterSpacing = (-0.6).sp
+                    )
                 }
             }
 
@@ -528,9 +420,9 @@ fun HomeScreen(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(6.dp))
-                                    .background(if (colors.isDark) Color(0x3310B981) else Color(0x2210B981))
+                                    .background(Color(0x66111820))
                                     .border(
-                                        BorderStroke(0.5.dp, Color(0xFF10B981).copy(alpha = 0.4f)),
+                                        BorderStroke(0.5.dp, Color(0xFFFF4D5D).copy(alpha = 0.55f)),
                                         RoundedCornerShape(6.dp)
                                     )
                                     .padding(horizontal = 7.dp, vertical = 3.dp)
@@ -540,7 +432,7 @@ fun HomeScreen(
                                         modifier = Modifier
                                             .size(5.dp)
                                             .scale(dotPulse)
-                                            .background(Color(0xFF10B981), CircleShape)
+                                            .background(Color(0xFFFF4D5D), CircleShape)
                                     )
                                     Spacer(modifier = Modifier.width(5.dp))
                                     Text(
@@ -548,7 +440,7 @@ fun HomeScreen(
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 9.sp,
                                         letterSpacing = 0.8.sp,
-                                        color = Color(0xFF10B981)
+                                        color = Color.White
                                     )
                                 }
                             }
@@ -576,145 +468,87 @@ fun HomeScreen(
                         val growthText = if (yesterdayPaise > 0L) {
                             val diff = todayPaise - yesterdayPaise
                             val pct = (diff * 100 / yesterdayPaise).toInt()
-                            if (pct >= 0) "↑ +$pct% vs yesterday" else "↓ $pct% vs yesterday"
+                            if (pct >= 0) "↑ +$pct% vs yesterday" else "↓ ${kotlin.math.abs(pct)}% vs yesterday"
                         } else if (todayPaise > 0L) {
-                            "↑ +100% vs yesterday"
+                            "First collection today"
                         } else {
-                            "↑ +18% vs yesterday"
+                            "No comparison yet"
                         }
 
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(if (colors.isDark) Color(0xFF102E1E) else Color(0xFFDCFCE7))
-                                .border(
-                                    BorderStroke(0.5.dp, Color(0xFF10B981).copy(alpha = 0.35f)),
-                                    RoundedCornerShape(8.dp)
-                                )
-                                .padding(horizontal = 10.dp, vertical = 5.dp)
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (growthText.startsWith("↑") || growthText.startsWith("↓")) {
                                 Icon(
-                                    imageVector = Icons.Default.ArrowUpward,
+                                    imageVector = if (growthText.startsWith("↓")) Icons.Default.ArrowDownward else Icons.Default.ArrowUpward,
                                     contentDescription = null,
-                                    tint = if (colors.isDark) Color(0xFF34D399) else Color(0xFF15803D),
-                                    modifier = Modifier.size(12.dp)
+                                    tint = if (growthText.startsWith("↓")) colors.error else Color(0xFF35E6A1),
+                                    modifier = Modifier.size(13.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = growthText,
-                                    color = if (colors.isDark) Color(0xFF34D399) else Color(0xFF15803D),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = (11 * scaleMultiplier).sp
-                                )
                             }
+                            Text(
+                                text = growthText,
+                                color = when {
+                                    growthText.startsWith("↓") -> colors.error
+                                    growthText.startsWith("No") -> colors.textMuted
+                                    else -> Color(0xFF35E6A1)
+                                },
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = (11.5 * scaleMultiplier).sp
+                            )
                         }
 
                         Spacer(modifier = Modifier.height(18.dp))
 
-                        // Dual Sculpted Inner Stat Tiles: Payments count & Monthly Total (matching reference mockup)
+                        // A single, quiet summary rail keeps the two core metrics legible
+                        // without stacking competing mini-cards inside the hero.
+                        val monthlyPaise = monthlyTotalPaise ?: (todayTotalPaise ?: 0L)
+                        val monthlyDisplay = AmountParser.formatPaise(monthlyPaise)
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(
+                                    if (colors.isDark) Color(0x261A4A32) else Color(0xB8FFFFFF)
+                                )
+                                .border(
+                                    BorderStroke(
+                                        1.dp,
+                                        if (colors.isDark) Color(0x332FE89E) else Color(0xFFD7F2E0)
+                                    ),
+                                    RoundedCornerShape(16.dp)
+                                )
+                                .padding(horizontal = 14.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Left Stat Tile: Payments Count
-                            Surface(
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(16.dp),
-                                color = if (colors.isDark) Color(0xFF0B1B13) else Color(0xFFFFFFFF),
-                                border = BorderStroke(
-                                    1.dp,
-                                    if (colors.isDark) Color(0xFF173826) else Color(0xFFD1FAE5)
-                                ),
-                                shadowElevation = if (colors.isDark) 0.dp else 1.dp
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(36.dp)
-                                            .clip(RoundedCornerShape(10.dp))
-                                            .background(if (colors.isDark) Color(0xFF133623) else Color(0xFFDCFCE7)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Layers,
-                                            contentDescription = "Payments",
-                                            tint = if (colors.isDark) Color(0xFF34D399) else Color(0xFF15803D),
-                                            modifier = Modifier.size(19.dp)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(10.dp))
-                                    Column {
-                                        Text(
-                                            text = "$todayCount",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = colors.textPrimary,
-                                            fontSize = (16 * scaleMultiplier).sp
-                                        )
-                                        Text(
-                                            text = "Payments",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = colors.textMuted,
-                                            fontSize = (11 * scaleMultiplier).sp
-                                        )
-                                    }
-                                }
-                            }
+                            DashboardMetric(
+                                icon = Icons.Default.Layers,
+                                label = "PAYMENTS",
+                                value = todayCount.toString(),
+                                supportingText = "received today",
+                                accent = if (colors.isDark) Color(0xFF42E6A3) else Color(0xFF11824F),
+                                scale = scaleMultiplier,
+                                modifier = Modifier.weight(1f)
+                            )
 
-                            // Right Stat Tile: Monthly Total
-                            Surface(
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(16.dp),
-                                color = if (colors.isDark) Color(0xFF0B1B13) else Color(0xFFFFFFFF),
-                                border = BorderStroke(
-                                    1.dp,
-                                    if (colors.isDark) Color(0xFF173826) else Color(0xFFD1FAE5)
-                                ),
-                                shadowElevation = if (colors.isDark) 0.dp else 1.dp
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(36.dp)
-                                            .clip(RoundedCornerShape(10.dp))
-                                            .background(if (colors.isDark) Color(0xFF133623) else Color(0xFFDCFCE7)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.CalendarToday,
-                                            contentDescription = "Monthly Total",
-                                            tint = if (colors.isDark) Color(0xFF34D399) else Color(0xFF15803D),
-                                            modifier = Modifier.size(17.dp)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(10.dp))
-                                    Column {
-                                        val monthlyPaise = monthlyTotalPaise ?: (todayTotalPaise ?: 0L)
-                                        val monthlyDisplay = AmountParser.formatPaise(monthlyPaise)
-                                        Text(
-                                            text = monthlyDisplay,
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = colors.textPrimary,
-                                            fontSize = (15 * scaleMultiplier).sp,
-                                            maxLines = 1
-                                        )
-                                        Text(
-                                            text = "Monthly Total",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = colors.textMuted,
-                                            fontSize = (11 * scaleMultiplier).sp
-                                        )
-                                    }
-                                }
-                            }
+                            Box(
+                                modifier = Modifier
+                                    .padding(horizontal = 12.dp)
+                                    .width(1.dp)
+                                    .height(44.dp)
+                                    .background(
+                                        if (colors.isDark) Color(0x3348D69B) else Color(0xFFD1E9D9)
+                                    )
+                            )
+
+                            DashboardMetric(
+                                icon = Icons.Default.CalendarToday,
+                                label = "MONTHLY TOTAL",
+                                value = monthlyDisplay,
+                                supportingText = "all collections",
+                                accent = if (colors.isDark) Color(0xFF7FE8C0) else Color(0xFF11824F),
+                                scale = scaleMultiplier,
+                                modifier = Modifier.weight(1.18f)
+                            )
                         }
                     }
                 }
@@ -863,76 +697,135 @@ fun HomeScreen(
             }
         }
 
-        // Edit Merchant Name Dialog
-        if (showNameDialog) {
-            AlertDialog(
-                onDismissRequest = { showNameDialog = false },
-                title = {
-                    Text(
-                        text = "Merchant Name",
-                        fontWeight = FontWeight.Bold,
-                        color = colors.textPrimary
-                    )
-                },
-                text = {
-                    Column {
-                        Text(
-                            text = "Set your name to display on the soundbox dashboard:",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.textMuted
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        OutlinedTextField(
-                            value = tempName,
-                            onValueChange = { tempName = it },
-                            placeholder = { Text("e.g. Budiarti, Rahul, Store Name", color = colors.textMuted) },
-                            singleLine = true,
-                            shape = RoundedCornerShape(12.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = colors.cardBackground,
-                                unfocusedContainerColor = colors.cardBackground,
-                                focusedBorderColor = Color(0xFF10B981),
-                                unfocusedBorderColor = colors.cardBorder,
-                                focusedTextColor = colors.textPrimary,
-                                unfocusedTextColor = colors.textPrimary
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                },
-                confirmButton = {
-                    Text(
-                        text = "Save",
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF10B981),
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable {
-                                val newName = tempName.trim().ifEmpty { "Budiarti" }
-                                scope.launch { preferences.setUserName(newName) }
-                                showNameDialog = false
-                            }
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                    )
-                },
-                dismissButton = {
-                    Text(
-                        text = "Cancel",
-                        fontWeight = FontWeight.Medium,
-                        color = colors.textMuted,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable { showNameDialog = false }
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                    )
-                },
-                containerColor = colors.cardBackground,
-                shape = RoundedCornerShape(20.dp)
+    }
+}
+
+@Composable
+private fun SpeakerToggle(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    val colors = LocalSoundboxColors.current
+    val trackColor by animateColorAsState(
+        targetValue = if (checked) {
+            if (colors.isDark) Color(0xFF123D2B) else Color(0xFFD7F8E7)
+        } else {
+            colors.cardBackground
+        },
+        animationSpec = tween(220),
+        label = "speakerTrack"
+    )
+    val thumbColor by animateColorAsState(
+        targetValue = if (checked) colors.emeraldGreen else colors.textMuted.copy(alpha = 0.9f),
+        animationSpec = tween(220),
+        label = "speakerThumb"
+    )
+    val thumbOffset by animateDpAsState(
+        targetValue = if (checked) 28.dp else 3.dp,
+        animationSpec = tween(260),
+        label = "speakerThumbOffset"
+    )
+
+    Box(
+        modifier = Modifier
+            .width(60.dp)
+            .height(34.dp)
+            .clip(RoundedCornerShape(17.dp))
+            .background(trackColor)
+            .border(
+                BorderStroke(
+                    1.dp,
+                    if (checked) colors.emeraldGreen.copy(alpha = 0.7f) else colors.cardBorder
+                ),
+                RoundedCornerShape(17.dp)
+            )
+            .clickable { onCheckedChange(!checked) },
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Box(
+            modifier = Modifier
+                .offset(x = thumbOffset)
+                .size(28.dp)
+                .clip(CircleShape)
+                .background(thumbColor),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = if (checked) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
+                contentDescription = if (checked) "Speaker on" else "Speaker off",
+                tint = if (checked) Color(0xFF062719) else colors.background,
+                modifier = Modifier.size(16.dp)
             )
         }
     }
 }
 
+
+@Composable
+private fun DashboardMetric(
+    icon: ImageVector,
+    label: String,
+    value: String,
+    supportingText: String,
+    accent: Color,
+    scale: Float,
+    modifier: Modifier = Modifier
+) {
+    val colors = LocalSoundboxColors.current
+
+    Column(modifier = modifier) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(7.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .background(accent.copy(alpha = if (colors.isDark) 0.14f else 0.10f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = label,
+                    tint = accent,
+                    modifier = Modifier.size(15.dp)
+                )
+            }
+            Text(
+                text = label,
+                color = colors.textMuted,
+                fontSize = (9.5f * scale).sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.8.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        Spacer(modifier = Modifier.height(9.dp))
+
+        Text(
+            text = value,
+            color = colors.textPrimary,
+            fontSize = (21 * scale).sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = (-0.35).sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+
+        Spacer(modifier = Modifier.height(2.dp))
+
+        Text(
+            text = supportingText,
+            color = colors.textMuted,
+            fontSize = (10.5f * scale).sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
 
 @Composable
 private fun QuickActionButton(

@@ -56,10 +56,22 @@ class AudioChimePlayer {
                 .setTransferMode(AudioTrack.MODE_STATIC)
                 .build()
 
-            audioTrack.write(buffer, 0, buffer.size)
-            audioTrack.play()
-            kotlinx.coroutines.delay(durationMs.toLong() + 50)
-            audioTrack.release()
+            try {
+                if (audioTrack.state != AudioTrack.STATE_INITIALIZED) return@withContext
+
+                val written = audioTrack.write(buffer, 0, buffer.size)
+                if (written < 0) return@withContext
+
+                audioTrack.play()
+                kotlinx.coroutines.delay(durationMs.toLong() + 50)
+            } finally {
+                try {
+                    if (audioTrack.playState == AudioTrack.PLAYSTATE_PLAYING) {
+                        audioTrack.stop()
+                    }
+                } catch (_: Exception) {}
+                audioTrack.release()
+            }
         } catch (_: Exception) {
             // Ignore if audio device is unavailable
         }

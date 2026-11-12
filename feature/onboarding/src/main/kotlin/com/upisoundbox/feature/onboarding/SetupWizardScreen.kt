@@ -89,7 +89,7 @@ fun SetupWizardScreen(
     var hasPostNotificationPermission by remember { mutableStateOf(false) }
     var hasBatteryExemption by remember { mutableStateOf(false) }
     var hasVoiceInstalled by remember { mutableStateOf(true) }
-    var isTestSuccessful by remember { mutableStateOf(false) }
+    var isTestSuccessful by remember { mutableStateOf<Boolean?>(null) }
 
     var showRestrictedSettingsHelp by remember { mutableStateOf(false) }
     var showSmsDisclosureDialog by remember { mutableStateOf(false) }
@@ -339,20 +339,26 @@ fun SetupWizardScreen(
                 Spacer(modifier = Modifier.height(12.dp))
                 Button(
                     onClick = {
-                        announcementQueue.enqueue(AnnouncementRequest.Test())
-                        isTestSuccessful = true
+                        scope.launch {
+                            isTestSuccessful = null
+                            isTestSuccessful = announcementQueue.enqueueAndAwait(AnnouncementRequest.Test())
+                        }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = colors.accentOrange),
                     shape = RoundedCornerShape(50)
                 ) {
                     Text(text = "Play Test Payment (₹100)")
                 }
-                if (isTestSuccessful) {
+                if (isTestSuccessful != null) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "✓ Announcement sent to queue",
+                        text = if (isTestSuccessful == true) {
+                            "✓ Test announcement played"
+                        } else {
+                            "Audio test failed — check Text-to-Speech settings"
+                        },
                         style = MaterialTheme.typography.bodySmall,
-                        color = colors.success
+                        color = if (isTestSuccessful == true) colors.success else colors.error
                     )
                 }
             }
