@@ -10,13 +10,17 @@ class SoundboxApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        try {
+            System.loadLibrary("sqlcipher")
+        } catch (_: Throwable) {}
+
         if (BuildConfig.DEBUG) {
             Timber.plant(RedactingDebugTree())
         }
         // Schedule periodic 15-min watchdog
         try {
             WatchdogWorker.schedule(this)
-        } catch (_: Exception) {}
+        } catch (_: Throwable) {}
     }
 
     /**

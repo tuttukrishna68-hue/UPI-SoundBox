@@ -18,19 +18,34 @@ abstract class SoundboxDatabase : RoomDatabase() {
 
         fun getInstance(context: Context, useEncryption: Boolean = true): SoundboxDatabase {
             return INSTANCE ?: synchronized(this) {
-                INSTANCE ?: buildDatabase(context.applicationContext, useEncryption).also { INSTANCE = it }
+                INSTANCE ?: try {
+                    if (useEncryption) {
+                        try {
+                            System.loadLibrary("sqlcipher")
+                        } catch (_: Throwable) {}
+                    }
+                    buildDatabase(context.applicationContext, useEncryption)
+                } catch (t: Throwable) {
+                    // Fallback to standard Room SQLite if SQLCipher or KeyStore fails on newer OS
+                    buildDatabase(context.applicationContext, useEncryption = false)
+                }.also { INSTANCE = it }
             }
         }
 
         private fun buildDatabase(context: Context, useEncryption: Boolean): SoundboxDatabase {
-            val builder = Room.databaseBuilder(context, SoundboxDatabase::class.java, DB_NAME)
+            val dbName = if (useEncryption) DB_NAME else "soundbox_unencrypted.db"
+            val builder = Room.databaseBuilder(context, SoundboxDatabase::class.java, dbName)
                 .fallbackToDestructiveMigration()
 
             if (useEncryption) {
-                val keyManager = DatabaseKeyManager(context)
-                val passphrase = keyManager.getOrCreatePassphrase()
-                val factory = SupportOpenHelperFactory(passphrase)
-                builder.openHelperFactory(factory)
+                try {
+                    val keyManager = DatabaseKeyManager(context)
+                    val passphrase = keyManager.getOrCreatePassphrase()
+                    val factory = SupportOpenHelperFactory(passphrase)
+                    builder.openHelperFactory(factory)
+                } catch (_: Throwable) {
+                    // If KeyManager or factory fails, proceed with default helper
+                }
             }
 
             return builder.build()

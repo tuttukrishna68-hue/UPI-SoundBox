@@ -55,7 +55,9 @@ class DatabaseKeyManager(private val context: Context) {
             keyGenerator.init(spec)
             keyGenerator.generateKey()
         }
-        return (keyStore.getEntry(MASTER_KEY_ALIAS, null) as KeyStore.SecretKeyEntry).secretKey
+        return (keyStore.getKey(MASTER_KEY_ALIAS, null) as? SecretKey)
+            ?: (keyStore.getEntry(MASTER_KEY_ALIAS, null) as? KeyStore.SecretKeyEntry)?.secretKey
+            ?: throw IllegalStateException("Could not retrieve master key from AndroidKeyStore")
     }
 
     private fun encryptPassphrase(passphrase: ByteArray): Pair<String, String> {
