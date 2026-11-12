@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Strictly NO android.permission.INTERNET. CI build automatically fails if detected. -->
+
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.READ_SMS" />
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
+    <uses-feature
+        android:name="android.hardware.telephony"
+        android:required="false" />
+
+    <queries>
+        <!-- Required on Android 11+ to bind to Text-To-Speech engine -->
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+        <!-- Required on Android 11+ to detect installed UPI merchant apps -->
+        <package android:name="com.google.android.apps.nbu.paisa.user" />
+        <package android:name="com.google.android.apps.nbu.paisa.merchant" />
+        <package android:name="com.phonepe.app" />
+        <package android:name="com.phonepe.app.business" />
+        <package android:name="com.phonepe.business" />
+        <package android:name="net.one97.paytm" />
+        <package android:name="net.one97.paytm.merchant" />
+        <package android:name="com.paytm.business" />
+        <package android:name="in.org.npci.upiapp" />
+        <package android:name="in.amazon.mShop.android.shopping" />
+        <package android:name="com.dreamplug.androidapp" />
+        <package android:name="com.naviapp" />
+        <package android:name="money.super.payments" />
+        <package android:name="com.whatsapp" />
+        <package android:name="com.mobikwik_new" />
+        <package android:name="com.popclub.android" />
+        <package android:name="indwin.c3.shareapp" />
+        <package android:name="com.fampay.in" />
+        <package android:name="com.nextbillion.groww" />
+        <package android:name="com.myairtelapp" />
+    </queries>
+
+    <application
+        android:name=".SoundboxApp"
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.UpiSoundbox">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Notification listener for allow-listed UPI apps -->
+        <service
+            android:name=".service.NotificationSource"
+            android:exported="true"
+            android:label="UPI Soundbox Notification Listener"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <!-- Persistent foreground service with low-importance notification -->
+        <service
+            android:name=".service.SoundboxService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Live UPI payment announcement and audio playback for merchant soundbox operation" />
+        </service>
+
+        <!-- Incoming SMS detection (disabled by default) -->
+        <receiver
+            android:name=".service.SmsSource"
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_SMS">
+            <intent-filter android:priority="1000">
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Boot & App Update watchdog launcher -->
+        <receiver
+            android:name=".service.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
+
+        <!-- FileProvider for secure QR sharing -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+    </application>
+</manifest>

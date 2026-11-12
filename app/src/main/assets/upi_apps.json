@@ -1,0 +1,142 @@
+[
+  {
+    "packageId": "com.google.android.apps.nbu.paisa.user",
+    "displayName": "Google Pay",
+    "enabled": true,
+    "parserId": "google_pay",
+    "verified": true
+  },
+  {
+    "packageId": "com.google.android.apps.nbu.paisa.merchant",
+    "displayName": "Google Pay for Business",
+    "enabled": true,
+    "parserId": "google_pay_business",
+    "verified": true
+  },
+  {
+    "packageId": "com.phonepe.app",
+    "displayName": "PhonePe",
+    "enabled": true,
+    "parserId": "phonepe",
+    "verified": true
+  },
+  {
+    "packageId": "com.phonepe.app.business",
+    "displayName": "PhonePe for Business",
+    "enabled": true,
+    "parserId": "phonepe_business",
+    "verified": true
+  },
+  {
+    "packageId": "com.phonepe.business",
+    "displayName": "PhonePe Business (Alt)",
+    "enabled": true,
+    "parserId": "phonepe_business",
+    "verified": true
+  },
+  {
+    "packageId": "net.one97.paytm",
+    "displayName": "Paytm",
+    "enabled": true,
+    "parserId": "paytm",
+    "verified": true
+  },
+  {
+    "packageId": "net.one97.paytm.merchant",
+    "displayName": "Paytm for Business",
+    "enabled": true,
+    "parserId": "paytm_business",
+    "verified": true
+  },
+  {
+    "packageId": "com.paytm.business",
+    "displayName": "Paytm Business (Alt)",
+    "enabled": true,
+    "parserId": "paytm_business",
+    "verified": true
+  },
+  {
+    "packageId": "in.org.npci.upiapp",
+    "displayName": "BHIM",
+    "enabled": true,
+    "parserId": "bhim",
+    "verified": true
+  },
+  {
+    "packageId": "in.amazon.mShop.android.shopping",
+    "displayName": "Amazon Pay",
+    "enabled": true,
+    "parserId": "amazon_pay",
+    "verified": true
+  },
+  {
+    "packageId": "com.dreamplug.androidapp",
+    "displayName": "CRED",
+    "enabled": true,
+    "parserId": "cred",
+    "verified": true
+  },
+  {
+    "packageId": "com.naviapp",
+    "displayName": "Navi",
+    "enabled": true,
+    "parserId": "generic",
+    "verified": true
+  },
+  {
+    "packageId": "money.super.payments",
+    "displayName": "super.money",
+    "enabled": true,
+    "parserId": "generic",
+    "verified": true
+  },
+  {
+    "packageId": "com.whatsapp",
+    "displayName": "WhatsApp Pay",
+    "enabled": true,
+    "parserId": "generic",
+    "verified": true
+  },
+  {
+    "packageId": "com.mobikwik_new",
+    "displayName": "MobiKwik",
+    "enabled": true,
+    "parserId": "generic",
+    "verified": true
+  },
+  {
+    "packageId": "com.popclub.android",
+    "displayName": "POP",
+    "enabled": true,
+    "parserId": "generic",
+    "verified": true
+  },
+  {
+    "packageId": "indwin.c3.shareapp",
+    "displayName": "slice",
+    "enabled": true,
+    "parserId": "generic",
+    "verified": true
+  },
+  {
+    "packageId": "com.fampay.in",
+    "displayName": "FamApp by Trio",
+    "enabled": true,
+    "parserId": "generic",
+    "verified": true
+  },
+  {
+    "packageId": "com.nextbillion.groww",
+    "displayName": "Groww",
+    "enabled": true,
+    "parserId": "generic",
+    "verified": true
+  },
+  {
+    "packageId": "com.myairtelapp",
+    "displayName": "Airtel",
+    "enabled": true,
+    "parserId": "generic",
+    "verified": true
+  }
+]

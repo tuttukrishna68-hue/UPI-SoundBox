@@ -1,0 +1,122 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="240dp"
+    android:viewportWidth="240"
+    android:viewportHeight="240">
+
+    <!-- Background decorative counter/shelf line -->
+    <path
+        android:pathData="M20,210 C70,208 170,211 220,210"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round" />
+
+    <!-- Shopkeeper Torso & Apron -->
+    <path
+        android:pathData="M65,210 C68,172 75,145 92,130 C100,123 118,123 126,130 C138,142 144,168 147,210"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Apron neck strap -->
+    <path
+        android:pathData="M98,135 C104,142 114,142 120,135"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round" />
+
+    <!-- Head and Ears -->
+    <path
+        android:pathData="M88,88 C85,60 102,46 116,46 C132,46 145,58 144,88 C144,106 130,122 115,122 C99,122 88,106 88,88 Z"
+        android:fillColor="#FAFAF8"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Hair / Cap detail -->
+    <path
+        android:pathData="M89,76 C94,54 112,46 128,47 C138,48 143,55 144,66 C138,62 130,62 122,66 C114,64 102,68 96,77 Z"
+        android:fillColor="#141414"
+        android:strokeWidth="2"
+        android:strokeColor="#141414" />
+
+    <!-- Friendly Face: Eyes and Smile -->
+    <path
+        android:pathData="M104,86 C105,86 106,86 106,87 C106,88 105,88 104,88 Z"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M124,86 C125,86 126,86 126,87 C126,88 125,88 124,88 Z"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M110,98 C114,103 118,103 122,98"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round" />
+
+    <!-- Left Arm extending to hold the phone -->
+    <path
+        android:pathData="M136,145 C150,148 160,158 165,170"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round" />
+
+    <!-- Hand holding phone -->
+    <path
+        android:pathData="M165,172 C168,172 172,175 174,180 C175,183 172,186 168,187"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round" />
+
+    <!-- Smartphone Body with Orange Screen -->
+    <!-- Screen background fill -->
+    <path
+        android:pathData="M166,132 C166,128 169,125 173,125 L197,125 C201,125 204,128 204,132 L204,188 C204,192 201,195 197,195 L173,195 C169,195 166,192 166,188 Z"
+        android:fillColor="#F25C2E" />
+
+    <!-- Phone outline -->
+    <path
+        android:pathData="M165,130 C165,124 169,120 175,120 L195,120 C201,120 205,124 205,130 L205,190 C205,196 201,200 195,200 L175,200 C169,200 165,196 165,190 Z"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Rupee symbol on phone screen -->
+    <path
+        android:pathData="M178,145 L192,145 M178,151 L192,151 M182,145 C187,145 191,148 191,154 C191,159 186,162 181,163 L191,175 M181,145 L181,170"
+        android:strokeWidth="2.5"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Sound wave arcs emanating from phone (Orange accents) -->
+    <path
+        android:pathData="M212,142 C217,149 217,163 212,170"
+        android:strokeWidth="3.5"
+        android:strokeColor="#F25C2E"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M220,134 C228,146 228,168 220,180"
+        android:strokeWidth="3.5"
+        android:strokeColor="#F25C2E"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M228,126 C238,143 238,173 228,190"
+        android:strokeWidth="3.5"
+        android:strokeColor="#F25C2E"
+        android:strokeLineCap="round" />
+
+    <!-- Sparkle accent near shopkeeper -->
+    <path
+        android:pathData="M60,82 L60,94 M54,88 L66,88"
+        android:strokeWidth="3"
+        android:strokeColor="#F25C2E"
+        android:strokeLineCap="round" />
+
+</vector>

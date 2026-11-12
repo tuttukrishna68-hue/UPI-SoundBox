@@ -1,0 +1,78 @@
+name: 🔍 Parser Request
+description: Request support for a new UPI app or fix a parsing issue
+title: "[Parser]: "
+labels: ["parser", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us improve payment parsing! Please provide a **redacted** notification sample — replace your name and UPI VPA with XXXXX, but keep the amount and keywords intact.
+
+  - type: input
+    id: upi-app-name
+    attributes:
+      label: UPI App Name
+      placeholder: e.g., Google Pay, PhonePe, Paytm
+    validations:
+      required: true
+
+  - type: input
+    id: package-id
+    attributes:
+      label: UPI App Package ID
+      description: You can find this in your phone's app settings.
+      placeholder: e.g., com.google.android.apps.nbu.paisa.user
+    validations:
+      required: true
+
+  - type: textarea
+    id: notification-text
+    attributes:
+      label: Redacted Notification Text
+      description: |
+        Paste the notification text exactly as it appears, but replace your name and UPI VPA with XXXXX.
+        Keep the amount, currency symbol, and all other keywords intact.
+      placeholder: |
+        Example: "XXXXX paid you ₹500.00 via UPI. UPI Ref: 123456789012"
+      render: text
+    validations:
+      required: true
+
+  - type: input
+    id: expected-amount
+    attributes:
+      label: Expected Parsed Amount
+      placeholder: e.g., 500.00
+    validations:
+      required: true
+
+  - type: input
+    id: expected-payer
+    attributes:
+      label: Expected Payer Name
+      description: The payer name you expect to be extracted (use XXXXX if it should match the redacted name).
+      placeholder: e.g., XXXXX
+    validations:
+      required: true
+
+  - type: dropdown
+    id: parse-status
+    attributes:
+      label: Current Parse Result
+      description: Was this notification correctly parsed by the current version?
+      options:
+        - Not parsed at all (missed)
+        - Parsed but incorrect amount
+        - Parsed but incorrect payer
+        - Parsed but other fields wrong
+        - Not yet tested (new app)
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other details — e.g., notification channel, language, or locale settings.
+    validations:
+      required: false

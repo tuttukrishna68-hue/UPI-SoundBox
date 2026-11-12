@@ -1,0 +1,72 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="240dp"
+    android:viewportWidth="240"
+    android:viewportHeight="240">
+
+    <!-- Subtle background security glow / ring -->
+    <path
+        android:pathData="M120,30 C65,30 25,70 25,125 C25,175 60,205 120,225 C180,205 215,175 215,125 C215,70 175,30 120,30 Z"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FCE3D8" />
+
+    <!-- Main Shield Outline and Orange Fill -->
+    <!-- Shield Fill -->
+    <path
+        android:pathData="M120,44 C158,44 185,55 185,55 C185,125 162,168 120,196 C78,168 55,125 55,55 C55,55 82,44 120,44 Z"
+        android:fillColor="#F25C2E" />
+
+    <!-- Shield Outline -->
+    <path
+        android:pathData="M120,44 C158,44 185,55 185,55 C185,125 162,168 120,196 C78,168 55,125 55,55 C55,55 82,44 120,44 Z"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Inner Shield Inset Line -->
+    <path
+        android:pathData="M120,56 C150,56 172,65 172,65 C172,122 153,156 120,180 C87,156 68,122 68,65 C68,65 90,56 120,56 Z"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FAFAF8" />
+
+    <!-- Padlock Shackle / Loop -->
+    <path
+        android:pathData="M106,108 L106,94 C106,86 112,80 120,80 C128,80 134,86 134,94 L134,108"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round" />
+
+    <!-- Padlock Body (Solid White with Black Stroke) -->
+    <path
+        android:pathData="M98,108 C98,104 101,101 105,101 L135,101 C139,101 142,104 142,108 L142,137 C142,141 139,144 135,144 L105,144 C101,144 98,141 98,137 Z"
+        android:fillColor="#FFFFFF"
+        android:strokeWidth="3.5"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Keyhole -->
+    <path
+        android:pathData="M120,115 A3.5,3.5 0 1,0 120,122 A3.5,3.5 0 1,0 120,115 Z"
+        android:fillColor="#141414" />
+    <path
+        android:pathData="M120,121 L120,131"
+        android:strokeWidth="3"
+        android:strokeColor="#141414"
+        android:strokeLineCap="round" />
+
+    <!-- Sparkle Accents -->
+    <path
+        android:pathData="M198,38 L198,48 M193,43 L203,43"
+        android:strokeWidth="3"
+        android:strokeColor="#F25C2E"
+        android:strokeLineCap="round" />
+
+    <path
+        android:pathData="M42,150 L42,158 M38,154 L46,154"
+        android:strokeWidth="2.5"
+        android:strokeColor="#F25C2E"
+        android:strokeLineCap="round" />
+
+</vector>

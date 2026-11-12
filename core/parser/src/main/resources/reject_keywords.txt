@@ -1,0 +1,28 @@
+you paid
+paid to
+sent to
+debited
+debited from
+payment failed
+transaction failed
+payment declined
+transaction declined
+transaction pending
+payment pending
+payment cancelled
+transaction cancelled
+refund issued
+refund completed
+bill due
+due date
+overdue
+otp
+verification code
+security code
+recharge successful
+autopay
+auto-debit
+mandate
+split bill
+statement
+summary of the day
