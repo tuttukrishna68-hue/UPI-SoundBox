@@ -1,6 +1,7 @@
 package com.upisoundbox.feature.home
 
 import android.text.format.DateUtils
+import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateDpAsState
@@ -34,6 +35,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
@@ -92,6 +95,7 @@ fun HomeScreen(
     onNavigateSettings: () -> Unit
 ) {
     val colors = LocalSoundboxColors.current
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     val isListening by preferences.isSoundboxActive.collectAsState(initial = true)
@@ -178,8 +182,60 @@ fun HomeScreen(
                         )
                     }
 
-                    // Top Action Buttons (Bell with badge + Settings gear)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // Top Action Buttons (Speaker toggle + Notification Bell + Settings gear)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Speaker / Listening Toggle Button (Next to Notification Bell)
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (isListening) {
+                                        if (colors.isDark) Color(0xFF102E1E) else Color(0xFFE8F5E9)
+                                    } else {
+                                        colors.cardBackground
+                                    }
+                                )
+                                .border(
+                                    BorderStroke(
+                                        1.dp,
+                                        if (isListening) Color(0xFF10B981) else colors.cardBorder
+                                    ),
+                                    CircleShape
+                                )
+                                .clickable {
+                                    val newState = !isListening
+                                    scope.launch { preferences.setSoundboxActive(newState) }
+                                    Toast.makeText(
+                                        context,
+                                        if (newState) "🔊 Soundbox listening active" else "🔇 Soundbox listening paused",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = if (isListening) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
+                                contentDescription = if (isListening) "Soundbox Speaker Active" else "Soundbox Speaker Muted",
+                                tint = if (isListening) Color(0xFF10B981) else colors.textMuted,
+                                modifier = Modifier.size(19.dp)
+                            )
+                            if (isListening) {
+                                // Subtle pulsing green active dot at top-right
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(top = 7.dp, end = 7.dp)
+                                        .size(6.dp)
+                                        .scale(dotPulse)
+                                        .background(Color(0xFF10B981), CircleShape)
+                                )
+                            }
+                        }
+
                         // Notification Bell Button
                         Box(
                             modifier = Modifier
@@ -230,54 +286,7 @@ fun HomeScreen(
                 }
             }
 
-            // 2. Listening Status Banner Card with Animated ON/OFF switch
-            item {
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = colors.cardBackground),
-                    border = BorderStroke(1.dp, colors.cardBorder),
-                    elevation = CardDefaults.cardElevation(defaultElevation = if (colors.isDark) 0.dp else 1.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 10.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .scale(if (isListening) dotPulse else 1f)
-                                    .background(
-                                        if (isListening) Color(0xFF10B981) else Color(0xFF9CA3AF),
-                                        CircleShape
-                                    )
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Text(
-                                text = if (isListening) "Listening for payments" else "Soundbox paused",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = colors.textPrimary,
-                                fontSize = (13 * scaleMultiplier).sp
-                            )
-                        }
-
-                        // Smooth Animated Toggle Pill Button (Fluid slide & color transition)
-                        AnimatedListeningSwitch(
-                            checked = isListening,
-                            onToggle = {
-                                scope.launch { preferences.setSoundboxActive(!isListening) }
-                            }
-                        )
-                    }
-                }
-            }
-
-            // 3. Hero Card: "Today's Collection" + Real Ledger Data
+            // 2. Hero Card: "Today's Collection" + Real Ledger Data
             item {
                 val heroGradient = Brush.verticalGradient(
                     listOf(colors.heroGradientStart, colors.heroGradientEnd)
@@ -564,60 +573,6 @@ fun HomeScreen(
     }
 }
 
-/**
- * Animated ON/OFF Pill Switch with smooth sliding thumb and color animation
- */
-@Composable
-private fun AnimatedListeningSwitch(
-    checked: Boolean,
-    onToggle: () -> Unit
-) {
-    val trackBg by animateColorAsState(
-        targetValue = if (checked) Color(0xFF10B981) else Color(0xFF374151),
-        animationSpec = tween(250),
-        label = "switchBg"
-    )
-
-    val thumbOffset by animateDpAsState(
-        targetValue = if (checked) 22.dp else 2.dp,
-        animationSpec = tween(250),
-        label = "switchOffset"
-    )
-
-    Box(
-        modifier = Modifier
-            .width(52.dp)
-            .height(28.dp)
-            .clip(CircleShape)
-            .background(trackBg)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onToggle
-            )
-            .padding(2.dp)
-    ) {
-        // Text inside pill
-        Text(
-            text = if (checked) "ON" else "OFF",
-            color = Color.White,
-            fontWeight = FontWeight.Bold,
-            fontSize = 9.sp,
-            modifier = Modifier
-                .align(if (checked) Alignment.CenterStart else Alignment.CenterEnd)
-                .padding(horizontal = 5.dp)
-        )
-
-        // Sliding knob
-        Box(
-            modifier = Modifier
-                .size(24.dp)
-                .offset(x = thumbOffset)
-                .clip(CircleShape)
-                .background(Color.White)
-        )
-    }
-}
 
 @Composable
 private fun QuickActionButton(
