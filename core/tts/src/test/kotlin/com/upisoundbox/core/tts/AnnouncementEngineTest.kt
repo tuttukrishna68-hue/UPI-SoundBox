@@ -103,3 +103,4 @@ class AnnouncementEngineTest {
             .replace("{app}", app)
     }
 }
+
