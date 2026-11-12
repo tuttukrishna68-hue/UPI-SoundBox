@@ -146,4 +146,4 @@ val DarkSoundboxColorScheme = SoundboxColorScheme(
     isDark = true
 )
 
-val LocalSoundboxColors = staticCompositionLocalOf { LightSoundboxColorScheme }
+val LocalSoundboxColors = staticCompositionLocalOf { DarkSoundboxColorScheme }

@@ -35,6 +35,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.ArrowUpward
@@ -42,11 +44,9 @@ import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.QrCode
-import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material3.AlertDialog
@@ -117,6 +117,19 @@ fun HomeScreen(
 
     var showNameDialog by remember { mutableStateOf(false) }
     var tempName by remember { mutableStateOf("") }
+
+    val isNotificationAccessGranted = remember {
+        androidx.core.app.NotificationManagerCompat.getEnabledListenerPackages(context).contains(context.packageName)
+    }
+
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        try {
+            val intent = android.content.Intent("com.upisoundbox.action.RESUME").apply {
+                setPackage(context.packageName)
+            }
+            context.startService(intent)
+        } catch (_: Exception) {}
+    }
 
     // Font size multiplier based on user preference
     val scaleMultiplier = when (fontScalePref.lowercase()) {
@@ -294,6 +307,70 @@ fun HomeScreen(
                                 contentDescription = "Settings",
                                 tint = colors.textPrimary,
                                 modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Notification Access Warning Banner (if disabled in Android settings)
+            if (!isNotificationAccessGranted) {
+                item {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (colors.isDark) Color(0xFF26190F) else Color(0xFFFFF7ED)
+                        ),
+                        border = BorderStroke(1.dp, Color(0xFFF97316)),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                try {
+                                    context.startActivity(
+                                        android.content.Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).apply {
+                                            flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                                        }
+                                    )
+                                } catch (_: Exception) {}
+                            }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFF97316).copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Notifications,
+                                    contentDescription = null,
+                                    tint = Color(0xFFF97316),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Enable Notification Access",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = (13 * scaleMultiplier).sp,
+                                    color = if (colors.isDark) Color(0xFFFED7AA) else Color(0xFF9A3412)
+                                )
+                                Text(
+                                    text = "Tap to grant permission so Google Pay payments are announced.",
+                                    fontSize = (11 * scaleMultiplier).sp,
+                                    color = colors.textMuted
+                                )
+                            }
+                            Text(
+                                text = "ALLOW →",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = (11 * scaleMultiplier).sp,
+                                color = Color(0xFFF97316)
                             )
                         }
                     }
@@ -664,7 +741,7 @@ fun HomeScreen(
                         modifier = Modifier.weight(1f)
                     )
                     QuickActionButton(
-                        icon = Icons.Default.ReceiptLong,
+                        icon = Icons.AutoMirrored.Filled.ReceiptLong,
                         title = "History",
                         scale = scaleMultiplier,
                         onClick = onNavigateHistory,
@@ -709,7 +786,7 @@ fun HomeScreen(
                         )
                         Spacer(modifier = Modifier.width(2.dp))
                         Icon(
-                            imageVector = Icons.Default.KeyboardArrowRight,
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                             contentDescription = "See all",
                             tint = colors.textMuted,
                             modifier = Modifier.size(14.dp)
@@ -760,7 +837,7 @@ fun HomeScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.ReceiptLong,
+                                    imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
                                     contentDescription = null,
                                     tint = colors.statIconTint,
                                     modifier = Modifier.size(22.dp)

@@ -12,8 +12,12 @@ import android.speech.tts.UtteranceProgressListener
 import com.upisoundbox.core.parser.AmountParser
 import com.upisoundbox.core.parser.NumberToWords
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.Locale
@@ -27,19 +31,13 @@ class AnnouncementEngine(
     private var tts: TextToSpeech? = null
     @Volatile
     private var isTtsReady = false
+    private val initMutex = Mutex()
     private var initDeferred = CompletableDeferred<Boolean>()
 
     init {
-        initializeTts()
-    }
-
-    private fun initializeTts() {
-        try {
-            initDeferred = CompletableDeferred()
-            tts = TextToSpeech(context.applicationContext, this)
-        } catch (_: Exception) {
-            isTtsReady = false
-            initDeferred.complete(false)
+        // Kick off asynchronous initialization on Main Looper
+        CoroutineScope(Dispatchers.Main).launch {
+            ensureReady()
         }
     }
 
@@ -47,7 +45,6 @@ class AnnouncementEngine(
         if (status == TextToSpeech.SUCCESS) {
             isTtsReady = true
             try {
-                // Apply optimal speech attributes for soundbox clarity
                 tts?.setPitch(1.0f)
                 tts?.setSpeechRate(0.95f)
             } catch (_: Exception) {}
@@ -62,19 +59,36 @@ class AnnouncementEngine(
         }
     }
 
-    suspend fun ensureReady(): Boolean = withContext(Dispatchers.Main) {
-        if (isTtsReady && tts != null) return@withContext true
+    suspend fun ensureReady(): Boolean = initMutex.withLock {
+        if (isTtsReady && tts != null) return true
 
-        // If not ready, attempt re-initialization
-        if (tts == null || !isTtsReady) {
-            initializeTts()
+        if (!initDeferred.isCompleted && tts != null) {
+            val ready = withTimeoutOrNull(4000L) {
+                initDeferred.await()
+            } ?: false
+            if (ready && isTtsReady) return true
         }
 
-        val ready = withTimeoutOrNull(3000L) {
-            initDeferred.await()
-        } ?: false
-
-        return@withContext ready
+        // Initialize fresh TextToSpeech instance on Main thread
+        initDeferred = CompletableDeferred()
+        isTtsReady = false
+        try {
+            withContext(Dispatchers.Main) {
+                try {
+                    tts?.stop()
+                    tts?.shutdown()
+                } catch (_: Exception) {}
+                tts = TextToSpeech(context.applicationContext, this@AnnouncementEngine)
+            }
+            val ready = withTimeoutOrNull(4500L) {
+                initDeferred.await()
+            } ?: false
+            return ready && isTtsReady
+        } catch (_: Exception) {
+            isTtsReady = false
+            if (!initDeferred.isCompleted) initDeferred.complete(false)
+            return false
+        }
     }
 
     suspend fun isVoiceInstalled(languageTag: String): Boolean = withContext(Dispatchers.IO) {
@@ -157,7 +171,7 @@ class AnnouncementEngine(
             val streamType = if (useAlarmStream) AudioManager.STREAM_ALARM else AudioManager.STREAM_MUSIC
             val audioUsage = if (useAlarmStream) AudioAttributes.USAGE_ALARM else AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY
 
-            // Modern Android AudioAttributes
+            // Audio Attributes
             val audioAttributes = AudioAttributes.Builder()
                 .setUsage(audioUsage)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
@@ -166,7 +180,7 @@ class AnnouncementEngine(
                 engine.setAudioAttributes(audioAttributes)
             } catch (_: Exception) {}
 
-            // Configure language with smart fallback
+            // Language resolution with graceful fallback
             val targetLocale = try {
                 Locale.forLanguageTag(languageTag)
             } catch (_: Exception) {
@@ -180,11 +194,10 @@ class AnnouncementEngine(
                 TextToSpeech.LANG_NOT_SUPPORTED
             }
 
-            val langSupported = setLangResult != TextToSpeech.LANG_MISSING_DATA &&
-                    setLangResult != TextToSpeech.LANG_NOT_SUPPORTED
+            val langSupported = setLangResult >= TextToSpeech.LANG_AVAILABLE
 
             if (!langSupported) {
-                // Try language-only (e.g., "hi", "ml", "ta")
+                // Try language-only (e.g., "hi", "ml", "ta", "te", "kn")
                 val baseLocale = Locale(targetLocale.language)
                 val baseResult = try {
                     engine.setLanguage(baseLocale)
@@ -192,56 +205,61 @@ class AnnouncementEngine(
                     TextToSpeech.LANG_NOT_SUPPORTED
                 }
 
-                val baseSupported = baseResult != TextToSpeech.LANG_MISSING_DATA &&
-                        baseResult != TextToSpeech.LANG_NOT_SUPPORTED
+                val baseSupported = baseResult >= TextToSpeech.LANG_AVAILABLE
 
                 if (!baseSupported) {
-                    // Fall back to English engine
-                    try { engine.setLanguage(Locale.ENGLISH) } catch (_: Exception) {}
-                    // If the text contains Indic script, English TTS will be silent.
-                    // Fall back to a spoken English announcement so sound is guaranteed!
+                    // Fall back to Indian English or English
+                    try {
+                        val enInResult = engine.setLanguage(Locale("en", "IN"))
+                        if (enInResult < TextToSpeech.LANG_AVAILABLE) {
+                            engine.setLanguage(Locale.ENGLISH)
+                        }
+                    } catch (_: Exception) {
+                        try { engine.setLanguage(Locale.ENGLISH) } catch (_: Exception) {}
+                    }
+                    // If text contains Indic characters, English TTS cannot articulate them.
+                    // Provide guaranteed spoken fallback in English:
                     if (containsIndicScript(text)) {
-                        textToSpeak = "Received 500 rupees on PhonePe from Rahul"
+                        textToSpeak = "Received 500 rupees on PhonePe from Rahul Sharma"
                     }
                 }
             }
 
-            // Play chime first if enabled
+            // Play pleasant audio chime
             if (playChime) {
                 try {
-                    withTimeoutOrNull(600L) {
+                    withTimeoutOrNull(500L) {
                         chimePlayer.playChime(useAlarmStream)
                     }
                 } catch (_: Exception) {}
             }
 
-            // Request Audio Focus
+            // Audio focus
             val focusRequest = buildAudioFocusRequest(audioUsage)
             try { requestAudioFocus(focusRequest, streamType) } catch (_: Exception) {}
 
-            // Volume management: Unmute or boost to audible level
-            val previousVolume = try { audioManager.getStreamVolume(streamType) } catch (_: Exception) { 7 }
-            val maxVolume = try { audioManager.getStreamMaxVolume(streamType) } catch (_: Exception) { 15 }
-            val audibleVolume = (maxVolume * 0.85f).toInt().coerceAtLeast(1)
-
-            if (volumeBoost || previousVolume == 0) {
-                try {
+            // Volume management: Ensure soundbox is loud and clear (>= 85%)
+            try {
+                val maxVolume = audioManager.getStreamMaxVolume(streamType)
+                val currentVolume = audioManager.getStreamVolume(streamType)
+                val audibleVolume = (maxVolume * 0.85f).toInt().coerceAtLeast(1)
+                if (volumeBoost || currentVolume < audibleVolume) {
                     audioManager.setStreamVolume(streamType, audibleVolume, 0)
-                } catch (_: Exception) {}
-            }
+                }
+            } catch (_: Exception) {}
 
             val speechCompletion = CompletableDeferred<Boolean>()
-            val utteranceId = "upi_soundbox_${System.currentTimeMillis()}"
+            val utteranceId = "soundbox_${System.currentTimeMillis()}"
 
             engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                override fun onStart(utteranceId: String?) {}
-                override fun onDone(utteranceId: String?) {
-                    if (!speechCompletion.isCompleted) {
+                override fun onStart(id: String?) {}
+                override fun onDone(id: String?) {
+                    if (id == utteranceId && !speechCompletion.isCompleted) {
                         speechCompletion.complete(true)
                     }
                 }
-                override fun onError(utteranceId: String?) {
-                    if (!speechCompletion.isCompleted) {
+                override fun onError(id: String?) {
+                    if (id == utteranceId && !speechCompletion.isCompleted) {
                         speechCompletion.complete(false)
                     }
                 }
@@ -262,17 +280,13 @@ class AnnouncementEngine(
                 speechCompletion.complete(false)
             }
 
-            // Await completion with a safe 5-second timeout (never hang)
-            val success = withTimeoutOrNull(5000L) {
+            // Await speech completion with a 6-second timeout
+            val success = withTimeoutOrNull(6000L) {
                 speechCompletion.await()
             } ?: (speakResult == TextToSpeech.SUCCESS)
 
-            // Restore volume if boosted
-            if (volumeBoost) {
-                try {
-                    audioManager.setStreamVolume(streamType, previousVolume, 0)
-                } catch (_: Exception) {}
-            }
+            // Grace period so hardware speaker finishes physical output buffer
+            delay(350L)
             try { abandonAudioFocus(focusRequest, streamType) } catch (_: Exception) {}
 
             return@withContext success

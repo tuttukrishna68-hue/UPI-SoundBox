@@ -6,12 +6,16 @@ import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import com.upisoundbox.core.data.preferences.SoundboxPreferences
+import com.upisoundbox.core.data.repository.PaymentRepository
 import com.upisoundbox.core.parser.AmountParser
 import com.upisoundbox.core.parser.KeywordMatcher
 import com.upisoundbox.core.parser.ParseResult
 import com.upisoundbox.core.parser.ParserRouter
+import com.upisoundbox.core.parser.PaymentDeduplicator
 import com.upisoundbox.core.parser.RawNotification
 import com.upisoundbox.core.parser.UpiAppConfig
+import com.upisoundbox.core.tts.AnnouncementQueue
+import com.upisoundbox.core.tts.AnnouncementRequest
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,8 +32,15 @@ class NotificationSource : NotificationListenerService() {
     @Inject
     lateinit var preferences: SoundboxPreferences
 
+    @Inject
+    lateinit var repository: PaymentRepository
+
+    @Inject
+    lateinit var announcementQueue: AnnouncementQueue
+
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val processedKeys = Collections.synchronizedSet(LinkedHashSet<String>())
+    private val deduplicator = PaymentDeduplicator()
     private val parserRouter = ParserRouter()
     private val keywordMatcher = KeywordMatcher()
     private val amountParser = AmountParser()
@@ -130,8 +141,19 @@ class NotificationSource : NotificationListenerService() {
         // Parse notification
         when (val result = parserRouter.parse(rawNotification)) {
             is ParseResult.Success -> {
-                // Forward to Soundbox foreground service for deduplication, announcement, and DB write
-                SoundboxService.handlePayment(this, result.event)
+                val event = result.event
+                serviceScope.launch {
+                    if (!deduplicator.isDuplicate(event)) {
+                        // Direct recording and announcement to ensure payment is NEVER missed
+                        repository.recordPayment(event, announced = true)
+                        SoundboxEventBus.emitPayment(event)
+                        announcementQueue.enqueue(AnnouncementRequest.Payment(event))
+                    }
+                    // Also forward to foreground service if running to update persistent notification
+                    try {
+                        SoundboxService.handlePayment(this@NotificationSource, event)
+                    } catch (_: Exception) {}
+                }
             }
             is ParseResult.Rejected, is ParseResult.Ignored -> {
                 // Rejected noise or debits discarded
@@ -155,4 +177,3 @@ class NotificationSource : NotificationListenerService() {
             private set
     }
 }
-

@@ -46,6 +46,10 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        try {
+            com.upisoundbox.app.service.SoundboxService.start(this)
+        } catch (_: Exception) {}
+
         // Observe FLAG_SECURE (anti-screenshot) setting
         lifecycleScope.launch {
             preferences.isSecureScreenEnabled.collect { isSecure ->

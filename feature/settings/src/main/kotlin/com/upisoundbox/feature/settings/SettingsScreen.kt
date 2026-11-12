@@ -233,25 +233,25 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         ThemeOptionPill(
-                            title = "Dark",
+                            title = "Dark (Default)",
                             icon = Icons.Default.DarkMode,
                             isSelected = currentTheme.equals("dark", ignoreCase = true),
                             onClick = { scope.launch { preferences.setThemeMode("dark") } },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1.1f)
                         )
                         ThemeOptionPill(
                             title = "Light",
                             icon = Icons.Default.LightMode,
                             isSelected = currentTheme.equals("light", ignoreCase = true),
                             onClick = { scope.launch { preferences.setThemeMode("light") } },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(0.9f)
                         )
                         ThemeOptionPill(
                             title = "System",
                             icon = Icons.Default.SettingsBrightness,
                             isSelected = currentTheme.equals("system", ignoreCase = true),
                             onClick = { scope.launch { preferences.setThemeMode("system") } },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(0.9f)
                         )
                     }
 

@@ -11,4 +11,10 @@ payment received
 transferred to
 deposit of
 has sent
-
+has transferred
+transferred ₹
+transferred rs
+sent ₹
+sent rs
+received a payment
+payment of

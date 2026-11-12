@@ -52,15 +52,17 @@ class KeywordMatcher(
         private val defaultCreditKeywords = listOf(
             "received", "received from", "paid you", "credited", "credited to",
             "credited with", "sent you", "received in", "added to", "payment received",
-            "transferred to", "deposit of", "has sent"
+            "transferred to", "deposit of", "has sent", "has transferred",
+            "transferred ₹", "transferred rs", "sent ₹", "sent rs",
+            "received a payment", "payment of"
         )
 
         private val defaultRejectKeywords = listOf(
             "you paid", "paid to", "sent to", "debited", "debited from",
-            "request", "requested", "reminder", "reminding", "failed",
-            "declined", "pending", "cancelled", "refund", "cashback",
-            "reward", "offer", "scratch card", "bill due", "due date",
-            "overdue", "otp", "verification code", "security code",
+            "payment failed", "transaction failed", "payment declined", "transaction declined",
+            "transaction pending", "payment pending", "payment cancelled", "transaction cancelled",
+            "refund issued", "refund completed", "bill due", "due date", "overdue",
+            "otp", "verification code", "security code",
             "recharge successful", "autopay", "auto-debit", "mandate",
             "split bill", "statement", "summary of the day"
         )

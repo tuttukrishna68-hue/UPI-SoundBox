@@ -3,19 +3,16 @@ paid to
 sent to
 debited
 debited from
-request
-requested
-reminder
-reminding
-failed
-declined
-pending
-cancelled
-refund
-cashback
-reward
-offer
-scratch card
+payment failed
+transaction failed
+payment declined
+transaction declined
+transaction pending
+payment pending
+payment cancelled
+transaction cancelled
+refund issued
+refund completed
 bill due
 due date
 overdue
@@ -29,4 +26,3 @@ mandate
 split bill
 statement
 summary of the day
-

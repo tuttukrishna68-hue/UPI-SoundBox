@@ -30,10 +30,21 @@ abstract class BaseNotificationParser(
         // 1. Check reject keywords first
         val rejectedKeyword = keywordMatcher.hasRejectKeyword(fullText)
         if (rejectedKeyword != null) {
-            return ParseResult.Rejected(
-                reason = "Matched debit/noise keyword: '$rejectedKeyword'",
-                rawSnippet = fullText.take(100)
-            )
+            val isDebitOrFailure = rejectedKeyword.contains("paid to") ||
+                    rejectedKeyword.contains("you paid") ||
+                    rejectedKeyword.contains("sent to") ||
+                    rejectedKeyword.contains("debited") ||
+                    rejectedKeyword.contains("failed") ||
+                    rejectedKeyword.contains("declined") ||
+                    rejectedKeyword.contains("cancelled") ||
+                    rejectedKeyword.contains("bill due") ||
+                    rejectedKeyword.contains("otp")
+            if (isDebitOrFailure || (!hasAppSpecificCreditIntent(notification) && keywordMatcher.findCreditKeywords(fullText).isEmpty())) {
+                return ParseResult.Rejected(
+                    reason = "Matched debit/noise keyword: '$rejectedKeyword'",
+                    rawSnippet = fullText.take(100)
+                )
+            }
         }
 
         // 2. Check incoming money / credit keywords
@@ -79,21 +90,59 @@ abstract class BaseNotificationParser(
 
 class GooglePayParser : BaseNotificationParser("google_pay") {
     override fun hasAppSpecificCreditIntent(notification: RawNotification): Boolean {
-        val title = notification.title?.lowercase() ?: ""
-        val text = notification.text?.lowercase() ?: ""
-        return title.contains("paid you") || text.contains("paid you") ||
-                title.contains("received") || text.contains("received")
+        val full = notification.fullText().lowercase()
+        return full.contains("paid you") ||
+                full.contains("received") ||
+                full.contains("sent you") ||
+                full.contains("credited") ||
+                full.contains("transferred") ||
+                full.contains("payment received") ||
+                full.contains("has sent") ||
+                full.contains("payment of")
     }
 
     override fun extractPayerInfo(notification: RawNotification, fullText: String): ExtractedPayerInfo {
-        // In GPay, title often has the payer: "Rahul Sharma paid you ₹500"
         val title = notification.title ?: ""
-        val titleMatch = Regex("^([A-Za-z\\s]+)\\s+paid you", RegexOption.IGNORE_CASE).find(title)
-        if (titleMatch != null) {
-            val payerName = PayerParser.cleanPayerName(titleMatch.groupValues[1])
-            val baseInfo = payerParser.extract(fullText)
-            return baseInfo.copy(payer = payerName ?: baseInfo.payer)
+        val text = notification.text ?: ""
+        val bigText = notification.bigText ?: ""
+
+        // 1. Check "<Payer> paid you" or "<Payer> sent you" in title, text, or bigText
+        for (candidate in listOf(title, text, bigText)) {
+            val m = Regex("([A-Za-z\\s]{2,30})\\s+(?:paid you|sent you|has sent you|transferred)", RegexOption.IGNORE_CASE).find(candidate)
+            if (m != null) {
+                val payerName = PayerParser.cleanPayerName(m.groupValues[1])
+                if (!payerName.isNullOrBlank() && !payerName.equals("google pay", ignoreCase = true) && !payerName.equals("gpay", ignoreCase = true)) {
+                    val baseInfo = payerParser.extract(fullText)
+                    return baseInfo.copy(payer = payerName)
+                }
+            }
         }
+
+        // 2. Check "from <Payer>"
+        for (candidate in listOf(text, bigText, title)) {
+            val m = Regex("(?:from|by)\\s+([A-Za-z\\s]{2,30})", RegexOption.IGNORE_CASE).find(candidate)
+            if (m != null) {
+                val payerName = PayerParser.cleanPayerName(m.groupValues[1])
+                if (!payerName.isNullOrBlank() && !payerName.equals("google pay", ignoreCase = true) && !payerName.equals("gpay", ignoreCase = true)) {
+                    val baseInfo = payerParser.extract(fullText)
+                    return baseInfo.copy(payer = payerName)
+                }
+            }
+        }
+
+        // 3. If title is a person's name (not "Google Pay" / "Payment" / "GPay" / amount)
+        if (title.isNotBlank() &&
+            !title.contains("Google Pay", ignoreCase = true) &&
+            !title.contains("GPay", ignoreCase = true) &&
+            !title.contains("Payment", ignoreCase = true) &&
+            !title.contains("₹") && !title.contains("Rs", ignoreCase = true)) {
+            val cleaned = PayerParser.cleanPayerName(title)
+            if (!cleaned.isNullOrBlank()) {
+                val baseInfo = payerParser.extract(fullText)
+                return baseInfo.copy(payer = cleaned)
+            }
+        }
+
         return super.extractPayerInfo(notification, fullText)
     }
 }
@@ -101,7 +150,27 @@ class GooglePayParser : BaseNotificationParser("google_pay") {
 class GooglePayBusinessParser : BaseNotificationParser("google_pay_business") {
     override fun hasAppSpecificCreditIntent(notification: RawNotification): Boolean {
         val full = notification.fullText().lowercase()
-        return full.contains("payment received") || full.contains("received") || full.contains("credited")
+        return full.contains("payment received") ||
+                full.contains("received") ||
+                full.contains("credited") ||
+                full.contains("paid you") ||
+                full.contains("payment of")
+    }
+
+    override fun extractPayerInfo(notification: RawNotification, fullText: String): ExtractedPayerInfo {
+        val text = notification.text ?: ""
+        val bigText = notification.bigText ?: ""
+        for (candidate in listOf(text, bigText, notification.title ?: "")) {
+            val m = Regex("(?:from|by)\\s+([A-Za-z\\s]{2,30})", RegexOption.IGNORE_CASE).find(candidate)
+            if (m != null) {
+                val payerName = PayerParser.cleanPayerName(m.groupValues[1])
+                if (!payerName.isNullOrBlank() && !payerName.contains("google pay", ignoreCase = true)) {
+                    val baseInfo = payerParser.extract(fullText)
+                    return baseInfo.copy(payer = payerName)
+                }
+            }
+        }
+        return super.extractPayerInfo(notification, fullText)
     }
 }
 
