@@ -12,6 +12,8 @@ import java.util.Calendar
 interface PaymentRepository {
     fun getTodayTotal(): Flow<Long?>
     fun getTodayCount(): Flow<Int>
+    fun getMonthlyTotal(): Flow<Long?>
+    fun getYesterdayTotal(): Flow<Long?>
     fun getLastPayment(): Flow<PaymentEntity?>
     fun getRecentPayments(limit: Int = 50): Flow<List<PaymentEntity>>
     fun getAllPayments(): Flow<List<PaymentEntity>>
@@ -41,9 +43,34 @@ class PaymentRepositoryImpl(
         }.timeInMillis
     }
 
+    private fun getStartOfMonthTimestamp(): Long {
+        return Calendar.getInstance().apply {
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    }
+
+    private fun getStartOfYesterdayTimestamp(): Long {
+        return Calendar.getInstance().apply {
+            add(Calendar.DAY_OF_YEAR, -1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    }
+
     override fun getTodayTotal(): Flow<Long?> = paymentDao.getTodayTotal(getStartOfDayTimestamp())
 
     override fun getTodayCount(): Flow<Int> = paymentDao.getTodayCount(getStartOfDayTimestamp())
+
+    override fun getMonthlyTotal(): Flow<Long?> = paymentDao.getMonthlyTotal(getStartOfMonthTimestamp())
+
+    override fun getYesterdayTotal(): Flow<Long?> =
+        paymentDao.getYesterdayTotal(getStartOfYesterdayTimestamp(), getStartOfDayTimestamp())
 
     override fun getLastPayment(): Flow<PaymentEntity?> = paymentDao.getLastPayment()
 

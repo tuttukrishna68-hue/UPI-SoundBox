@@ -43,6 +43,12 @@ interface PaymentDao {
     @Query("SELECT COUNT(*) FROM payments WHERE receivedAt >= :startOfDayTimestamp")
     fun getTodayCount(startOfDayTimestamp: Long): Flow<Int>
 
+    @Query("SELECT SUM(amountPaise) FROM payments WHERE receivedAt >= :startOfMonthTimestamp")
+    fun getMonthlyTotal(startOfMonthTimestamp: Long): Flow<Long?>
+
+    @Query("SELECT SUM(amountPaise) FROM payments WHERE receivedAt >= :startOfYesterday AND receivedAt < :startOfToday")
+    fun getYesterdayTotal(startOfYesterday: Long, startOfToday: Long): Flow<Long?>
+
     @Query("SELECT * FROM payments ORDER BY receivedAt DESC LIMIT 1")
     fun getLastPayment(): Flow<PaymentEntity?>
 
