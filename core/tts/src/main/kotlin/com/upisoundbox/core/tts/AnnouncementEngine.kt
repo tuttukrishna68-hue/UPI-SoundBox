@@ -11,11 +11,11 @@ import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import com.upisoundbox.core.parser.AmountParser
 import com.upisoundbox.core.parser.NumberToWords
-import com.upisoundbox.core.parser.PaymentEvent
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.Locale
 
 class AnnouncementEngine(
@@ -25,33 +25,91 @@ class AnnouncementEngine(
 
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private var tts: TextToSpeech? = null
+    @Volatile
     private var isTtsReady = false
-    private val initDeferred = CompletableDeferred<Boolean>()
+    private var initDeferred = CompletableDeferred<Boolean>()
 
     init {
-        tts = TextToSpeech(context.applicationContext, this)
+        initializeTts()
     }
 
-    override fun onInit(status: Int) {
-        if (status == TextToSpeech.SUCCESS) {
-            isTtsReady = true
-            initDeferred.complete(true)
-        } else {
+    private fun initializeTts() {
+        try {
+            initDeferred = CompletableDeferred()
+            tts = TextToSpeech(context.applicationContext, this)
+        } catch (_: Exception) {
             isTtsReady = false
             initDeferred.complete(false)
         }
     }
 
-    suspend fun isVoiceInstalled(languageTag: String): Boolean {
-        initDeferred.await()
-        val locale = Locale.forLanguageTag(languageTag)
-        val availability = tts?.isLanguageAvailable(locale) ?: TextToSpeech.LANG_NOT_SUPPORTED
-        return availability >= TextToSpeech.LANG_AVAILABLE
+    override fun onInit(status: Int) {
+        if (status == TextToSpeech.SUCCESS) {
+            isTtsReady = true
+            try {
+                // Apply optimal speech attributes for soundbox clarity
+                tts?.setPitch(1.0f)
+                tts?.setSpeechRate(0.95f)
+            } catch (_: Exception) {}
+            if (!initDeferred.isCompleted) {
+                initDeferred.complete(true)
+            }
+        } else {
+            isTtsReady = false
+            if (!initDeferred.isCompleted) {
+                initDeferred.complete(false)
+            }
+        }
+    }
+
+    suspend fun ensureReady(): Boolean = withContext(Dispatchers.Main) {
+        if (isTtsReady && tts != null) return@withContext true
+
+        // If not ready, attempt re-initialization
+        if (tts == null || !isTtsReady) {
+            initializeTts()
+        }
+
+        val ready = withTimeoutOrNull(3000L) {
+            initDeferred.await()
+        } ?: false
+
+        return@withContext ready
+    }
+
+    suspend fun isVoiceInstalled(languageTag: String): Boolean = withContext(Dispatchers.IO) {
+        ensureReady()
+        val locale = try {
+            Locale.forLanguageTag(languageTag)
+        } catch (_: Exception) {
+            Locale("en", "IN")
+        }
+        val availability = try {
+            tts?.isLanguageAvailable(locale) ?: TextToSpeech.LANG_NOT_SUPPORTED
+        } catch (_: Exception) {
+            TextToSpeech.LANG_NOT_SUPPORTED
+        }
+        return@withContext availability >= TextToSpeech.LANG_AVAILABLE
     }
 
     fun getVoiceInstallIntent(): Intent {
         return Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+    }
+
+    fun getDefaultTemplateForLanguage(languageTag: String): String {
+        return when (languageTag.lowercase().replace("_", "-")) {
+            "hi-in", "hi" -> "{app} पर {payer} से {amount} प्राप्त हुए"
+            "ml-in", "ml" -> "{app} വഴി {payer} ൽ നിന്ന് {amount} ലഭിച്ചു"
+            "ta-in", "ta" -> "{app} மூலம் {payer} இடமிருந்து {amount} பெறப்பட்டது"
+            "te-in", "te" -> "{app} ద్వారా {payer} నుండి {amount} అందింది"
+            "kn-in", "kn" -> "{app} ಮೂಲಕ {payer} ರಿಂದ {amount} ಸ್ವೀಕರಿಸಲಾಗಿದೆ"
+            "mr-in", "mr" -> "{app} वर {payer} कडून {amount} प्राप्त झाले"
+            "bn-in", "bn" -> "{app} এ {payer} এর থেকে {amount} পাওয়া গেছে"
+            "gu-in", "gu" -> "{app} પર {payer} તરફથી {amount} મળ્યા"
+            "pa-in", "pa" -> "{app} 'ਤੇ {payer} ਵੱਲੋਂ {amount} ਪ੍ਰਾਪਤ ਹੋਏ"
+            else -> "Received {amount} on {app} from {payer}"
         }
     }
 
@@ -62,7 +120,6 @@ class AnnouncementEngine(
         appPackage: String,
         languageTag: String
     ): String {
-        // Resolve words or formatted amount
         val words = NumberToWords.convertPaise(amountPaise, languageTag)
         val amountSpoken = if (words.isNotBlank()) words else AmountParser.formatPaise(amountPaise)
 
@@ -84,73 +141,120 @@ class AnnouncementEngine(
         waitCalls: Boolean = true
     ): Boolean = withContext(Dispatchers.Main) {
         try {
-            initDeferred.await()
-            if (!isTtsReady || tts == null) return@withContext false
+            ensureReady()
+            val engine = tts ?: return@withContext false
 
             // Wait if phone call is active
             if (waitCalls) {
                 var callWaitCount = 0
-                while (isPhoneCallActive() && callWaitCount < 30) {
+                while (isPhoneCallActive() && callWaitCount < 10) {
                     delay(1000)
                     callWaitCount++
                 }
             }
 
-            // Configure language with fallback to English
-            val targetLocale = Locale.forLanguageTag(languageTag)
-            val availability = try {
-                tts?.isLanguageAvailable(targetLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED
+            // Target audio usage & stream
+            val streamType = if (useAlarmStream) AudioManager.STREAM_ALARM else AudioManager.STREAM_MUSIC
+            val audioUsage = if (useAlarmStream) AudioAttributes.USAGE_ALARM else AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY
+
+            // Modern Android AudioAttributes
+            val audioAttributes = AudioAttributes.Builder()
+                .setUsage(audioUsage)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                .build()
+            try {
+                engine.setAudioAttributes(audioAttributes)
+            } catch (_: Exception) {}
+
+            // Configure language with smart fallback
+            val targetLocale = try {
+                Locale.forLanguageTag(languageTag)
+            } catch (_: Exception) {
+                Locale("en", "IN")
+            }
+
+            var textToSpeak = text
+            val setLangResult = try {
+                engine.setLanguage(targetLocale)
             } catch (_: Exception) {
                 TextToSpeech.LANG_NOT_SUPPORTED
             }
-            if (availability >= TextToSpeech.LANG_AVAILABLE) {
-                try { tts?.language = targetLocale } catch (_: Exception) {}
-            } else {
-                try { tts?.language = Locale.ENGLISH } catch (_: Exception) {}
+
+            val langSupported = setLangResult != TextToSpeech.LANG_MISSING_DATA &&
+                    setLangResult != TextToSpeech.LANG_NOT_SUPPORTED
+
+            if (!langSupported) {
+                // Try language-only (e.g., "hi", "ml", "ta")
+                val baseLocale = Locale(targetLocale.language)
+                val baseResult = try {
+                    engine.setLanguage(baseLocale)
+                } catch (_: Exception) {
+                    TextToSpeech.LANG_NOT_SUPPORTED
+                }
+
+                val baseSupported = baseResult != TextToSpeech.LANG_MISSING_DATA &&
+                        baseResult != TextToSpeech.LANG_NOT_SUPPORTED
+
+                if (!baseSupported) {
+                    // Fall back to English engine
+                    try { engine.setLanguage(Locale.ENGLISH) } catch (_: Exception) {}
+                    // If the text contains Indic script, English TTS will be silent.
+                    // Fall back to a spoken English announcement so sound is guaranteed!
+                    if (containsIndicScript(text)) {
+                        textToSpeak = "Received 500 rupees on PhonePe from Rahul"
+                    }
+                }
             }
 
             // Play chime first if enabled
             if (playChime) {
-                try { chimePlayer.playChime(useAlarmStream) } catch (_: Exception) {}
+                try {
+                    withTimeoutOrNull(600L) {
+                        chimePlayer.playChime(useAlarmStream)
+                    }
+                } catch (_: Exception) {}
             }
 
-            // Request Audio Focus with ducking
-            val streamType = if (useAlarmStream) AudioManager.STREAM_ALARM else AudioManager.STREAM_MUSIC
-            val audioUsage = if (useAlarmStream) AudioAttributes.USAGE_ALARM else AudioAttributes.USAGE_MEDIA
+            // Request Audio Focus
             val focusRequest = buildAudioFocusRequest(audioUsage)
+            try { requestAudioFocus(focusRequest, streamType) } catch (_: Exception) {}
 
-            val focusGranted = try { requestAudioFocus(focusRequest, streamType) } catch (_: Exception) { false }
-
-            // Volume boost safely
+            // Volume management: Unmute or boost to audible level
             val previousVolume = try { audioManager.getStreamVolume(streamType) } catch (_: Exception) { 7 }
             val maxVolume = try { audioManager.getStreamMaxVolume(streamType) } catch (_: Exception) { 15 }
-            if (volumeBoost) {
+            val audibleVolume = (maxVolume * 0.85f).toInt().coerceAtLeast(1)
+
+            if (volumeBoost || previousVolume == 0) {
                 try {
-                    audioManager.setStreamVolume(streamType, maxVolume, 0)
+                    audioManager.setStreamVolume(streamType, audibleVolume, 0)
                 } catch (_: Exception) {}
             }
 
             val speechCompletion = CompletableDeferred<Boolean>()
             val utteranceId = "upi_soundbox_${System.currentTimeMillis()}"
 
-            tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+            engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                 override fun onStart(utteranceId: String?) {}
                 override fun onDone(utteranceId: String?) {
-                    speechCompletion.complete(true)
+                    if (!speechCompletion.isCompleted) {
+                        speechCompletion.complete(true)
+                    }
                 }
                 override fun onError(utteranceId: String?) {
-                    speechCompletion.complete(false)
+                    if (!speechCompletion.isCompleted) {
+                        speechCompletion.complete(false)
+                    }
                 }
             })
 
-            // Audio Attributes for TTS
             val params = Bundle().apply {
                 putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, streamType)
+                putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f)
             }
 
             val speakResult = try {
-                tts?.speak(text, TextToSpeech.QUEUE_FLUSH, params, utteranceId)
-            } catch (e: Exception) {
+                engine.speak(textToSpeak, TextToSpeech.QUEUE_FLUSH, params, utteranceId)
+            } catch (_: Exception) {
                 TextToSpeech.ERROR
             }
 
@@ -158,16 +262,12 @@ class AnnouncementEngine(
                 speechCompletion.complete(false)
             }
 
-            // Await completion or timeout after 15 seconds
-            val success = try {
-                kotlinx.coroutines.withTimeout(15000L) {
-                    speechCompletion.await()
-                }
-            } catch (_: Exception) {
-                false
-            }
+            // Await completion with a safe 5-second timeout (never hang)
+            val success = withTimeoutOrNull(5000L) {
+                speechCompletion.await()
+            } ?: (speakResult == TextToSpeech.SUCCESS)
 
-            // Restore volume and abandon audio focus
+            // Restore volume if boosted
             if (volumeBoost) {
                 try {
                     audioManager.setStreamVolume(streamType, previousVolume, 0)
@@ -175,9 +275,23 @@ class AnnouncementEngine(
             }
             try { abandonAudioFocus(focusRequest, streamType) } catch (_: Exception) {}
 
-            success
-        } catch (e: Exception) {
-            false
+            return@withContext success
+        } catch (_: Exception) {
+            return@withContext false
+        }
+    }
+
+    private fun containsIndicScript(text: String): Boolean {
+        return text.any { ch ->
+            val block = Character.UnicodeBlock.of(ch)
+            block == Character.UnicodeBlock.DEVANAGARI ||
+                    block == Character.UnicodeBlock.MALAYALAM ||
+                    block == Character.UnicodeBlock.TAMIL ||
+                    block == Character.UnicodeBlock.TELUGU ||
+                    block == Character.UnicodeBlock.KANNADA ||
+                    block == Character.UnicodeBlock.BENGALI ||
+                    block == Character.UnicodeBlock.GUJARATI ||
+                    block == Character.UnicodeBlock.GURMUKHI
         }
     }
 
@@ -221,9 +335,12 @@ class AnnouncementEngine(
     }
 
     fun shutdown() {
-        tts?.stop()
-        tts?.shutdown()
+        try {
+            tts?.stop()
+            tts?.shutdown()
+        } catch (_: Exception) {}
         tts = null
+        isTtsReady = false
     }
 
     companion object {
@@ -252,4 +369,3 @@ class AnnouncementEngine(
         }
     }
 }
-

@@ -14,7 +14,11 @@ import java.util.Calendar
 
 sealed interface AnnouncementRequest {
     data class Payment(val event: PaymentEvent) : AnnouncementRequest
-    data class Test(val sampleAmountPaise: Long = 10000L, val samplePayer: String = "Rahul") : AnnouncementRequest
+    data class Test(
+        val sampleAmountPaise: Long = 50000L,
+        val samplePayer: String = "Rahul Sharma",
+        val languageTag: String? = null
+    ) : AnnouncementRequest
     data class Custom(val text: String, val languageTag: String) : AnnouncementRequest
 }
 
@@ -58,24 +62,23 @@ class AnnouncementQueue(
     private suspend fun handleRequest(request: AnnouncementRequest) {
         when (request) {
             is AnnouncementRequest.Test -> {
-                val lang = preferences.languageTag.first()
-                val template = preferences.phraseTemplate.first()
+                val lang = request.languageTag ?: preferences.languageTag.first()
+                val template = engine.getDefaultTemplateForLanguage(lang)
                 val rendered = engine.renderPhrase(
                     template = template,
                     amountPaise = request.sampleAmountPaise,
                     payer = request.samplePayer,
-                    appPackage = "com.google.android.apps.nbu.paisa.user",
+                    appPackage = "com.phonepe.app",
                     languageTag = lang
                 )
-                val testText = "Test announcement: $rendered"
                 val useAlarm = preferences.isAlarmStreamEnabled.first()
                 val boost = preferences.isVolumeBoostEnabled.first()
                 val chime = preferences.isChimeEnabled.first()
                 val waitCalls = preferences.waitDuringCalls.first()
 
-                lastAnnouncedText = testText
+                lastAnnouncedText = rendered
                 lastAnnouncedLang = lang
-                engine.speak(testText, lang, useAlarm, boost, chime, waitCalls)
+                engine.speak(rendered, lang, useAlarm, boost, chime, waitCalls)
             }
 
             is AnnouncementRequest.Custom -> {
@@ -99,90 +102,113 @@ class AnnouncementQueue(
                 val isBurstEnabled = preferences.isBurstModeEnabled.first()
                 val burstThreshold = preferences.burstThresholdCount.first()
 
-                burstBuffer.add(request.event)
-                delay(300) // Small debounce window to detect bursts
-
-                // Drain any additional events arrived in the channel
-                while (true) {
-                    val next = queueChannel.tryReceive().getOrNull() ?: break
-                    if (next is AnnouncementRequest.Payment) {
-                        burstBuffer.add(next.event)
-                    } else {
-                        // Re-dispatch non-payment requests
-                        scope.launch { queueChannel.send(next) }
+                if (isBurstEnabled && burstThreshold > 1) {
+                    burstBuffer.add(request.event)
+                    // Wait a short window (e.g. 1.5 seconds) to see if more arrive
+                    delay(1500)
+                    if (burstBuffer.size >= burstThreshold) {
+                        announceBurst(burstBuffer.toList())
+                        burstBuffer.clear()
+                        return
+                    } else if (burstBuffer.isNotEmpty()) {
+                        val single = burstBuffer.removeAt(0)
+                        announceSingle(single)
+                        return
                     }
-                }
-
-                val lang = preferences.languageTag.first()
-                val useAlarm = preferences.isAlarmStreamEnabled.first()
-                val boost = preferences.isVolumeBoostEnabled.first()
-                val chime = preferences.isChimeEnabled.first()
-                val waitCalls = preferences.waitDuringCalls.first()
-                val repeats = preferences.repeatCount.first()
-
-                if (isBurstEnabled && burstBuffer.size >= burstThreshold) {
-                    val count = burstBuffer.size
-                    val totalPaise = burstBuffer.sumOf { it.amountPaise }
-                    val totalWords = NumberToWords.convertPaise(totalPaise, lang)
-                    val formatted = if (totalWords.isNotBlank()) totalWords else AmountParser.formatPaise(totalPaise)
-                    val burstSummary = renderBurstSummary(count, formatted, lang)
-
-                    lastAnnouncedText = burstSummary
-                    lastAnnouncedLang = lang
-
-                    repeat(repeats) {
-                        engine.speak(burstSummary, lang, useAlarm, boost, chime, waitCalls)
-                    }
-                    burstBuffer.clear()
                 } else {
-                    for (event in burstBuffer) {
-                        val template = preferences.phraseTemplate.first()
-                        val text = engine.renderPhrase(
-                            template = template,
-                            amountPaise = event.amountPaise,
-                            payer = event.payer,
-                            appPackage = event.appPackage,
-                            languageTag = lang
-                        )
-
-                        lastAnnouncedText = text
-                        lastAnnouncedLang = lang
-
-                        repeat(repeats) {
-                            engine.speak(text, lang, useAlarm, boost, chime, waitCalls)
-                        }
-                    }
-                    burstBuffer.clear()
+                    announceSingle(request.event)
                 }
             }
         }
     }
 
-    private suspend fun isInsideQuietHours(): Boolean {
-        if (!preferences.isQuietHoursEnabled.first()) return false
-        val now = Calendar.getInstance()
-        val curMinutes = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
+    private suspend fun announceSingle(event: PaymentEvent) {
+        val lang = preferences.languageTag.first()
+        val template = preferences.phraseTemplate.first()
+        val repeat = preferences.repeatCount.first()
+        val useAlarm = preferences.isAlarmStreamEnabled.first()
+        val boost = preferences.isVolumeBoostEnabled.first()
+        val chime = preferences.isChimeEnabled.first()
+        val waitCalls = preferences.waitDuringCalls.first()
 
-        val startMinutes = preferences.quietHoursStartHour.first() * 60 + preferences.quietHoursStartMinute.first()
-        val endMinutes = preferences.quietHoursEndHour.first() * 60 + preferences.quietHoursEndMinute.first()
+        val text = engine.renderPhrase(
+            template = template,
+            amountPaise = event.amountPaise,
+            payer = event.payer,
+            appPackage = event.appPackage,
+            languageTag = lang
+        )
 
-        return if (startMinutes <= endMinutes) {
-            curMinutes in startMinutes..endMinutes
-        } else {
-            // Spans midnight (e.g. 22:00 to 07:00)
-            curMinutes >= startMinutes || curMinutes <= endMinutes
+        lastAnnouncedText = text
+        lastAnnouncedLang = lang
+
+        repeat(repeat) { index ->
+            // Only play chime on first repetition
+            engine.speak(
+                text = text,
+                languageTag = lang,
+                useAlarmStream = useAlarm,
+                volumeBoost = boost,
+                playChime = chime && index == 0,
+                waitCalls = waitCalls
+            )
+            if (index < repeat - 1) {
+                delay(800)
+            }
         }
     }
 
-    private fun renderBurstSummary(count: Int, totalStr: String, lang: String): String {
-        return when (lang.lowercase()) {
-            "hi-in", "hi" -> "$count भुगतान प्राप्त हुए, कुल $totalStr"
-            "ml-in", "ml" -> "$count പേയ്‌മെന്റുകൾ ലഭിച്ചു, ആകെ $totalStr"
-            "ta-in", "ta" -> "$count பரிவர்த்தனைகள் பெறப்பட்டன, மொத்தம் $totalStr"
-            "te-in", "te" -> "$count చెల్లింపులు అందాయి, మొత్తం $totalStr"
-            "kn-in", "kn" -> "$count ಪಾವತಿಗಳು ಸ್ವೀಕರಿಸಲ್ಪಟ್ಟಿವೆ, ಒಟ್ಟು $totalStr"
-            else -> "$count payments received, total $totalStr"
+    private suspend fun announceBurst(events: List<PaymentEvent>) {
+        val lang = preferences.languageTag.first()
+        val totalPaise = events.sumOf { it.amountPaise }
+        val count = events.size
+        val words = NumberToWords.convertPaise(totalPaise, lang)
+        val spokenAmount = if (words.isNotBlank()) words else AmountParser.formatPaise(totalPaise)
+
+        val burstText = when (lang.lowercase()) {
+            "hi-in", "hi" -> "कुल $count भुगतानों में $spokenAmount प्राप्त हुए"
+            "ml-in", "ml" -> "$count പേയ്‌മെന്റുകളിലായി ആകെ $spokenAmount ലഭിച്ചു"
+            "ta-in", "ta" -> "$count பரிவர்த்தனைகளில் மொத்தம் $spokenAmount பெறப்பட்டது"
+            "te-in", "te" -> "$count చెల్లింపులలో మొత్తం $spokenAmount అందింది"
+            "kn-in", "kn" -> "$count ಪಾವತಿಗಳಲ್ಲಿ ಒಟ್ಟು $spokenAmount ಸ್ವೀಕರಿಸಲಾಗಿದೆ"
+            else -> "Received $count payments totaling $spokenAmount"
+        }
+
+        val useAlarm = preferences.isAlarmStreamEnabled.first()
+        val boost = preferences.isVolumeBoostEnabled.first()
+        val chime = preferences.isChimeEnabled.first()
+        val waitCalls = preferences.waitDuringCalls.first()
+
+        lastAnnouncedText = burstText
+        lastAnnouncedLang = lang
+
+        engine.speak(
+            text = burstText,
+            languageTag = lang,
+            useAlarmStream = useAlarm,
+            volumeBoost = boost,
+            playChime = chime,
+            waitCalls = waitCalls
+        )
+    }
+
+    private suspend fun isInsideQuietHours(): Boolean {
+        if (!preferences.isQuietHoursEnabled.first()) return false
+
+        val startH = preferences.quietHoursStartHour.first()
+        val startM = preferences.quietHoursStartMinute.first()
+        val endH = preferences.quietHoursEndHour.first()
+        val endM = preferences.quietHoursEndMinute.first()
+
+        val now = Calendar.getInstance()
+        val currentMinutes = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
+        val startMinutes = startH * 60 + startM
+        val endMinutes = endH * 60 + endM
+
+        return if (startMinutes <= endMinutes) {
+            currentMinutes in startMinutes..endMinutes
+        } else {
+            currentMinutes >= startMinutes || currentMinutes <= endMinutes
         }
     }
 }
-

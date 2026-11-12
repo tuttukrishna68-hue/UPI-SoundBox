@@ -316,8 +316,14 @@ fun VoiceSettingsScreen(
             PillButton(
                 text = "🔊 Play Test Announcement",
                 onClick = {
-                    announcementQueue.enqueue(AnnouncementRequest.Test())
-                    Toast.makeText(context, "Playing test announcement...", Toast.LENGTH_SHORT).show()
+                    announcementQueue.enqueue(
+                        AnnouncementRequest.Test(
+                            sampleAmountPaise = 50000L,
+                            samplePayer = "Rahul Sharma",
+                            languageTag = currentLangTag
+                        )
+                    )
+                    Toast.makeText(context, "📢 Playing test announcement ($currentLangTag)...", Toast.LENGTH_SHORT).show()
                 },
                 modifier = Modifier.fillMaxWidth()
             )

@@ -42,10 +42,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -79,6 +86,8 @@ fun SettingsScreen(
 
     val currentTheme by preferences.themeMode.collectAsState(initial = "dark")
     val currentFontScale by preferences.fontScale.collectAsState(initial = "compact")
+    val currentLang by preferences.languageTag.collectAsState(initial = "en-IN")
+    var testLang by remember(currentLang) { mutableStateOf(currentLang) }
     val isAppLock by preferences.isAppLockEnabled.collectAsState(initial = false)
     val isSecureScreen by preferences.isSecureScreenEnabled.collectAsState(initial = false)
 
@@ -228,7 +237,7 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(18.dp))
 
-            // 2. Demo Voice Test Card (Bulletproof try-catch)
+            // 2. Demo Voice Test Card (Multi-language verification)
             Text(
                 text = "SOUNDBOX SPEAKER TEST",
                 style = MaterialTheme.typography.labelSmall,
@@ -271,12 +280,88 @@ fun SettingsScreen(
                                 fontSize = 14.sp
                             )
                             Text(
-                                text = "Simulates a live ₹500 payment from PhonePe.",
+                                text = "Instant offline voice test across Indian languages.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.textMuted,
                                 fontSize = 11.sp
                             )
                         }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Language Selector Chips
+                    val testLangs = listOf(
+                        "en-IN" to "English",
+                        "hi-IN" to "हिन्दी",
+                        "ml-IN" to "മലയാളം",
+                        "ta-IN" to "தமிழ்",
+                        "te-IN" to "తెలుగు",
+                        "kn-IN" to "ಕನ್ನಡ"
+                    )
+
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        items(testLangs) { (tag, label) ->
+                            val isSelected = testLang.equals(tag, ignoreCase = true)
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = {
+                                    testLang = tag
+                                    scope.launch { preferences.setLanguageTag(tag) }
+                                },
+                                label = {
+                                    Text(
+                                        text = label,
+                                        fontSize = 12.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Color(0xFF10B981),
+                                    selectedLabelColor = Color.White,
+                                    containerColor = colors.pillBackground,
+                                    labelColor = colors.textMuted
+                                ),
+                                border = FilterChipDefaults.filterChipBorder(
+                                    borderColor = if (isSelected) Color(0xFF10B981) else colors.cardBorder,
+                                    selectedBorderColor = Color(0xFF10B981),
+                                    enabled = true,
+                                    selected = isSelected
+                                ),
+                                shape = RoundedCornerShape(10.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Dynamic Live Preview Phrase
+                    val previewPhrase = when (testLang.lowercase().replace("_", "-")) {
+                        "hi-in", "hi" -> "PhonePe पर Rahul Sharma से पाँच सौ रुपये प्राप्त हुए"
+                        "ml-in", "ml" -> "PhonePe വഴി Rahul Sharma ൽ നിന്ന് 500 രൂപ ലഭിച്ചു"
+                        "ta-in", "ta" -> "PhonePe மூலம் Rahul Sharma இடமிருந்து 500 ரூபாய் பெறப்பட்டது"
+                        "te-in", "te" -> "PhonePe ద్వారా Rahul Sharma నుండి 500 రూపాయలు అందింది"
+                        "kn-in", "kn" -> "PhonePe ಮೂಲಕ Rahul Sharma ರಿಂದ 500 ರೂಪಾಯಿ ಸ್ವೀಕರಿಸಲಾಗಿದೆ"
+                        else -> "Received 500 rupees on PhonePe from Rahul Sharma"
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(colors.pillBackground)
+                            .padding(10.dp)
+                    ) {
+                        Text(
+                            text = "\"$previewPhrase\"",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.pillText,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 12.sp
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -289,12 +374,14 @@ fun SettingsScreen(
                                         announcementQueue.enqueue(
                                             AnnouncementRequest.Test(
                                                 sampleAmountPaise = 50000L,
-                                                samplePayer = "Rahul Sharma"
+                                                samplePayer = "Rahul Sharma",
+                                                languageTag = testLang
                                             )
                                         )
+                                        val displayLang = testLangs.find { it.first.equals(testLang, ignoreCase = true) }?.second ?: testLang
                                         Toast.makeText(
                                             context,
-                                            "📢 Playing: ₹500 on PhonePe",
+                                            "📢 Playing ($displayLang): ₹500 on PhonePe",
                                             Toast.LENGTH_SHORT
                                         ).show()
                                     } catch (e: Exception) {
@@ -319,7 +406,7 @@ fun SettingsScreen(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "Play Demo Voice (₹500 on PhonePe)",
+                            text = "Play Demo Voice (${testLangs.find { it.first.equals(testLang, ignoreCase = true) }?.second ?: "Voice"})",
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp
                         )
