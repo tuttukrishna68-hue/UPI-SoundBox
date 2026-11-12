@@ -411,7 +411,12 @@ fun SetupWizardScreen(
                     onClick = {
                         scope.launch {
                             isTestSuccessful = null
-                            isTestSuccessful = announcementQueue.enqueueAndAwait(AnnouncementRequest.Test())
+                            isTestSuccessful = announcementQueue.enqueueAndAwait(
+                                AnnouncementRequest.Custom(
+                                    text = "Audio check complete.",
+                                    languageTag = languageTag
+                                )
+                            )
                         }
                     },
                     colors = ButtonDefaults.buttonColors(

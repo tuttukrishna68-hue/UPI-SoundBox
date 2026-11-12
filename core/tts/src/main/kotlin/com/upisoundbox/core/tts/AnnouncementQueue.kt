@@ -16,11 +16,6 @@ import java.util.Calendar
 
 sealed interface AnnouncementRequest {
     data class Payment(val event: PaymentEvent) : AnnouncementRequest
-    data class Test(
-        val sampleAmountPaise: Long = 50000L,
-        val samplePayer: String = "Rahul Sharma",
-        val languageTag: String? = null
-    ) : AnnouncementRequest
     data class Custom(val text: String, val languageTag: String) : AnnouncementRequest
 }
 
@@ -49,10 +44,7 @@ class AnnouncementQueue(
         return queueChannel.trySend(QueuedRequest(request)).isSuccess
     }
 
-    /**
-     * Enqueues a request and waits until the audio engine has actually attempted it.
-     * UI test buttons use this path so they never report success before playback starts.
-     */
+    /** Enqueues a request and waits until the audio engine has attempted it. */
     suspend fun enqueueAndAwait(request: AnnouncementRequest): Boolean {
         val completion = CompletableDeferred<Boolean>()
         queueChannel.send(QueuedRequest(request, completion))
@@ -144,26 +136,6 @@ class AnnouncementQueue(
 
     private suspend fun handleRequest(request: AnnouncementRequest): Boolean {
         when (request) {
-            is AnnouncementRequest.Test -> {
-                val lang = request.languageTag ?: preferences.languageTag.first()
-                val template = engine.getDefaultTemplateForLanguage(lang)
-                val rendered = engine.renderPhrase(
-                    template = template,
-                    amountPaise = request.sampleAmountPaise,
-                    payer = request.samplePayer,
-                    appPackage = "com.phonepe.app",
-                    languageTag = lang
-                )
-                val useAlarm = preferences.isAlarmStreamEnabled.first()
-                val boost = preferences.isVolumeBoostEnabled.first()
-                val chime = preferences.isChimeEnabled.first()
-                val waitCalls = preferences.waitDuringCalls.first()
-
-                lastAnnouncedText = rendered
-                lastAnnouncedLang = lang
-                return engine.speak(rendered, lang, useAlarm, boost, chime, waitCalls)
-            }
-
             is AnnouncementRequest.Custom -> {
                 lastAnnouncedText = request.text
                 lastAnnouncedLang = request.languageTag

@@ -156,7 +156,6 @@ fun SoundboxNavGraph(
         composable(Screen.Settings.route) {
             SettingsScreen(
                 preferences = preferences,
-                announcementQueue = announcementQueue,
                 onRequestBiometricConfirmation = onRequestBiometricConfirmation,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateVoiceSettings = { navController.navigate(Screen.VoiceSettings.route) },

@@ -2,7 +2,6 @@ package com.upisoundbox.feature.settings
 
 import android.content.Intent
 import android.net.Uri
-import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -22,8 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,11 +33,8 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.FormatSize
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SettingsBrightness
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -72,14 +66,11 @@ import androidx.compose.ui.unit.sp
 import com.upisoundbox.core.data.preferences.SoundboxPreferences
 import com.upisoundbox.core.design.component.PillButton
 import com.upisoundbox.core.design.theme.LocalSoundboxColors
-import com.upisoundbox.core.tts.AnnouncementQueue
-import com.upisoundbox.core.tts.AnnouncementRequest
 import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
     preferences: SoundboxPreferences,
-    announcementQueue: AnnouncementQueue,
     onRequestBiometricConfirmation: (onSuccess: () -> Unit) -> Unit,
     onNavigateBack: () -> Unit,
     onNavigateVoiceSettings: () -> Unit,
@@ -97,27 +88,10 @@ fun SettingsScreen(
     val currentLang by preferences.languageTag.collectAsState(initial = "en-IN")
     val isAppLock by preferences.isAppLockEnabled.collectAsState(initial = false)
     val isSecureScreen by preferences.isSecureScreenEnabled.collectAsState(initial = false)
-    var testLang by remember(currentLang) { mutableStateOf(currentLang) }
-
-    val testLangs = remember {
-        listOf(
-            "en-IN" to "English",
-            "hi-IN" to "हिन्दी",
-            "ml-IN" to "മലയാളം",
-            "ta-IN" to "தமிழ்",
-            "te-IN" to "తెలుగు",
-            "kn-IN" to "ಕನ್ನಡ"
-        )
-    }
-    val selectedLanguage = testLangs.firstOrNull { it.first.equals(testLang, ignoreCase = true) }?.second ?: testLang
-    val previewPhrase = when (testLang.lowercase().replace("_", "-")) {
-        "hi-in", "hi" -> "PhonePe पर Rahul Sharma से पाँच सौ रुपये प्राप्त हुए"
-        "ml-in", "ml" -> "PhonePe വഴി Rahul Sharma ൽ നിന്ന് 500 രൂപ ലഭിച്ചു"
-        "ta-in", "ta" -> "PhonePe மூலம் Rahul Sharma இடமிருந்து 500 ரூபாய் பெறப்பட்டது"
-        "te-in", "te" -> "PhonePe ద్వారా Rahul Sharma నుండి 500 రూపాయలు అందింది"
-        "kn-in", "kn" -> "PhonePe ಮೂಲಕ Rahul Sharma ರಿಂದ 500 ರೂಪಾಯಿ ಸ್ವೀಕರಿಸಲಾಗಿದೆ"
-        else -> "Received 500 rupees on PhonePe from Rahul Sharma"
-    }
+    val selectedLanguage = SUPPORTED_LANGUAGES
+        .firstOrNull { it.tag.equals(currentLang, ignoreCase = true) }
+        ?.name
+        ?: currentLang
 
     Column(
         modifier = Modifier
@@ -267,85 +241,6 @@ fun SettingsScreen(
                     subtitle = "$selectedLanguage · Phrases, repeats and volume",
                     onClick = onNavigateVoiceSettings
                 )
-                SettingsDivider()
-                Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp)) {
-                    Text(
-                        text = "Quick voice check",
-                        color = colors.textPrimary,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp
-                    )
-                    Spacer(modifier = Modifier.height(3.dp))
-                    Text(
-                        text = "Verify the soundbox before opening the counter.",
-                        color = colors.textMuted,
-                        fontSize = 11.sp
-                    )
-                    Spacer(modifier = Modifier.height(11.dp))
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(7.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        items(testLangs) { (tag, label) ->
-                            SettingsLanguageChip(
-                                label = label,
-                                selected = testLang.equals(tag, ignoreCase = true),
-                                onClick = {
-                                    testLang = tag
-                                    scope.launch { preferences.setLanguageTag(tag) }
-                                }
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(11.dp))
-                    Text(
-                        text = previewPhrase,
-                        color = colors.pillText,
-                        fontSize = 12.sp,
-                        lineHeight = 18.sp,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(colors.pillBackground)
-                            .padding(horizontal = 12.dp, vertical = 10.dp)
-                    )
-                    Spacer(modifier = Modifier.height(11.dp))
-                    Button(
-                        onClick = {
-                            scope.launch {
-                                val success = announcementQueue.enqueueAndAwait(
-                                    AnnouncementRequest.Test(
-                                        sampleAmountPaise = 50000L,
-                                        samplePayer = "Rahul Sharma",
-                                        languageTag = testLang
-                                    )
-                                )
-                                val message = if (success) {
-                                    "Test announcement played ($selectedLanguage)"
-                                } else {
-                                    "Audio unavailable. Check Text-to-Speech settings."
-                                }
-                                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colors.emeraldGreen,
-                            contentColor = Color(0xFF04281A)
-                        ),
-                        shape = RoundedCornerShape(13.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(46.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.PlayArrow,
-                            contentDescription = null,
-                            modifier = Modifier.size(17.dp)
-                        )
-                        Spacer(modifier = Modifier.width(7.dp))
-                        Text("Play demo voice", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                    }
-                }
             }
 
             SettingsSectionTitle(
@@ -356,7 +251,7 @@ fun SettingsScreen(
                 SettingsRow(
                     icon = Icons.Default.Settings,
                     title = "UPI apps & parser",
-                    subtitle = "Supported apps and notification test tools",
+                    subtitle = "Supported apps and payment routing",
                     onClick = onNavigateUpiApps
                 )
                 SettingsDivider()
@@ -455,7 +350,7 @@ fun SettingsScreen(
                         onClick = {
                             val intent = Intent(
                                 Intent.ACTION_VIEW,
-                                Uri.parse("https://github.com/tuttukrishna/upi-soundbox/releases")
+                                Uri.parse("https://github.com/tuttukrishna68-hue/UPI-SoundBox/releases")
                             ).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }
                             try {
                                 context.startActivity(intent)
@@ -683,30 +578,3 @@ private fun SettingsChoice(
     }
 }
 
-@Composable
-private fun SettingsLanguageChip(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    val colors = LocalSoundboxColors.current
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(if (selected) colors.emeraldGreen else colors.background)
-            .border(
-                BorderStroke(1.dp, if (selected) colors.emeraldGreen else colors.cardBorder),
-                RoundedCornerShape(10.dp)
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 11.dp, vertical = 8.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = label,
-            color = if (selected) Color(0xFF04281A) else colors.textMuted,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-            fontSize = 11.sp
-        )
-    }
-}

@@ -24,7 +24,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -218,8 +217,8 @@ fun VoiceSettingsScreen(
                     Spacer(modifier = Modifier.height(4.dp))
                     val previewText = announcementEngine.renderPhrase(
                         template = editableTemplate,
-                        amountPaise = 25000L,
-                        payer = "Rahul",
+                        amountPaise = 0L,
+                        payer = "Customer",
                         appPackage = "com.google.android.apps.nbu.paisa.user",
                         languageTag = currentLangTag
                     )
@@ -316,20 +315,19 @@ fun VoiceSettingsScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Test Announcement Button
+            // Audio check
             PillButton(
-                text = "🔊 Play Test Announcement",
+                text = "🔊 Play Audio Check",
                 onClick = {
                     scope.launch {
                         val success = announcementQueue.enqueueAndAwait(
-                            AnnouncementRequest.Test(
-                                sampleAmountPaise = 50000L,
-                                samplePayer = "Rahul Sharma",
+                            AnnouncementRequest.Custom(
+                                text = "Audio check complete.",
                                 languageTag = currentLangTag
                             )
                         )
                         val message = if (success) {
-                            "📢 Test announcement played ($currentLangTag)"
+                            "Audio check played ($currentLangTag)"
                         } else {
                             "Audio unavailable. Check the phone's Text-to-Speech engine."
                         }
