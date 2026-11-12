@@ -24,14 +24,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.FormatSize
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SettingsBrightness
-import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -59,10 +59,8 @@ import androidx.compose.ui.unit.sp
 import com.upisoundbox.core.data.preferences.SoundboxPreferences
 import com.upisoundbox.core.design.component.PillButton
 import com.upisoundbox.core.design.theme.LocalSoundboxColors
-import com.upisoundbox.core.tts.AnnouncementEngine
 import com.upisoundbox.core.tts.AnnouncementQueue
 import com.upisoundbox.core.tts.AnnouncementRequest
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 @Composable
@@ -79,7 +77,8 @@ fun SettingsScreen(
     val colors = LocalSoundboxColors.current
     val scope = rememberCoroutineScope()
 
-    val currentTheme by preferences.themeMode.collectAsState(initial = "light")
+    val currentTheme by preferences.themeMode.collectAsState(initial = "dark")
+    val currentFontScale by preferences.fontScale.collectAsState(initial = "compact")
     val isAppLock by preferences.isAppLockEnabled.collectAsState(initial = false)
     val isSecureScreen by preferences.isSecureScreenEnabled.collectAsState(initial = false)
 
@@ -92,78 +91,84 @@ fun SettingsScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 14.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onNavigateBack) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
-                    tint = colors.textPrimary
+                    tint = colors.textPrimary,
+                    modifier = Modifier.size(22.dp)
                 )
             }
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = "Settings",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = colors.textPrimary
+                color = colors.textPrimary,
+                fontSize = 19.sp
             )
         }
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp)
+                .padding(horizontal = 18.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
-            // 1. Theme Toggler Section (Light default, Dark, System)
+            // 1. Appearance & Display Section (Theme + Font Scale)
             Text(
-                text = "APPEARANCE & THEME",
+                text = "APPEARANCE & DISPLAY",
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
-                color = colors.textMuted
+                color = colors.textMuted,
+                fontSize = 11.sp,
+                letterSpacing = 1.sp
             )
             Spacer(modifier = Modifier.height(8.dp))
 
             Card(
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = colors.cardBackground),
                 border = BorderStroke(1.dp, colors.cardBorder),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(14.dp)) {
                     Text(
-                        text = "App Theme",
+                        text = "Theme Mode",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = colors.textPrimary
+                        color = colors.textPrimary,
+                        fontSize = 14.sp
                     )
                     Text(
-                        text = "Choose light, dark, or follow device settings (Light is default).",
+                        text = "Dark theme is default, matching merchant soundbox display.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = colors.textMuted
+                        color = colors.textMuted,
+                        fontSize = 12.sp
                     )
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        ThemeOptionPill(
-                            title = "Light",
-                            icon = Icons.Default.LightMode,
-                            isSelected = currentTheme.equals("light", ignoreCase = true),
-                            onClick = { scope.launch { preferences.setThemeMode("light") } },
-                            modifier = Modifier.weight(1f)
-                        )
                         ThemeOptionPill(
                             title = "Dark",
                             icon = Icons.Default.DarkMode,
                             isSelected = currentTheme.equals("dark", ignoreCase = true),
                             onClick = { scope.launch { preferences.setThemeMode("dark") } },
+                            modifier = Modifier.weight(1f)
+                        )
+                        ThemeOptionPill(
+                            title = "Light",
+                            icon = Icons.Default.LightMode,
+                            isSelected = currentTheme.equals("light", ignoreCase = true),
+                            onClick = { scope.launch { preferences.setThemeMode("light") } },
                             modifier = Modifier.weight(1f)
                         )
                         ThemeOptionPill(
@@ -174,157 +179,217 @@ fun SettingsScreen(
                             modifier = Modifier.weight(1f)
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "Text & Icon Scale",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.textPrimary,
+                        fontSize = 14.sp
+                    )
+                    Text(
+                        text = "Compact fits entire soundbox on one screen.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.textMuted,
+                        fontSize = 12.sp
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        ThemeOptionPill(
+                            title = "Compact",
+                            icon = Icons.Default.FormatSize,
+                            isSelected = currentFontScale.equals("compact", ignoreCase = true),
+                            onClick = { scope.launch { preferences.setFontScale("compact") } },
+                            modifier = Modifier.weight(1f)
+                        )
+                        ThemeOptionPill(
+                            title = "Standard",
+                            icon = Icons.Default.FormatSize,
+                            isSelected = currentFontScale.equals("standard", ignoreCase = true),
+                            onClick = { scope.launch { preferences.setFontScale("standard") } },
+                            modifier = Modifier.weight(1f)
+                        )
+                        ThemeOptionPill(
+                            title = "Large",
+                            icon = Icons.Default.FormatSize,
+                            isSelected = currentFontScale.equals("large", ignoreCase = true),
+                            onClick = { scope.launch { preferences.setFontScale("large") } },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
-            // 2. Demo Payment Announcement Test Card
+            // 2. Demo Voice Test Card (Bulletproof try-catch)
             Text(
-                text = "TEST ANNOUNCEMENT",
+                text = "SOUNDBOX SPEAKER TEST",
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
-                color = colors.textMuted
+                color = colors.textMuted,
+                fontSize = 11.sp,
+                letterSpacing = 1.sp
             )
             Spacer(modifier = Modifier.height(8.dp))
 
             Card(
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = colors.cardBackground),
                 border = BorderStroke(1.dp, colors.cardBorder),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier.padding(18.dp)) {
+                Column(modifier = Modifier.padding(14.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(12.dp))
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(10.dp))
                                 .background(colors.pillBackground),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Default.VolumeUp,
+                                imageVector = Icons.AutoMirrored.Filled.VolumeUp,
                                 contentDescription = "Speaker",
                                 tint = colors.pillText,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(18.dp)
                             )
                         }
-                        Spacer(modifier = Modifier.width(12.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
-                                text = "Demo Payment Announcement",
+                                text = "Test Voice Announcement",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = colors.textPrimary
+                                color = colors.textPrimary,
+                                fontSize = 14.sp
                             )
                             Text(
-                                text = "Test your speaker volume & voice pronunciation.",
+                                text = "Simulates a live ₹500 payment from PhonePe.",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = colors.textMuted
+                                color = colors.textMuted,
+                                fontSize = 11.sp
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     Button(
                         onClick = {
-                            scope.launch {
-                                announcementQueue.enqueue(
-                                    AnnouncementRequest.Test(
-                                        sampleAmountPaise = 50000L, // ₹500
-                                        samplePayer = "Rahul Sharma"
-                                    )
-                                )
-                                Toast.makeText(
-                                    context,
-                                    "📢 Playing demo: ₹500 on PhonePe",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
+                            try {
+                                scope.launch {
+                                    try {
+                                        announcementQueue.enqueue(
+                                            AnnouncementRequest.Test(
+                                                sampleAmountPaise = 50000L,
+                                                samplePayer = "Rahul Sharma"
+                                            )
+                                        )
+                                        Toast.makeText(
+                                            context,
+                                            "📢 Playing: ₹500 on PhonePe",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    } catch (e: Exception) {
+                                        Toast.makeText(context, "Audio error: ${e.message}", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            } catch (_: Exception) {}
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF10B981),
                             contentColor = Color.White
                         ),
-                        shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier.fillMaxWidth()
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.PlayArrow,
                             contentDescription = "Play",
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(16.dp)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = "Play Demo Voice (₹500 on PhonePe)",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
+                            fontSize = 13.sp
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
-            // 3. Navigation Cards
+            // 3. Soundbox Controls
             Text(
                 text = "SOUNDBOX CONTROLS",
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
-                color = colors.textMuted
+                color = colors.textMuted,
+                fontSize = 11.sp,
+                letterSpacing = 1.sp
             )
             Spacer(modifier = Modifier.height(8.dp))
 
             SettingsNavCard(
                 title = "Voice & Soundbox",
-                subtitle = "10 languages, custom phrase templates, volume boost",
+                subtitle = "10 Indian languages, custom phrase template, volume boost",
                 onClick = onNavigateVoiceSettings
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             SettingsNavCard(
                 title = "UPI Apps & Parser Tester",
-                subtitle = "App detection status & real-time notification tester",
+                subtitle = "App detection status & live notification test tool",
                 onClick = onNavigateUpiApps
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             SettingsNavCard(
                 title = "Help & FAQ",
-                subtitle = "Conversational guide and OEM troubleshooting",
+                subtitle = "OEM battery troubleshooting & conversational guide",
                 onClick = onNavigateHelp
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             SettingsNavCard(
-                title = "Diagnostics & Fixture Export",
+                title = "Diagnostics & System Logs",
                 subtitle = "Redacted log inspector and export real notification samples",
                 onClick = onNavigateDiagnostics
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
-            // 4. Security Section
+            // 4. Security & Privacy
             Text(
                 text = "SECURITY & PRIVACY",
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
-                color = colors.textMuted
+                color = colors.textMuted,
+                fontSize = 11.sp,
+                letterSpacing = 1.sp
             )
             Spacer(modifier = Modifier.height(8.dp))
 
             Card(
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = colors.cardBackground),
                 border = BorderStroke(1.dp, colors.cardBorder),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier.padding(18.dp)) {
+                Column(modifier = Modifier.padding(14.dp)) {
                     // Biometric Lock
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -336,12 +401,14 @@ fun SettingsScreen(
                                 text = "Biometric / PIN Lock",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = colors.textPrimary
+                                color = colors.textPrimary,
+                                fontSize = 14.sp
                             )
                             Text(
                                 text = "Require fingerprint or PIN to view transaction ledger.",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = colors.textMuted
+                                color = colors.textMuted,
+                                fontSize = 11.sp
                             )
                         }
                         Switch(
@@ -354,7 +421,7 @@ fun SettingsScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     // Secure Screen (FLAG_SECURE)
                     Row(
@@ -367,12 +434,14 @@ fun SettingsScreen(
                                 text = "Secure Screen (Anti-Screenshot)",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = colors.textPrimary
+                                color = colors.textPrimary,
+                                fontSize = 14.sp
                             )
                             Text(
-                                text = "Blocks screenshots and screen recording for extra privacy.",
+                                text = "Blocks screenshots and screen recording for privacy.",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = colors.textMuted
+                                color = colors.textMuted,
+                                fontSize = 11.sp
                             )
                         }
                         Switch(
@@ -387,56 +456,61 @@ fun SettingsScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
-            // 5. About Section (with official original logo)
+            // 5. About UPI Soundbox (Using Real Official Brand Logo)
             Text(
                 text = "ABOUT UPI SOUNDBOX",
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
-                color = colors.textMuted
+                color = colors.textMuted,
+                fontSize = 11.sp,
+                letterSpacing = 1.sp
             )
             Spacer(modifier = Modifier.height(8.dp))
 
             Card(
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = colors.cardBackground),
                 border = BorderStroke(1.dp, colors.cardBorder),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier.padding(18.dp)) {
+                Column(modifier = Modifier.padding(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Image(
                             painter = painterResource(id = com.upisoundbox.core.design.R.drawable.ic_app_logo),
                             contentDescription = "App Logo",
                             modifier = Modifier
-                                .size(50.dp)
-                                .clip(RoundedCornerShape(14.dp))
+                                .size(46.dp)
+                                .clip(RoundedCornerShape(12.dp))
                         )
-                        Spacer(modifier = Modifier.width(14.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
                                 text = "UPI Soundbox",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = colors.textPrimary
+                                color = colors.textPrimary,
+                                fontSize = 15.sp
                             )
                             Text(
-                                text = "Version 1.0.0 (Offline Open Source)",
+                                text = "Version 1.0.0 (100% Offline & Open Source)",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = colors.textMuted
+                                color = colors.textMuted,
+                                fontSize = 11.sp
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "100% offline, privacy-first merchant soundbox. Announces payments within 1 second.",
+                        text = "Zero internet permission, no cloud uploads. Runs 100% offline with on-device hardware Text-To-Speech.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = colors.textMuted
+                        color = colors.textMuted,
+                        fontSize = 11.sp
                     )
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     PillButton(
                         text = "Check for Updates (GitHub)",
@@ -451,7 +525,7 @@ fun SettingsScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(36.dp))
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
@@ -471,10 +545,10 @@ private fun ThemeOptionPill(
 
     Box(
         modifier = modifier
-            .height(46.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .height(40.dp)
+            .clip(RoundedCornerShape(10.dp))
             .background(bgColor)
-            .border(BorderStroke(1.dp, borderColor), RoundedCornerShape(12.dp))
+            .border(BorderStroke(1.dp, borderColor), RoundedCornerShape(10.dp))
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
@@ -486,13 +560,13 @@ private fun ThemeOptionPill(
                 imageVector = icon,
                 contentDescription = title,
                 tint = textColor,
-                modifier = Modifier.size(16.dp)
+                modifier = Modifier.size(15.dp)
             )
-            Spacer(modifier = Modifier.width(6.dp))
+            Spacer(modifier = Modifier.width(5.dp))
             Text(
                 text = title,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                fontSize = 13.sp,
+                fontSize = 12.sp,
                 color = textColor
             )
         }
@@ -507,7 +581,7 @@ private fun SettingsNavCard(
 ) {
     val colors = LocalSoundboxColors.current
     Card(
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = colors.cardBackground),
         border = BorderStroke(1.dp, colors.cardBorder),
         modifier = Modifier
@@ -517,7 +591,7 @@ private fun SettingsNavCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -526,19 +600,22 @@ private fun SettingsNavCard(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = colors.textPrimary
+                    color = colors.textPrimary,
+                    fontSize = 14.sp
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = colors.textMuted
+                    color = colors.textMuted,
+                    fontSize = 11.sp
                 )
             }
             Icon(
-                imageVector = Icons.Default.KeyboardArrowRight,
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
-                tint = colors.textMuted
+                tint = colors.textMuted,
+                modifier = Modifier.size(18.dp)
             )
         }
     }

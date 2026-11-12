@@ -3,7 +3,15 @@ package com.upisoundbox.feature.home
 import android.app.Activity
 import android.text.format.DateUtils
 import android.view.WindowManager
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,10 +23,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,17 +44,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.upisoundbox.core.data.repository.PaymentRepository
-import com.upisoundbox.core.design.component.AmountDisplay
-import com.upisoundbox.core.design.component.AmountSize
-import com.upisoundbox.core.design.component.AppChip
-import com.upisoundbox.core.design.theme.LocalSoundboxColors
+import com.upisoundbox.core.design.util.AppLogoProvider
 import com.upisoundbox.core.parser.AmountParser
 import com.upisoundbox.core.tts.AnnouncementEngine
 
@@ -52,7 +65,6 @@ fun CounterModeScreen(
     onClose: () -> Unit
 ) {
     val context = LocalContext.current
-    val colors = LocalSoundboxColors.current
     val lastPayment by repository.getLastPayment().collectAsState(initial = null)
     val todayTotal by repository.getTodayTotal().collectAsState(initial = 0L)
     val todayCount by repository.getTodayCount().collectAsState(initial = 0)
@@ -72,10 +84,29 @@ fun CounterModeScreen(
         }
     }
 
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.25f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseScale"
+    )
+
+    val backgroundBrush = Brush.verticalGradient(
+        listOf(
+            Color(0xFF070B09),
+            Color(0xFF0A130E),
+            Color(0xFF070B09)
+        )
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0F0F10)) // Pure dark high-contrast mode
+            .background(backgroundBrush)
             .padding(24.dp)
             .clickable { onClose() }
     ) {
@@ -87,142 +118,181 @@ fun CounterModeScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
-                Text(
-                    text = "COUNTER MODE",
-                    color = Color(0xFFF25C2E),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    letterSpacing = 2.sp
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .scale(pulseScale)
+                        .background(Color(0xFF10B981), CircleShape)
                 )
-                Text(
-                    text = "Tap anywhere to exit",
-                    color = Color(0xFF8A8A8F),
-                    fontSize = 12.sp
-                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Column {
+                    Text(
+                        text = "COUNTER SOUNDBOX MODE",
+                        color = Color(0xFF10B981),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        letterSpacing = 1.5.sp
+                    )
+                    Text(
+                        text = "Tap anywhere to exit",
+                        color = Color(0xFF94A3B8),
+                        fontSize = 11.sp
+                    )
+                }
             }
 
             IconButton(onClick = onClose) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "Close",
+                    contentDescription = "Exit",
                     tint = Color.White,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }
 
-        // Center: Giant Amount readable from 2 meters
+        // Center: Giant payment announcement card
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.Center),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (lastPayment != null) {
-                val p = lastPayment!!
-                Text(
-                    text = "LATEST PAYMENT",
-                    color = Color(0xFF8A8A8F),
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp,
-                    letterSpacing = 1.sp
+                val payment = lastPayment!!
+                val logoRes = AppLogoProvider.getLogoForPackage(payment.appPackage)
+                val appName = AnnouncementEngine.mapPackageToDisplayName(payment.appPackage)
+
+                Image(
+                    painter = painterResource(id = logoRes),
+                    contentDescription = appName,
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(RoundedCornerShape(16.dp))
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = AmountParser.formatPaise(p.amountPaise),
+                    text = AmountParser.formatPaise(payment.amountPaise),
                     color = Color.White,
-                    style = MaterialTheme.typography.displayLarge.copy(
-                        fontSize = 68.sp,
-                        fontWeight = FontWeight.Bold
-                    ),
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 52.sp,
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = p.payer ?: "Customer",
-                    color = Color(0xFFFCE3D8),
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-
                 Spacer(modifier = Modifier.height(8.dp))
 
-                AppChip(
-                    appName = AnnouncementEngine.mapPackageToDisplayName(p.appPackage)
-                )
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(Color(0xFF102E1E))
+                        .padding(horizontal = 14.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = "✔ Received from ${payment.payer ?: "Customer"}",
+                        color = Color(0xFF34D399),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
 
-                val timeStr = DateUtils.getRelativeTimeSpanString(p.receivedAt)
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(6.dp))
+
+                val timeAgo = DateUtils.getRelativeTimeSpanString(payment.receivedAt)
                 Text(
-                    text = "$timeStr",
-                    color = Color(0xFF8A8A8F),
-                    fontSize = 14.sp
+                    text = "$appName • $timeAgo",
+                    color = Color(0xFF94A3B8),
+                    fontSize = 13.sp
                 )
             } else {
+                // Idle Soundbox Standee state
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .scale(pulseScale)
+                        .clip(CircleShape)
+                        .background(Color(0xFF102E1E))
+                        .border(BorderStroke(2.dp, Color(0xFF10B981)), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.VolumeUp,
+                        contentDescription = null,
+                        tint = Color(0xFF34D399),
+                        modifier = Modifier.size(38.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
                 Text(
-                    text = "READY FOR PAYMENTS",
-                    color = Color(0xFF8A8A8F),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 2.sp
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = "₹0",
+                    text = "Ready to Announce",
                     color = Color.White,
-                    style = MaterialTheme.typography.displayLarge.copy(fontSize = 68.sp)
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = "Keep this screen open on your merchant counter.\nPayments will be spoken aloud at full volume.",
+                    color = Color(0xFF94A3B8),
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center
                 )
             }
         }
 
-        // Bottom Bar: Today's Summary & Keep Awake toggle
-        Row(
+        // Bottom: Daily summary bar
+        Card(
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF0E1511)),
+            border = BorderStroke(1.dp, Color(0xFF1B2B21)),
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
-                Text(
-                    text = "Today's Total: ${AmountParser.formatPaise(todayTotal ?: 0L)}",
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "$todayCount payments received",
-                    color = Color(0xFF8A8A8F),
-                    fontSize = 13.sp
-                )
-            }
-
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable { keepAwake = !keepAwake }
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Checkbox(
-                    checked = keepAwake,
-                    onCheckedChange = { keepAwake = it },
-                    colors = CheckboxDefaults.colors(
-                        checkedColor = Color(0xFFF25C2E),
-                        checkmarkColor = Color.White
+                Column {
+                    Text(
+                        text = "TODAY'S TOTAL",
+                        color = Color(0xFF94A3B8),
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 11.sp,
+                        letterSpacing = 1.sp
                     )
-                )
-                Text(
-                    text = "Keep Screen Awake",
-                    color = Color.White,
-                    fontSize = 13.sp
-                )
+                    Text(
+                        text = AmountParser.formatPaise(todayTotal ?: 0L),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp
+                    )
+                }
+
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = "TRANSACTIONS",
+                        color = Color(0xFF94A3B8),
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 11.sp,
+                        letterSpacing = 1.sp
+                    )
+                    Text(
+                        text = "$todayCount Payments",
+                        color = Color(0xFF34D399),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+                }
             }
         }
     }
 }
-

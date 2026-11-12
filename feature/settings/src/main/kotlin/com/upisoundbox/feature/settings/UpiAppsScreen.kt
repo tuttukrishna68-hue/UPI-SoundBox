@@ -1,6 +1,8 @@
 package com.upisoundbox.feature.settings
 
 import android.content.pm.PackageManager
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,10 +16,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -30,7 +35,6 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -40,16 +44,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.upisoundbox.core.design.component.AmountDisplay
-import com.upisoundbox.core.design.component.AmountSize
-import com.upisoundbox.core.design.component.AppChip
-import com.upisoundbox.core.design.component.ChipStatus
-import com.upisoundbox.core.design.component.StatusChip
 import com.upisoundbox.core.design.theme.LocalSoundboxColors
+import com.upisoundbox.core.design.util.AppLogoProvider
 import com.upisoundbox.core.parser.AmountParser
 import com.upisoundbox.core.parser.ParseResult
 import com.upisoundbox.core.parser.ParserRouter
@@ -94,7 +97,7 @@ fun UpiAppsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.paper)
+            .background(colors.background)
     ) {
         // App Top Bar
         Row(
@@ -104,119 +107,48 @@ fun UpiAppsScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onNavigateBack) {
-                Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back", tint = colors.ink)
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Back",
+                    tint = colors.textPrimary
+                )
             }
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "UPI Apps & Parser Tester",
                 style = MaterialTheme.typography.titleLarge,
-                color = colors.ink
+                fontWeight = FontWeight.Bold,
+                color = colors.textPrimary,
+                fontSize = 19.sp
             )
         }
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = 20.dp)
                 .verticalScroll(rememberScrollState())
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Section 1: Live Parser Tester
-            Card(
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = colors.orangeTint.copy(alpha = 0.35f)),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(18.dp)) {
-                    Text(
-                        text = "🔬 Live Parser Tester",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.ink
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Paste any notification or SMS sample to test detection and amount extraction.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.muted
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    OutlinedTextField(
-                        value = testerInputText,
-                        onValueChange = { testerInputText = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = colors.surface,
-                            unfocusedContainerColor = colors.surface,
-                            focusedBorderColor = colors.accentOrange,
-                            unfocusedBorderColor = colors.bubbleGrey
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Button(
-                        onClick = {
-                            val dummyNotification = RawNotification(
-                                key = "tester_1",
-                                packageName = "com.google.android.apps.nbu.paisa.user",
-                                postTime = System.currentTimeMillis(),
-                                text = testerInputText
-                            )
-                            testResult = parserRouter.parse(dummyNotification)
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = colors.accentOrange),
-                        shape = RoundedCornerShape(50)
-                    ) {
-                        Text("Parse Text")
-                    }
-
-                    if (testResult != null) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        when (val r = testResult!!) {
-                            is ParseResult.Success -> {
-                                Text(
-                                    text = "✓ Parsed Successfully!",
-                                    color = colors.success,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(text = "Amount: ${AmountParser.formatPaise(r.event.amountPaise)}", color = colors.ink)
-                                Text(text = "Payer: ${r.event.payer ?: "N/A"}", color = colors.ink)
-                                Text(text = "UPI Ref: ${r.event.upiRef ?: "N/A"}", color = colors.ink)
-                            }
-                            is ParseResult.Rejected -> {
-                                Text(text = "✗ Rejected: ${r.reason}", color = colors.error, fontWeight = FontWeight.Bold)
-                            }
-                            is ParseResult.Ignored -> {
-                                Text(text = "Ignored: ${r.reason}", color = colors.muted)
-                            }
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Section 2: Allow-listed UPI Apps
+            // Section 1: Allow-listed UPI Apps (Primary merchant focus)
             Text(
                 text = "SUPPORTED UPI APPS",
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
-                color = colors.muted
+                color = colors.textMuted
             )
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             appList.forEach { app ->
                 val isInstalled = appInstalledMap[app.packageId] == true
                 val isEnabled = appEnabledMap[app.packageId] ?: true
+                val logoRes = AppLogoProvider.getLogoForPackage(app.packageId)
 
                 Card(
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = colors.surface),
+                    colors = CardDefaults.cardColors(containerColor = colors.cardBackground),
+                    border = BorderStroke(1.dp, colors.cardBorder),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp)
@@ -228,34 +160,214 @@ fun UpiAppsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                AppChip(appName = app.displayName)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                StatusChip(
-                                    label = if (isInstalled) "Installed" else "Not detected",
-                                    status = if (isInstalled) ChipStatus.OK else ChipStatus.Warning
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Image(
+                                painter = painterResource(id = logoRes),
+                                contentDescription = app.displayName,
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = app.displayName,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = colors.textPrimary,
+                                        fontSize = 14.sp
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    // Single-line compact status badge
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(CircleShape)
+                                            .background(
+                                                if (isInstalled) colors.pillBackground else colors.bubbleGrey
+                                            )
+                                            .padding(horizontal = 7.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = if (isInstalled) "Installed" else "Not detected",
+                                            color = if (isInstalled) colors.pillText else colors.textMuted,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 10.sp,
+                                            maxLines = 1
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = app.packageId,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = colors.textMuted,
+                                    fontSize = 11.sp
                                 )
                             }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = app.packageId,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = colors.muted,
-                                fontSize = 11.sp
-                            )
                         }
 
                         Switch(
                             checked = isEnabled,
                             onCheckedChange = { appEnabledMap[app.packageId] = it },
-                            colors = SwitchDefaults.colors(checkedThumbColor = colors.accentOrange)
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = Color(0xFF10B981)
+                            )
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Section 2: Real-time Parser Tester
+            Text(
+                text = "NOTIFICATION PARSER TESTER",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = colors.textMuted
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Card(
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = colors.cardBackground),
+                border = BorderStroke(1.dp, colors.cardBorder),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Test Notification Text",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.textPrimary,
+                        fontSize = 14.sp
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Paste any notification to verify offline amount & sender extraction.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.textMuted,
+                        fontSize = 12.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    OutlinedTextField(
+                        value = testerInputText,
+                        onValueChange = { testerInputText = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = colors.cardBackground,
+                            unfocusedContainerColor = colors.cardBackground,
+                            focusedBorderColor = Color(0xFF10B981),
+                            unfocusedBorderColor = colors.cardBorder,
+                            focusedTextColor = colors.textPrimary,
+                            unfocusedTextColor = colors.textPrimary
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Button(
+                        onClick = {
+                            val dummyNotification = RawNotification(
+                                key = "tester_1",
+                                packageName = "com.google.android.apps.nbu.paisa.user",
+                                postTime = System.currentTimeMillis(),
+                                text = testerInputText
+                            )
+                            testResult = parserRouter.parse(dummyNotification)
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF10B981),
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = "Test",
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Parse Notification Text", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    }
+
+                    if (testResult != null) {
+                        Spacer(modifier = Modifier.height(14.dp))
+                        when (val r = testResult!!) {
+                            is ParseResult.Success -> {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(colors.pillBackground)
+                                        .padding(12.dp)
+                                ) {
+                                    Column {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(
+                                                imageVector = Icons.Default.CheckCircle,
+                                                contentDescription = null,
+                                                tint = colors.pillText,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = "Parsed Successfully",
+                                                color = colors.pillText,
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 13.sp
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Text(
+                                            text = "Amount: ${AmountParser.formatPaise(r.event.amountPaise)}",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 13.sp,
+                                            color = colors.textPrimary
+                                        )
+                                        Text(
+                                            text = "Payer: ${r.event.payer ?: "Customer"}",
+                                            fontSize = 12.sp,
+                                            color = colors.textMuted
+                                        )
+                                        Text(
+                                            text = "UPI Ref: ${r.event.upiRef ?: "N/A"}",
+                                            fontSize = 12.sp,
+                                            color = colors.textMuted
+                                        )
+                                    }
+                                }
+                            }
+                            is ParseResult.Rejected -> {
+                                Text(
+                                    text = "✗ Rejected: ${r.reason}",
+                                    color = colors.error,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp
+                                )
+                            }
+                            is ParseResult.Ignored -> {
+                                Text(
+                                    text = "Ignored: ${r.reason}",
+                                    color = colors.textMuted,
+                                    fontSize = 13.sp
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(36.dp))
         }
     }
 }

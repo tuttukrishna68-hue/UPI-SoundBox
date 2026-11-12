@@ -51,7 +51,7 @@ private val DarkColorScheme = darkColorScheme(
 
 @Composable
 fun SoundboxTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val soundboxColors = if (darkTheme) DarkSoundboxColorScheme else LightSoundboxColorScheme

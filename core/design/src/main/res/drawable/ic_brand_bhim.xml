@@ -1,0 +1,21 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- White background squircle -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#E2E8F0"
+        android:strokeWidth="1"
+        android:pathData="M12,4h24c4.42,0 8,3.58 8,8v24c0,4.42 -3.58,8 -8,8H12c-4.42,0 -8,-3.58 -8,-8V12c0,-4.42 3.58,-8 8,-8z" />
+    <!-- BHIM Green Triangle -->
+    <path
+        android:fillColor="#138808"
+        android:pathData="M10,34L22,10h5L15,34z" />
+    <!-- BHIM Orange Triangle -->
+    <path
+        android:fillColor="#FF9933"
+        android:pathData="M23,34L35,10h5L28,34z" />
+</vector>
+

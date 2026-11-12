@@ -12,6 +12,26 @@
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
+    <queries>
+        <!-- Required on Android 11+ to bind to Text-To-Speech engine -->
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+        <!-- Required on Android 11+ to detect installed UPI merchant apps -->
+        <package android:name="com.google.android.apps.nbu.paisa.user" />
+        <package android:name="com.google.android.apps.nbu.paisa.merchant" />
+        <package android:name="com.phonepe.app" />
+        <package android:name="com.phonepe.app.business" />
+        <package android:name="com.phonepe.business" />
+        <package android:name="net.one97.paytm" />
+        <package android:name="net.one97.paytm.merchant" />
+        <package android:name="com.paytm.business" />
+        <package android:name="in.org.npci.upiapp" />
+        <package android:name="in.amazon.mShop.android.shopping" />
+        <package android:name="com.dreamplug.androidapp" />
+    </queries>
 
     <application
         android:name=".SoundboxApp"

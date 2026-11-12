@@ -1,7 +1,9 @@
 package com.upisoundbox.feature.home
 
 import android.text.format.DateUtils
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -11,6 +13,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +23,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -34,10 +38,10 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -48,6 +52,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,6 +64,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -66,6 +72,7 @@ import com.upisoundbox.core.data.db.PaymentEntity
 import com.upisoundbox.core.data.preferences.SoundboxPreferences
 import com.upisoundbox.core.data.repository.PaymentRepository
 import com.upisoundbox.core.design.theme.LocalSoundboxColors
+import com.upisoundbox.core.design.util.AppLogoProvider
 import com.upisoundbox.core.parser.AmountParser
 import com.upisoundbox.core.tts.AnnouncementEngine
 import com.upisoundbox.core.tts.AnnouncementQueue
@@ -86,17 +93,25 @@ fun HomeScreen(
     val scope = rememberCoroutineScope()
 
     val isListening by preferences.isSoundboxActive.collectAsState(initial = true)
+    val fontScalePref by preferences.fontScale.collectAsState(initial = "compact")
     val todayTotalPaise by repository.getTodayTotal().collectAsState(initial = 0L)
     val todayCount by repository.getTodayCount().collectAsState(initial = 0)
-    val recentPayments by repository.getRecentPayments(15).collectAsState(initial = emptyList())
+    val recentPayments by repository.getRecentPayments(20).collectAsState(initial = emptyList())
+
+    // Font size multiplier based on user preference
+    val scaleMultiplier = when (fontScalePref.lowercase()) {
+        "large" -> 1.15f
+        "standard" -> 1.05f
+        else -> 1.0f // compact default (matching the reference image perfectly)
+    }
 
     // Pulsing animation for the green listening indicator dot
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val dotPulse by infiniteTransition.animateFloat(
         initialValue = 1f,
-        targetValue = 1.3f,
+        targetValue = 1.35f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1000),
+            animation = tween(1100),
             repeatMode = RepeatMode.Reverse
         ),
         label = "dotPulse"
@@ -128,15 +143,15 @@ fun HomeScreen(
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 28.dp),
+            verticalArrangement = Arrangement.spacedBy(13.dp)
         ) {
-            // 1. Top Header: Logo + App Name + Notification & Settings actions
+            // 1. Top Header: Logo + App Name + Notification Bell & Settings buttons
             item {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp, bottom = 4.dp),
+                        .padding(top = 4.dp, bottom = 2.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -145,25 +160,25 @@ fun HomeScreen(
                             painter = painterResource(id = com.upisoundbox.core.design.R.drawable.ic_app_logo),
                             contentDescription = "App Logo",
                             modifier = Modifier
-                                .size(42.dp)
-                                .clip(RoundedCornerShape(12.dp))
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(10.dp))
                         )
-                        Spacer(modifier = Modifier.width(12.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
                         Text(
                             text = "UPI Soundbox",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = colors.textPrimary,
-                            fontSize = 21.sp
+                            fontSize = (18 * scaleMultiplier).sp
                         )
                     }
 
                     // Top Action Buttons (Bell with badge + Settings gear)
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         // Notification Bell Button
                         Box(
                             modifier = Modifier
-                                .size(44.dp)
+                                .size(38.dp)
                                 .clip(CircleShape)
                                 .background(colors.cardBackground)
                                 .border(BorderStroke(1.dp, colors.cardBorder), CircleShape)
@@ -174,14 +189,14 @@ fun HomeScreen(
                                 imageVector = Icons.Default.Notifications,
                                 contentDescription = "Notifications",
                                 tint = colors.textPrimary,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(18.dp)
                             )
-                            // Badge dot (coral red in light, neon green in dark)
+                            // Badge dot
                             Box(
                                 modifier = Modifier
                                     .align(Alignment.TopEnd)
-                                    .padding(top = 10.dp, end = 10.dp)
-                                    .size(7.dp)
+                                    .padding(top = 9.dp, end = 9.dp)
+                                    .size(6.dp)
                                     .background(
                                         if (colors.isDark) Color(0xFF10B981) else Color(0xFFEF4444),
                                         CircleShape
@@ -192,7 +207,7 @@ fun HomeScreen(
                         // Settings Gear Button
                         Box(
                             modifier = Modifier
-                                .size(44.dp)
+                                .size(38.dp)
                                 .clip(CircleShape)
                                 .background(colors.cardBackground)
                                 .border(BorderStroke(1.dp, colors.cardBorder), CircleShape)
@@ -203,17 +218,17 @@ fun HomeScreen(
                                 imageVector = Icons.Default.Settings,
                                 contentDescription = "Settings",
                                 tint = colors.textPrimary,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(18.dp)
                             )
                         }
                     }
                 }
             }
 
-            // 2. Listening Status Banner Card with ON/OFF switch
+            // 2. Listening Status Banner Card with Animated ON/OFF switch
             item {
                 Card(
-                    shape = RoundedCornerShape(20.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = colors.cardBackground),
                     border = BorderStroke(1.dp, colors.cardBorder),
                     elevation = CardDefaults.cardElevation(defaultElevation = if (colors.isDark) 0.dp else 1.dp),
@@ -222,141 +237,114 @@ fun HomeScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 18.dp, vertical = 14.dp),
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(
                                 modifier = Modifier
-                                    .size(10.dp)
+                                    .size(8.dp)
                                     .scale(if (isListening) dotPulse else 1f)
                                     .background(
                                         if (isListening) Color(0xFF10B981) else Color(0xFF9CA3AF),
                                         CircleShape
                                     )
                             )
-                            Spacer(modifier = Modifier.width(12.dp))
+                            Spacer(modifier = Modifier.width(10.dp))
                             Text(
                                 text = if (isListening) "Listening for payments" else "Soundbox paused",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 color = colors.textPrimary,
-                                fontSize = 15.sp
+                                fontSize = (13 * scaleMultiplier).sp
                             )
                         }
 
-                        // Sleek ON/OFF Pill Toggle
-                        Box(
-                            modifier = Modifier
-                                .clip(CircleShape)
-                                .background(if (isListening) Color(0xFF10B981) else Color(0xFF9CA3AF))
-                                .clickable {
-                                    scope.launch { preferences.setSoundboxActive(!isListening) }
-                                }
-                                .padding(horizontal = 12.dp, vertical = 6.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                Text(
-                                    text = if (isListening) "ON" else "OFF",
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp
-                                )
-                                Box(
-                                    modifier = Modifier
-                                        .size(14.dp)
-                                        .background(Color.White, CircleShape)
-                                )
+                        // Smooth Animated Toggle Pill Button (Fluid slide & color transition)
+                        AnimatedListeningSwitch(
+                            checked = isListening,
+                            onToggle = {
+                                scope.launch { preferences.setSoundboxActive(!isListening) }
                             }
-                        }
+                        )
                     }
                 }
             }
 
-            // 3. Hero Card: "Today's Collection" + Trend Pill + Stats Mini-Cards
+            // 3. Hero Card: "Today's Collection" + Real Ledger Data
             item {
                 val heroGradient = Brush.verticalGradient(
                     listOf(colors.heroGradientStart, colors.heroGradientEnd)
                 )
 
                 Card(
-                    shape = RoundedCornerShape(24.dp),
+                    shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.Transparent),
                     border = BorderStroke(1.dp, colors.heroBorder),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(heroGradient, RoundedCornerShape(24.dp))
+                        .background(heroGradient, RoundedCornerShape(20.dp))
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(22.dp)
+                            .padding(18.dp)
                     ) {
                         Text(
                             text = "Today's Collection",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium,
                             color = colors.textMuted,
-                            fontSize = 14.sp
+                            fontSize = (12 * scaleMultiplier).sp
                         )
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
 
-                        val displayAmount = if (todayTotalPaise != null && todayTotalPaise!! > 0L) {
-                            AmountParser.formatPaise(todayTotalPaise!!)
-                        } else {
-                            "₹12,480" // Matching exact screenshot reference
-                        }
+                        val displayAmount = AmountParser.formatPaise(todayTotalPaise ?: 0L)
 
                         Text(
                             text = displayAmount,
                             style = MaterialTheme.typography.headlineLarge,
                             fontWeight = FontWeight.ExtraBold,
                             color = colors.textPrimary,
-                            fontSize = 38.sp
+                            fontSize = (30 * scaleMultiplier).sp
                         )
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                        // Trend Pill: ↑ +18% vs yesterday
+                        // Status/Ledger Pill (Real status instead of hardcoded numbers)
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
+                                .clip(RoundedCornerShape(6.dp))
                                 .background(colors.pillBackground)
-                                .padding(horizontal = 10.dp, vertical = 5.dp)
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "↑  +18% vs yesterday",
-                                    color = colors.pillText,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 13.sp
-                                )
-                            }
+                            Text(
+                                text = if (todayTotalPaise != null && todayTotalPaise!! > 0L) "Today's Ledger Active" else "Ready for payments",
+                                color = colors.pillText,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = (11 * scaleMultiplier).sp
+                            )
                         }
 
-                        Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                        // Stats 2-column row: Payments count & Monthly Total
+                        // Real Stats 2-column row: Payments count & Monthly Total
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Left Stat: Payments
+                            // Left Stat: Payments count
                             Row(
                                 modifier = Modifier.weight(1f),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(42.dp)
-                                        .clip(RoundedCornerShape(12.dp))
+                                        .size(34.dp)
+                                        .clip(RoundedCornerShape(10.dp))
                                         .background(colors.statIconBg),
                                     contentAlignment = Alignment.Center
                                 ) {
@@ -364,36 +352,36 @@ fun HomeScreen(
                                         imageVector = Icons.Default.Layers,
                                         contentDescription = "Payments",
                                         tint = colors.statIconTint,
-                                        modifier = Modifier.size(20.dp)
+                                        modifier = Modifier.size(17.dp)
                                     )
                                 }
-                                Spacer(modifier = Modifier.width(12.dp))
+                                Spacer(modifier = Modifier.width(10.dp))
                                 Column {
                                     Text(
-                                        text = if (todayCount > 0) "$todayCount" else "36",
+                                        text = "$todayCount",
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = colors.textPrimary,
-                                        fontSize = 18.sp
+                                        fontSize = (15 * scaleMultiplier).sp
                                     )
                                     Text(
                                         text = "Payments",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = colors.textMuted,
-                                        fontSize = 12.sp
+                                        fontSize = (11 * scaleMultiplier).sp
                                     )
                                 }
                             }
 
-                            // Right Stat: Monthly Total
+                            // Right Stat: Monthly Total (or real ledger total)
                             Row(
                                 modifier = Modifier.weight(1f),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(42.dp)
-                                        .clip(RoundedCornerShape(12.dp))
+                                        .size(34.dp)
+                                        .clip(RoundedCornerShape(10.dp))
                                         .background(colors.statIconBg),
                                     contentAlignment = Alignment.Center
                                 ) {
@@ -401,23 +389,23 @@ fun HomeScreen(
                                         imageVector = Icons.Default.CalendarToday,
                                         contentDescription = "Monthly Total",
                                         tint = colors.statIconTint,
-                                        modifier = Modifier.size(18.dp)
+                                        modifier = Modifier.size(15.dp)
                                     )
                                 }
-                                Spacer(modifier = Modifier.width(12.dp))
+                                Spacer(modifier = Modifier.width(10.dp))
                                 Column {
                                     Text(
                                         text = displayAmount,
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = colors.textPrimary,
-                                        fontSize = 18.sp
+                                        fontSize = (15 * scaleMultiplier).sp
                                     )
                                     Text(
                                         text = "Monthly Total",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = colors.textMuted,
-                                        fontSize = 12.sp
+                                        fontSize = (11 * scaleMultiplier).sp
                                     )
                                 }
                             }
@@ -426,33 +414,37 @@ fun HomeScreen(
                 }
             }
 
-            // 4. Quick Actions 4-Grid (My QR, Reports, History, Customers)
+            // 4. Quick Actions 4-Grid: My QR, Reports, History, Counter (Replaces Customers)
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     QuickActionButton(
                         icon = Icons.Default.QrCode,
                         title = "My QR",
+                        scale = scaleMultiplier,
                         onClick = onNavigateQr,
                         modifier = Modifier.weight(1f)
                     )
                     QuickActionButton(
                         icon = Icons.Default.BarChart,
                         title = "Reports",
+                        scale = scaleMultiplier,
                         onClick = onNavigateReports,
                         modifier = Modifier.weight(1f)
                     )
                     QuickActionButton(
                         icon = Icons.Default.ReceiptLong,
                         title = "History",
+                        scale = scaleMultiplier,
                         onClick = onNavigateHistory,
                         modifier = Modifier.weight(1f)
                     )
                     QuickActionButton(
-                        icon = Icons.Default.People,
-                        title = "Customers",
+                        icon = Icons.Default.Storefront,
+                        title = "Counter",
+                        scale = scaleMultiplier,
                         onClick = onNavigateCounter,
                         modifier = Modifier.weight(1f)
                     )
@@ -464,16 +456,16 @@ fun HomeScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp, bottom = 4.dp),
+                        .padding(top = 4.dp, bottom = 2.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = "Live Payment Feed",
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = colors.textPrimary,
-                        fontSize = 20.sp
+                        fontSize = (16 * scaleMultiplier).sp
                     )
                     Row(
                         modifier = Modifier.clickable { onNavigateHistory() },
@@ -481,64 +473,83 @@ fun HomeScreen(
                     ) {
                         Text(
                             text = "See all",
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Medium,
                             color = colors.textMuted,
-                            fontSize = 14.sp
+                            fontSize = (12 * scaleMultiplier).sp
                         )
                         Spacer(modifier = Modifier.width(2.dp))
                         Icon(
                             imageVector = Icons.Default.KeyboardArrowRight,
                             contentDescription = "See all",
                             tint = colors.textMuted,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(14.dp)
                         )
                     }
                 }
             }
 
-            // 6. Live Payment Feed Rows inside a unified card container
+            // 6. Live Payment Feed Rows (Clean, Real Data Only)
             item {
                 Card(
-                    shape = RoundedCornerShape(22.dp),
+                    shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(containerColor = colors.cardBackground),
                     border = BorderStroke(1.dp, colors.cardBorder),
                     elevation = CardDefaults.cardElevation(defaultElevation = if (colors.isDark) 0.dp else 1.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        if (recentPayments.isNotEmpty()) {
-                            recentPayments.take(6).forEachIndexed { index, payment ->
+                    if (recentPayments.isNotEmpty()) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            recentPayments.take(8).forEachIndexed { index, payment ->
                                 PaymentFeedRow(
                                     payment = payment,
+                                    scale = scaleMultiplier,
                                     onClick = onNavigateHistory
                                 )
-                                if (index < recentPayments.take(6).size - 1) {
+                                if (index < recentPayments.take(8).size - 1) {
                                     HorizontalDivider(
                                         color = colors.divider,
                                         thickness = 1.dp,
-                                        modifier = Modifier.padding(horizontal = 16.dp)
+                                        modifier = Modifier.padding(horizontal = 14.dp)
                                     )
                                 }
                             }
-                        } else {
-                            // Reference screenshot preview items when fresh
-                            DemoFeedRow(
-                                appType = AppLogoType.GooglePay,
-                                amount = "₹250",
-                                subtitle = "Google Pay • 12:28 PM"
+                        }
+                    } else {
+                        // Clean, professional empty state (NO fake/mock data)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 28.dp, horizontal = 20.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(CircleShape)
+                                    .background(colors.statIconBg),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ReceiptLong,
+                                    contentDescription = null,
+                                    tint = colors.statIconTint,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                text = "Waiting for live payments...",
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = (14 * scaleMultiplier).sp,
+                                color = colors.textPrimary
                             )
-                            HorizontalDivider(color = colors.divider, thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
-                            DemoFeedRow(
-                                appType = AppLogoType.PhonePe,
-                                amount = "₹120",
-                                subtitle = "PhonePe • 12:26 PM"
-                            )
-                            HorizontalDivider(color = colors.divider, thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
-                            DemoFeedRow(
-                                appType = AppLogoType.Paytm,
-                                amount = "₹500",
-                                subtitle = "Paytm • 12:24 PM"
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Incoming payments from PhonePe, Google Pay, and Paytm will be announced aloud and listed here instantly.",
+                                fontSize = (11 * scaleMultiplier).sp,
+                                color = colors.textMuted,
+                                textAlign = TextAlign.Center
                             )
                         }
                     }
@@ -548,25 +559,81 @@ fun HomeScreen(
     }
 }
 
+/**
+ * Animated ON/OFF Pill Switch with smooth sliding thumb and color animation
+ */
+@Composable
+private fun AnimatedListeningSwitch(
+    checked: Boolean,
+    onToggle: () -> Unit
+) {
+    val trackBg by animateColorAsState(
+        targetValue = if (checked) Color(0xFF10B981) else Color(0xFF374151),
+        animationSpec = tween(250),
+        label = "switchBg"
+    )
+
+    val thumbOffset by animateDpAsState(
+        targetValue = if (checked) 22.dp else 2.dp,
+        animationSpec = tween(250),
+        label = "switchOffset"
+    )
+
+    Box(
+        modifier = Modifier
+            .width(52.dp)
+            .height(28.dp)
+            .clip(CircleShape)
+            .background(trackBg)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onToggle
+            )
+            .padding(2.dp)
+    ) {
+        // Text inside pill
+        Text(
+            text = if (checked) "ON" else "OFF",
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = 9.sp,
+            modifier = Modifier
+                .align(if (checked) Alignment.CenterStart else Alignment.CenterEnd)
+                .padding(horizontal = 5.dp)
+        )
+
+        // Sliding knob
+        Box(
+            modifier = Modifier
+                .size(24.dp)
+                .offset(x = thumbOffset)
+                .clip(CircleShape)
+                .background(Color.White)
+        )
+    }
+}
+
 @Composable
 private fun QuickActionButton(
     icon: ImageVector,
     title: String,
+    scale: Float,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = LocalSoundboxColors.current
     Surface(
         modifier = modifier
-            .height(86.dp)
+            .height(68.dp)
             .clickable { onClick() },
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(14.dp),
         color = colors.cardBackground,
         border = BorderStroke(1.dp, colors.cardBorder),
         shadowElevation = if (colors.isDark) 0.dp else 1.dp
     ) {
         Column(
-            modifier = Modifier.padding(8.dp),
+            modifier = Modifier.padding(6.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -574,144 +641,16 @@ private fun QuickActionButton(
                 imageVector = icon,
                 contentDescription = title,
                 tint = colors.textPrimary,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(20.dp)
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(5.dp))
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.SemiBold,
                 color = colors.textPrimary,
-                fontSize = 12.sp
+                fontSize = (11 * scale).sp
             )
-        }
-    }
-}
-
-enum class AppLogoType {
-    GooglePay, PhonePe, Paytm, Other
-}
-
-@Composable
-private fun AppLogoSquircle(appType: AppLogoType) {
-    val bgColor = when (appType) {
-        AppLogoType.GooglePay -> Color.White
-        AppLogoType.PhonePe -> Color(0xFF5F259F)
-        AppLogoType.Paytm -> Color.White
-        AppLogoType.Other -> Color(0xFF00897B)
-    }
-
-    Box(
-        modifier = Modifier
-            .size(42.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(bgColor)
-            .border(
-                BorderStroke(
-                    1.dp,
-                    if (appType == AppLogoType.GooglePay || appType == AppLogoType.Paytm) Color(0xFFE2E8F0) else Color.Transparent
-                ),
-                RoundedCornerShape(12.dp)
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        when (appType) {
-            AppLogoType.GooglePay -> {
-                Text(
-                    text = "GPay",
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 11.sp,
-                    color = Color(0xFF1A73E8)
-                )
-            }
-            AppLogoType.PhonePe -> {
-                Text(
-                    text = "पे",
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 18.sp,
-                    color = Color.White
-                )
-            }
-            AppLogoType.Paytm -> {
-                Text(
-                    text = "paytm",
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 10.sp,
-                    color = Color(0xFF00BAF2)
-                )
-            }
-            AppLogoType.Other -> {
-                Text(
-                    text = "UPI",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
-                    color = Color.White
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun DemoFeedRow(
-    appType: AppLogoType,
-    amount: String,
-    subtitle: String
-) {
-    val colors = LocalSoundboxColors.current
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(
-            modifier = Modifier.weight(1f),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            AppLogoSquircle(appType = appType)
-            Spacer(modifier = Modifier.width(14.dp))
-            Column {
-                Text(
-                    text = amount,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.textPrimary,
-                    fontSize = 17.sp
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.textMuted,
-                    fontSize = 13.sp
-                )
-            }
-        }
-
-        // Pill badge with checkmark: "✔ Received"
-        Box(
-            modifier = Modifier
-                .clip(CircleShape)
-                .background(colors.pillBackground)
-                .padding(horizontal = 10.dp, vertical = 5.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = "Received",
-                    tint = colors.pillText,
-                    modifier = Modifier.size(13.dp)
-                )
-                Spacer(modifier = Modifier.width(5.dp))
-                Text(
-                    text = "Received",
-                    color = colors.pillText,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 12.sp
-                )
-            }
         }
     }
 }
@@ -719,26 +658,21 @@ private fun DemoFeedRow(
 @Composable
 private fun PaymentFeedRow(
     payment: PaymentEntity,
+    scale: Float,
     onClick: () -> Unit
 ) {
     val context = LocalContext.current
     val colors = LocalSoundboxColors.current
 
-    val appType = when {
-        payment.appPackage.contains("nbu.paisa", ignoreCase = true) -> AppLogoType.GooglePay
-        payment.appPackage.contains("phonepe", ignoreCase = true) -> AppLogoType.PhonePe
-        payment.appPackage.contains("paytm", ignoreCase = true) -> AppLogoType.Paytm
-        else -> AppLogoType.Other
-    }
-
     val appName = AnnouncementEngine.mapPackageToDisplayName(payment.appPackage)
+    val logoRes = AppLogoProvider.getLogoForPackage(payment.appPackage)
     val timeStr = DateUtils.formatDateTime(context, payment.receivedAt, DateUtils.FORMAT_SHOW_TIME)
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = 14.dp, vertical = 11.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -746,22 +680,28 @@ private fun PaymentFeedRow(
             modifier = Modifier.weight(1f),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AppLogoSquircle(appType = appType)
-            Spacer(modifier = Modifier.width(14.dp))
+            Image(
+                painter = painterResource(id = logoRes),
+                contentDescription = appName,
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(RoundedCornerShape(8.dp))
+            )
+            Spacer(modifier = Modifier.width(11.dp))
             Column {
                 Text(
                     text = AmountParser.formatPaise(payment.amountPaise),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = colors.textPrimary,
-                    fontSize = 17.sp
+                    fontSize = (15 * scale).sp
                 )
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(1.dp))
                 Text(
                     text = "$appName • $timeStr",
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.textMuted,
-                    fontSize = 13.sp,
+                    fontSize = (11 * scale).sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -773,21 +713,21 @@ private fun PaymentFeedRow(
             modifier = Modifier
                 .clip(CircleShape)
                 .background(colors.pillBackground)
-                .padding(horizontal = 10.dp, vertical = 5.dp)
+                .padding(horizontal = 8.dp, vertical = 4.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = "Received",
                     tint = colors.pillText,
-                    modifier = Modifier.size(13.dp)
+                    modifier = Modifier.size(11.dp)
                 )
-                Spacer(modifier = Modifier.width(5.dp))
+                Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = "Received",
                     color = colors.pillText,
                     fontWeight = FontWeight.SemiBold,
-                    fontSize = 12.sp
+                    fontSize = (10 * scale).sp
                 )
             }
         }

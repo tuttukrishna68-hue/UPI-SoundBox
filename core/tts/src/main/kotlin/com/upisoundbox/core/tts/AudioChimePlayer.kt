@@ -35,6 +35,9 @@ class AudioChimePlayer {
             val usage = if (useAlarmStream) AudioAttributes.USAGE_ALARM else AudioAttributes.USAGE_MEDIA
             val contentType = AudioAttributes.CONTENT_TYPE_SONIFICATION
 
+            val minBuffer = AudioTrack.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT)
+            val bufferSize = if (minBuffer > 0) kotlin.math.max(buffer.size * 2, minBuffer) else buffer.size * 2
+
             val audioTrack = AudioTrack.Builder()
                 .setAudioAttributes(
                     AudioAttributes.Builder()
@@ -49,7 +52,7 @@ class AudioChimePlayer {
                         .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
                         .build()
                 )
-                .setBufferSizeInBytes(buffer.size * 2)
+                .setBufferSizeInBytes(bufferSize)
                 .setTransferMode(AudioTrack.MODE_STATIC)
                 .build()
 

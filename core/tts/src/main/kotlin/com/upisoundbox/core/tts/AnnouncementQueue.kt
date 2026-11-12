@@ -47,7 +47,11 @@ class AnnouncementQueue(
 
     private suspend fun processQueue() {
         for (request in queueChannel) {
-            handleRequest(request)
+            try {
+                handleRequest(request)
+            } catch (_: Exception) {
+                // Keep the processing loop resilient to any error
+            }
         }
     }
 

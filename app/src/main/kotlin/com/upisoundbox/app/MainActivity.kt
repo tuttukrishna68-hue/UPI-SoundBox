@@ -58,12 +58,12 @@ class MainActivity : FragmentActivity() {
         }
 
         setContent {
-            val themeMode by preferences.themeMode.collectAsState(initial = "light")
+            val themeMode by preferences.themeMode.collectAsState(initial = "dark")
             val isSystemDark = isSystemInDarkTheme()
             val isDark = when (themeMode.lowercase()) {
-                "dark" -> true
                 "light" -> false
-                else -> isSystemDark
+                "system" -> isSystemDark
+                else -> true // Dark theme default
             }
 
             SoundboxTheme(darkTheme = isDark) {

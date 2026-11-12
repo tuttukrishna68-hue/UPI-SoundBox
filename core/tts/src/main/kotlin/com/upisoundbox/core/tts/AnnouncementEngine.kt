@@ -83,84 +83,102 @@ class AnnouncementEngine(
         playChime: Boolean = true,
         waitCalls: Boolean = true
     ): Boolean = withContext(Dispatchers.Main) {
-        initDeferred.await()
-        if (!isTtsReady || tts == null) return@withContext false
+        try {
+            initDeferred.await()
+            if (!isTtsReady || tts == null) return@withContext false
 
-        // Wait if phone call is active
-        if (waitCalls) {
-            while (isPhoneCallActive()) {
-                delay(1000)
+            // Wait if phone call is active
+            if (waitCalls) {
+                var callWaitCount = 0
+                while (isPhoneCallActive() && callWaitCount < 30) {
+                    delay(1000)
+                    callWaitCount++
+                }
             }
-        }
 
-        // Configure language with fallback to English
-        val targetLocale = Locale.forLanguageTag(languageTag)
-        val availability = tts?.isLanguageAvailable(targetLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED
-        if (availability >= TextToSpeech.LANG_AVAILABLE) {
-            tts?.language = targetLocale
-        } else {
-            tts?.language = Locale.ENGLISH
-        }
-
-        // Play chime first if enabled
-        if (playChime) {
-            chimePlayer.playChime(useAlarmStream)
-        }
-
-        // Request Audio Focus with ducking
-        val streamType = if (useAlarmStream) AudioManager.STREAM_ALARM else AudioManager.STREAM_MUSIC
-        val audioUsage = if (useAlarmStream) AudioAttributes.USAGE_ALARM else AudioAttributes.USAGE_MEDIA
-        val focusRequest = buildAudioFocusRequest(audioUsage)
-
-        val focusGranted = requestAudioFocus(focusRequest, streamType)
-
-        // Volume boost
-        val previousVolume = audioManager.getStreamVolume(streamType)
-        val maxVolume = audioManager.getStreamMaxVolume(streamType)
-        if (volumeBoost) {
-            try {
-                audioManager.setStreamVolume(streamType, maxVolume, 0)
-            } catch (_: Exception) {}
-        }
-
-        val speechCompletion = CompletableDeferred<Boolean>()
-        val utteranceId = "upi_soundbox_${System.currentTimeMillis()}"
-
-        tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-            override fun onStart(utteranceId: String?) {}
-            override fun onDone(utteranceId: String?) {
-                speechCompletion.complete(true)
+            // Configure language with fallback to English
+            val targetLocale = Locale.forLanguageTag(languageTag)
+            val availability = try {
+                tts?.isLanguageAvailable(targetLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED
+            } catch (_: Exception) {
+                TextToSpeech.LANG_NOT_SUPPORTED
             }
-            override fun onError(utteranceId: String?) {
+            if (availability >= TextToSpeech.LANG_AVAILABLE) {
+                try { tts?.language = targetLocale } catch (_: Exception) {}
+            } else {
+                try { tts?.language = Locale.ENGLISH } catch (_: Exception) {}
+            }
+
+            // Play chime first if enabled
+            if (playChime) {
+                try { chimePlayer.playChime(useAlarmStream) } catch (_: Exception) {}
+            }
+
+            // Request Audio Focus with ducking
+            val streamType = if (useAlarmStream) AudioManager.STREAM_ALARM else AudioManager.STREAM_MUSIC
+            val audioUsage = if (useAlarmStream) AudioAttributes.USAGE_ALARM else AudioAttributes.USAGE_MEDIA
+            val focusRequest = buildAudioFocusRequest(audioUsage)
+
+            val focusGranted = try { requestAudioFocus(focusRequest, streamType) } catch (_: Exception) { false }
+
+            // Volume boost safely
+            val previousVolume = try { audioManager.getStreamVolume(streamType) } catch (_: Exception) { 7 }
+            val maxVolume = try { audioManager.getStreamMaxVolume(streamType) } catch (_: Exception) { 15 }
+            if (volumeBoost) {
+                try {
+                    audioManager.setStreamVolume(streamType, maxVolume, 0)
+                } catch (_: Exception) {}
+            }
+
+            val speechCompletion = CompletableDeferred<Boolean>()
+            val utteranceId = "upi_soundbox_${System.currentTimeMillis()}"
+
+            tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                override fun onStart(utteranceId: String?) {}
+                override fun onDone(utteranceId: String?) {
+                    speechCompletion.complete(true)
+                }
+                override fun onError(utteranceId: String?) {
+                    speechCompletion.complete(false)
+                }
+            })
+
+            // Audio Attributes for TTS
+            val params = Bundle().apply {
+                putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, streamType)
+            }
+
+            val speakResult = try {
+                tts?.speak(text, TextToSpeech.QUEUE_FLUSH, params, utteranceId)
+            } catch (e: Exception) {
+                TextToSpeech.ERROR
+            }
+
+            if (speakResult != TextToSpeech.SUCCESS) {
                 speechCompletion.complete(false)
             }
-        })
 
-        // Audio Attributes for TTS
-        val params = Bundle().apply {
-            putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, streamType)
-        }
-
-        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, params, utteranceId)
-
-        // Await completion or timeout after 15 seconds
-        val success = try {
-            kotlinx.coroutines.withTimeout(15000L) {
-                speechCompletion.await()
+            // Await completion or timeout after 15 seconds
+            val success = try {
+                kotlinx.coroutines.withTimeout(15000L) {
+                    speechCompletion.await()
+                }
+            } catch (_: Exception) {
+                false
             }
-        } catch (_: Exception) {
+
+            // Restore volume and abandon audio focus
+            if (volumeBoost) {
+                try {
+                    audioManager.setStreamVolume(streamType, previousVolume, 0)
+                } catch (_: Exception) {}
+            }
+            try { abandonAudioFocus(focusRequest, streamType) } catch (_: Exception) {}
+
+            success
+        } catch (e: Exception) {
             false
         }
-
-        // Restore volume and abandon audio focus
-        if (volumeBoost) {
-            try {
-                audioManager.setStreamVolume(streamType, previousVolume, 0)
-            } catch (_: Exception) {}
-        }
-        abandonAudioFocus(focusRequest, streamType)
-
-        success
     }
 
     private fun isPhoneCallActive(): Boolean {
