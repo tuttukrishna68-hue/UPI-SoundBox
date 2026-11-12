@@ -1,5 +1,6 @@
 package com.upisoundbox.core.design.component
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.Composable
@@ -19,11 +20,12 @@ fun CardContainer(
         modifier = modifier,
         shape = SoundboxShapes.Card,
         colors = CardDefaults.cardColors(
-            containerColor = colors.surface,
+            containerColor = colors.cardBackground,
             contentColor = colors.textPrimary
         ),
+        border = BorderStroke(1.dp, colors.cardBorder),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = if (colors.isDark) 0.dp else 2.dp
+            defaultElevation = if (colors.isDark) 0.dp else 1.dp
         )
     ) {
         content()

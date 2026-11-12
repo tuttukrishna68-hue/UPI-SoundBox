@@ -5,33 +5,64 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 /**
- * Soundbox color tokens.
+ * Soundbox color tokens matching the reference emerald fintech design.
  *
- * Light: Paper #FAFAF8, Ink #141414, Accent Orange #F25C2E, Orange tint #FCE3D8,
- *        Bubble grey #E8E8EA, Muted text #8A8A8F, Success #1F9D55.
- * Dark:  Background #0F0F10, Surface #1B1B1D, Text #F5F5F2, same orange accent,
- *        bubble grey #2A2A2E, muted #8A8A8F, success #1F9D55.
+ * Light: MintBackground #F7FAF8, Ink #0F172A, Emerald #10B981, MintPill #DCFCE7 / #15803D.
+ * Dark:  Obsidian #090D0B, Text #FFFFFF, DarkEmerald #0E1511 / #1B2B21, Neon #34D399.
  */
 object SoundboxColors {
     // Light tokens
-    val Paper = Color(0xFFFAFAF8)
-    val Ink = Color(0xFF141414)
-    val AccentOrange = Color(0xFFF25C2E)
-    val OrangeTint = Color(0xFFFCE3D8)
-    val BubbleGreyLight = Color(0xFFE8E8EA)
-    val Muted = Color(0xFF8A8A8F)
-    val Success = Color(0xFF1F9D55)
+    val MintBackground = Color(0xFFF7FAF8)
+    val MintBackgroundGradientStart = Color(0xFFEBF7F0)
+    val CardBackgroundLight = Color(0xFFFFFFFF)
+    val CardBorderLight = Color(0xFFE5E7EB)
+    val Ink = Color(0xFF0F172A)
+    val Muted = Color(0xFF64748B)
+
+    // Primary Emerald Brand
+    val EmeraldGreen = Color(0xFF10B981)
+    val EmeraldDark = Color(0xFF059669)
+    val MintPillBgLight = Color(0xFFDCFCE7)
+    val MintPillTextLight = Color(0xFF15803D)
 
     // Dark tokens
-    val BackgroundDark = Color(0xFF0F0F10)
-    val SurfaceDark = Color(0xFF1B1B1D)
-    val TextDark = Color(0xFFF5F5F2)
-    val OrangeTintDark = Color(0xFF38231A)
-    val BubbleGreyDark = Color(0xFF2A2A2E)
+    val BackgroundDark = Color(0xFF090D0B)
+    val CardBackgroundDark = Color(0xFF0E1511)
+    val CardBorderDark = Color(0xFF1B2B21)
+    val TextDark = Color(0xFFFFFFFF)
+    val MutedDark = Color(0xFF94A3B8)
+    val MintPillBgDark = Color(0xFF102E1E)
+    val MintPillTextDark = Color(0xFF34D399)
+    val NeonGreen = Color(0xFF34D399)
+
+    // UPI Brand Logos
+    val GooglePayBlue = Color(0xFF1A73E8)
+    val PhonePePurple = Color(0xFF5F259F)
+    val PaytmBlue = Color(0xFF00BAF2)
+    val BhimTeal = Color(0xFF00897B)
+
+    // Hero Cards
+    val HeroLightGradientStart = Color(0xFFF0FDF4)
+    val HeroLightGradientEnd = Color(0xFFE7F7ED)
+    val HeroLightBorder = Color(0xFFC6F6D5)
+
+    val HeroDarkGradientStart = Color(0xFF0C2016)
+    val HeroDarkGradientEnd = Color(0xFF08170F)
+    val HeroDarkBorder = Color(0xFF1B4D34)
+
+    // Legacy Aliases
+    val Paper = MintBackground
+    val AccentOrange = EmeraldGreen
+    val OrangeTint = MintPillBgLight
+    val OrangeTintDark = MintPillBgDark
+    val BubbleGreyLight = Color(0xFFF1F5F9)
+    val BubbleGreyDark = Color(0xFF161F1A)
+    val SurfaceDark = CardBackgroundDark
 
     // Semantic status
-    val Warning = Color(0xFFE67E22)
-    val Error = Color(0xFFD32F2F)
+    val Success = EmeraldGreen
+    val Warning = Color(0xFFF59E0B)
+    val Error = Color(0xFFEF4444)
 }
 
 @Immutable
@@ -40,6 +71,17 @@ data class SoundboxColorScheme(
     val surface: Color,
     val textPrimary: Color,
     val textMuted: Color,
+    val cardBackground: Color,
+    val cardBorder: Color,
+    val emeraldGreen: Color,
+    val pillBackground: Color,
+    val pillText: Color,
+    val heroGradientStart: Color,
+    val heroGradientEnd: Color,
+    val heroBorder: Color,
+    val statIconBg: Color,
+    val statIconTint: Color,
+    val divider: Color,
     val accentOrange: Color,
     val orangeTint: Color,
     val bubbleGrey: Color,
@@ -55,14 +97,25 @@ data class SoundboxColorScheme(
 }
 
 val LightSoundboxColorScheme = SoundboxColorScheme(
-    background = SoundboxColors.Paper,
-    surface = Color.White,
+    background = SoundboxColors.MintBackground,
+    surface = SoundboxColors.CardBackgroundLight,
     textPrimary = SoundboxColors.Ink,
     textMuted = SoundboxColors.Muted,
-    accentOrange = SoundboxColors.AccentOrange,
-    orangeTint = SoundboxColors.OrangeTint,
+    cardBackground = SoundboxColors.CardBackgroundLight,
+    cardBorder = SoundboxColors.CardBorderLight,
+    emeraldGreen = SoundboxColors.EmeraldGreen,
+    pillBackground = SoundboxColors.MintPillBgLight,
+    pillText = SoundboxColors.MintPillTextLight,
+    heroGradientStart = SoundboxColors.HeroLightGradientStart,
+    heroGradientEnd = SoundboxColors.HeroLightGradientEnd,
+    heroBorder = SoundboxColors.HeroLightBorder,
+    statIconBg = SoundboxColors.MintPillBgLight,
+    statIconTint = SoundboxColors.MintPillTextLight,
+    divider = Color(0xFFF1F5F9),
+    accentOrange = SoundboxColors.EmeraldGreen,
+    orangeTint = SoundboxColors.MintPillBgLight,
     bubbleGrey = SoundboxColors.BubbleGreyLight,
-    success = SoundboxColors.Success,
+    success = SoundboxColors.EmeraldGreen,
     warning = SoundboxColors.Warning,
     error = SoundboxColors.Error,
     isDark = false
@@ -70,13 +123,24 @@ val LightSoundboxColorScheme = SoundboxColorScheme(
 
 val DarkSoundboxColorScheme = SoundboxColorScheme(
     background = SoundboxColors.BackgroundDark,
-    surface = SoundboxColors.SurfaceDark,
+    surface = SoundboxColors.CardBackgroundDark,
     textPrimary = SoundboxColors.TextDark,
-    textMuted = SoundboxColors.Muted,
-    accentOrange = SoundboxColors.AccentOrange,
-    orangeTint = SoundboxColors.OrangeTintDark,
+    textMuted = SoundboxColors.MutedDark,
+    cardBackground = SoundboxColors.CardBackgroundDark,
+    cardBorder = SoundboxColors.CardBorderDark,
+    emeraldGreen = SoundboxColors.NeonGreen,
+    pillBackground = SoundboxColors.MintPillBgDark,
+    pillText = SoundboxColors.MintPillTextDark,
+    heroGradientStart = SoundboxColors.HeroDarkGradientStart,
+    heroGradientEnd = SoundboxColors.HeroDarkGradientEnd,
+    heroBorder = SoundboxColors.HeroDarkBorder,
+    statIconBg = SoundboxColors.MintPillBgDark,
+    statIconTint = SoundboxColors.NeonGreen,
+    divider = Color(0xFF1A251E),
+    accentOrange = SoundboxColors.NeonGreen,
+    orangeTint = SoundboxColors.MintPillBgDark,
     bubbleGrey = SoundboxColors.BubbleGreyDark,
-    success = SoundboxColors.Success,
+    success = SoundboxColors.NeonGreen,
     warning = SoundboxColors.Warning,
     error = SoundboxColors.Error,
     isDark = true

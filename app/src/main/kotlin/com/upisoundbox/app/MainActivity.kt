@@ -8,6 +8,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
@@ -55,7 +58,15 @@ class MainActivity : FragmentActivity() {
         }
 
         setContent {
-            SoundboxTheme {
+            val themeMode by preferences.themeMode.collectAsState(initial = "light")
+            val isSystemDark = isSystemInDarkTheme()
+            val isDark = when (themeMode.lowercase()) {
+                "dark" -> true
+                "light" -> false
+                else -> isSystemDark
+            }
+
+            SoundboxTheme(darkTheme = isDark) {
                 val navController = rememberNavController()
                 SoundboxNavGraph(
                     navController = navController,

@@ -53,7 +53,7 @@ class SoundboxPreferences(private val context: Context) {
     val isSecureScreenEnabled: Flow<Boolean> = dataStore.data.map { it[KEY_SECURE_SCREEN] ?: false }
     val myUpiId: Flow<String> = dataStore.data.map { it[KEY_MY_UPI_ID] ?: "" }
     val myShopName: Flow<String> = dataStore.data.map { it[KEY_MY_SHOP_NAME] ?: "" }
-    val themeMode: Flow<String> = dataStore.data.map { it[KEY_THEME_MODE] ?: "system" }
+    val themeMode: Flow<String> = dataStore.data.map { it[KEY_THEME_MODE] ?: "light" }
 
     // Onboarding
     val isOnboardingCompleted: Flow<Boolean> = dataStore.data.map { it[KEY_ONBOARDING_DONE] ?: false }
