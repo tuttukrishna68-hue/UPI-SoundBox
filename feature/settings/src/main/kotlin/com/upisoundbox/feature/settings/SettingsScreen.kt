@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.FormatSize
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SettingsBrightness
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -41,6 +42,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -88,10 +91,14 @@ fun SettingsScreen(
 
     val currentTheme by preferences.themeMode.collectAsState(initial = "dark")
     val currentFontScale by preferences.fontScale.collectAsState(initial = "compact")
+    val userName by preferences.userName.collectAsState(initial = "Budiarti")
     val currentLang by preferences.languageTag.collectAsState(initial = "en-IN")
     var testLang by remember(currentLang) { mutableStateOf(currentLang) }
     val isAppLock by preferences.isAppLockEnabled.collectAsState(initial = false)
     val isSecureScreen by preferences.isSecureScreenEnabled.collectAsState(initial = false)
+
+    var showNameDialog by remember { mutableStateOf(false) }
+    var editingName by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -132,6 +139,61 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             Spacer(modifier = Modifier.height(6.dp))
+
+            // 0. Merchant Profile Section
+            Text(
+                text = "MERCHANT PROFILE",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = colors.textMuted,
+                fontSize = 11.sp,
+                letterSpacing = 1.sp
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Card(
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = colors.cardBackground),
+                border = BorderStroke(1.dp, colors.cardBorder),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        editingName = userName
+                        showNameDialog = true
+                    }
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Merchant Name",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colors.textPrimary,
+                            fontSize = 14.sp
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Dashboard displays: 'Hello, $userName'",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.textMuted,
+                            fontSize = 12.sp
+                        )
+                    }
+                    Text(
+                        text = userName,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF10B981),
+                        fontSize = 14.sp
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(18.dp))
 
             // 1. Appearance & Display Section (Theme + Font Scale)
             Text(
@@ -617,6 +679,74 @@ fun SettingsScreen(
             }
 
             Spacer(modifier = Modifier.height(32.dp))
+        }
+
+        // Edit Merchant Name Dialog
+        if (showNameDialog) {
+            AlertDialog(
+                onDismissRequest = { showNameDialog = false },
+                title = {
+                    Text(
+                        text = "Merchant Name",
+                        fontWeight = FontWeight.Bold,
+                        color = colors.textPrimary
+                    )
+                },
+                text = {
+                    Column {
+                        Text(
+                            text = "Set the name displayed on the soundbox home dashboard:",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.textMuted
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedTextField(
+                            value = editingName,
+                            onValueChange = { editingName = it },
+                            placeholder = { Text("e.g. Budiarti, Rahul, Store Name", color = colors.textMuted) },
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = colors.cardBackground,
+                                unfocusedContainerColor = colors.cardBackground,
+                                focusedBorderColor = Color(0xFF10B981),
+                                unfocusedBorderColor = colors.cardBorder,
+                                focusedTextColor = colors.textPrimary,
+                                unfocusedTextColor = colors.textPrimary
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    Text(
+                        text = "Save",
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF10B981),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable {
+                                val newName = editingName.trim().ifEmpty { "Budiarti" }
+                                scope.launch { preferences.setUserName(newName) }
+                                showNameDialog = false
+                            }
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                },
+                dismissButton = {
+                    Text(
+                        text = "Cancel",
+                        fontWeight = FontWeight.Medium,
+                        color = colors.textMuted,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { showNameDialog = false }
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                },
+                containerColor = colors.cardBackground,
+                shape = RoundedCornerShape(20.dp)
+            )
         }
     }
 }

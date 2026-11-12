@@ -53,6 +53,7 @@ class SoundboxPreferences(private val context: Context) {
     val isSecureScreenEnabled: Flow<Boolean> = dataStore.data.map { it[KEY_SECURE_SCREEN] ?: false }
     val myUpiId: Flow<String> = dataStore.data.map { it[KEY_MY_UPI_ID] ?: "" }
     val myShopName: Flow<String> = dataStore.data.map { it[KEY_MY_SHOP_NAME] ?: "" }
+    val userName: Flow<String> = dataStore.data.map { it[KEY_USER_NAME] ?: "Budiarti" }
     val themeMode: Flow<String> = dataStore.data.map { it[KEY_THEME_MODE] ?: "dark" }
     val fontScale: Flow<String> = dataStore.data.map { it[KEY_FONT_SCALE] ?: "compact" }
 
@@ -132,6 +133,10 @@ class SoundboxPreferences(private val context: Context) {
         dataStore.edit { it[KEY_APP_LOCK] = enabled }
     }
 
+    suspend fun setUserName(name: String) {
+        dataStore.edit { it[KEY_USER_NAME] = name.trim().ifEmpty { "Budiarti" } }
+    }
+
     suspend fun setOnboardingCompleted(completed: Boolean) {
         dataStore.edit { it[KEY_ONBOARDING_DONE] = completed }
     }
@@ -174,6 +179,7 @@ class SoundboxPreferences(private val context: Context) {
         private val KEY_SECURE_SCREEN = booleanPreferencesKey("secure_screen")
         private val KEY_MY_UPI_ID = stringPreferencesKey("my_upi_id")
         private val KEY_MY_SHOP_NAME = stringPreferencesKey("my_shop_name")
+        private val KEY_USER_NAME = stringPreferencesKey("user_name")
         private val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
         private val KEY_FONT_SCALE = stringPreferencesKey("font_scale")
         private val KEY_ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")

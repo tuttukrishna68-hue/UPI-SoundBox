@@ -40,6 +40,7 @@ import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Notifications
@@ -47,18 +48,23 @@ import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Storefront
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -99,10 +105,14 @@ fun HomeScreen(
     val scope = rememberCoroutineScope()
 
     val isListening by preferences.isSoundboxActive.collectAsState(initial = true)
+    val userName by preferences.userName.collectAsState(initial = "Budiarti")
     val fontScalePref by preferences.fontScale.collectAsState(initial = "compact")
     val todayTotalPaise by repository.getTodayTotal().collectAsState(initial = 0L)
     val todayCount by repository.getTodayCount().collectAsState(initial = 0)
     val recentPayments by repository.getRecentPayments(20).collectAsState(initial = emptyList())
+
+    var showNameDialog by remember { mutableStateOf(false) }
+    var tempName by remember { mutableStateOf("") }
 
     // Font size multiplier based on user preference
     val scaleMultiplier = when (fontScalePref.lowercase()) {
@@ -286,7 +296,88 @@ fun HomeScreen(
                 }
             }
 
-            // 2. Hero Card: "Today's Collection" + Real Ledger Data
+            // 2. Hello Greeting Card with User's Name (matching reference image)
+            item {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = colors.cardBackground),
+                    border = BorderStroke(1.dp, colors.cardBorder),
+                    elevation = CardDefaults.cardElevation(defaultElevation = if (colors.isDark) 0.dp else 1.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            tempName = userName
+                            showNameDialog = true
+                        }
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 13.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "Hello, $userName",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.textPrimary,
+                                    fontSize = (19 * scaleMultiplier).sp
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Edit Name",
+                                    tint = colors.textMuted.copy(alpha = 0.5f),
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = if (isListening) "Soundbox active • Ready for payments" else "Soundbox paused",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (isListening) Color(0xFF10B981) else colors.textMuted,
+                                fontSize = (12 * scaleMultiplier).sp
+                            )
+                        }
+
+                        // Merchant Avatar with live status dot
+                        Box(contentAlignment = Alignment.BottomEnd) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(if (colors.isDark) Color(0xFF102E1E) else Color(0xFFDCFCE7))
+                                    .border(
+                                        BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.5f)),
+                                        CircleShape
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = userName.firstOrNull()?.uppercase() ?: "B",
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (colors.isDark) Color.White else Color(0xFF065F46),
+                                    fontSize = 16.sp
+                                )
+                            }
+                            if (isListening) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(10.dp)
+                                        .scale(dotPulse)
+                                        .background(Color(0xFF10B981), CircleShape)
+                                        .border(BorderStroke(1.5.dp, colors.cardBackground), CircleShape)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. Hero Card: "Today's Collection" + Real Ledger Data
             item {
                 val heroGradient = Brush.verticalGradient(
                     listOf(colors.heroGradientStart, colors.heroGradientEnd)
@@ -569,6 +660,74 @@ fun HomeScreen(
                     }
                 }
             }
+        }
+
+        // Edit Merchant Name Dialog
+        if (showNameDialog) {
+            AlertDialog(
+                onDismissRequest = { showNameDialog = false },
+                title = {
+                    Text(
+                        text = "Merchant Name",
+                        fontWeight = FontWeight.Bold,
+                        color = colors.textPrimary
+                    )
+                },
+                text = {
+                    Column {
+                        Text(
+                            text = "Set your name to display on the soundbox dashboard:",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.textMuted
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedTextField(
+                            value = tempName,
+                            onValueChange = { tempName = it },
+                            placeholder = { Text("e.g. Budiarti, Rahul, Store Name", color = colors.textMuted) },
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = colors.cardBackground,
+                                unfocusedContainerColor = colors.cardBackground,
+                                focusedBorderColor = Color(0xFF10B981),
+                                unfocusedBorderColor = colors.cardBorder,
+                                focusedTextColor = colors.textPrimary,
+                                unfocusedTextColor = colors.textPrimary
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    Text(
+                        text = "Save",
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF10B981),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable {
+                                val newName = tempName.trim().ifEmpty { "Budiarti" }
+                                scope.launch { preferences.setUserName(newName) }
+                                showNameDialog = false
+                            }
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                },
+                dismissButton = {
+                    Text(
+                        text = "Cancel",
+                        fontWeight = FontWeight.Medium,
+                        color = colors.textMuted,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { showNameDialog = false }
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                },
+                containerColor = colors.cardBackground,
+                shape = RoundedCornerShape(20.dp)
+            )
         }
     }
 }
