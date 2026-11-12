@@ -11,6 +11,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.Calendar
 
 sealed interface AnnouncementRequest {
@@ -36,9 +37,7 @@ class AnnouncementQueue(
     private val queueChannel = Channel<QueuedRequest>(Channel.UNLIMITED)
     private var lastAnnouncedText: String? = null
     private var lastAnnouncedLang: String = "en-IN"
-
-    // Burst buffer tracking
-    private val burstBuffer = mutableListOf<PaymentEvent>()
+    private var pendingRequest: QueuedRequest? = null
 
     init {
         scope.launch {
@@ -66,14 +65,81 @@ class AnnouncementQueue(
     }
 
     private suspend fun processQueue() {
-        for (queuedRequest in queueChannel) {
-            val success = try {
-                handleRequest(queuedRequest.request)
-            } catch (_: Exception) {
-                false
+        while (true) {
+            val queuedRequest = pendingRequest?.also { pendingRequest = null }
+                ?: queueChannel.receive()
+
+            if (queuedRequest.request is AnnouncementRequest.Payment) {
+                processPaymentBatch(queuedRequest)
+            } else {
+                val success = try {
+                    handleRequest(queuedRequest.request)
+                } catch (_: Exception) {
+                    false
+                }
+                queuedRequest.completion?.complete(success)
             }
-            queuedRequest.completion?.complete(success)
         }
+    }
+
+    private suspend fun processPaymentBatch(first: QueuedRequest) {
+        val requests = mutableListOf(first)
+        val burstEnabled = try {
+            preferences.isBurstModeEnabled.first()
+        } catch (_: Exception) {
+            false
+        }
+        val threshold = try {
+            preferences.burstThresholdCount.first().coerceAtLeast(2)
+        } catch (_: Exception) {
+            2
+        }
+
+        if (burstEnabled) {
+            val windowMs = try {
+                preferences.burstWindowSeconds.first().coerceIn(1, 60) * 1000L
+            } catch (_: Exception) {
+                10_000L
+            }
+            val deadline = System.currentTimeMillis() + windowMs
+
+            while (requests.size < threshold) {
+                val remainingMs = deadline - System.currentTimeMillis()
+                if (remainingMs <= 0L) break
+
+                val next = withTimeoutOrNull(remainingMs) {
+                    queueChannel.receive()
+                } ?: break
+
+                if (next.request is AnnouncementRequest.Payment) {
+                    requests += next
+                } else {
+                    // Preserve non-payment requests for the next queue turn.
+                    pendingRequest = next
+                    break
+                }
+            }
+        }
+
+        val eligibleEvents = requests
+            .map { (it.request as AnnouncementRequest.Payment).event }
+            .filter { isPaymentEligible(it) }
+
+        val success = try {
+            if (eligibleEvents.size >= threshold) {
+                announceBurst(eligibleEvents)
+            } else {
+                var allSuccessful = true
+                eligibleEvents.forEach { event ->
+                    allSuccessful = announceSingle(event) && allSuccessful
+                }
+                allSuccessful && eligibleEvents.isNotEmpty()
+            }
+        } catch (_: Exception) {
+            false
+        }
+
+        requests.forEach { it.completion?.complete(success) }
     }
 
     private suspend fun handleRequest(request: AnnouncementRequest): Boolean {
@@ -105,38 +171,20 @@ class AnnouncementQueue(
             }
 
             is AnnouncementRequest.Payment -> {
-                // 1. Check if soundbox is active
-                if (!preferences.isSoundboxActive.first()) return false
-
-                // 2. Check minimum amount
-                val minAmount = preferences.minAmountPaise.first()
-                if (request.event.amountPaise < minAmount) return false
-
-                // 3. Check quiet hours
-                if (isInsideQuietHours()) return false
-
-                // 4. Burst handling: collect any pending payments
-                val isBurstEnabled = preferences.isBurstModeEnabled.first()
-                val burstThreshold = preferences.burstThresholdCount.first()
-
-                if (isBurstEnabled && burstThreshold > 1) {
-                    burstBuffer.add(request.event)
-                    // Wait a short window (e.g. 1.5 seconds) to see if more arrive
-                    delay(1500)
-                    if (burstBuffer.size >= burstThreshold) {
-                        val success = announceBurst(burstBuffer.toList())
-                        burstBuffer.clear()
-                        return success
-                    } else if (burstBuffer.isNotEmpty()) {
-                        val single = burstBuffer.removeAt(0)
-                        return announceSingle(single)
-                    }
+                return if (isPaymentEligible(request.event)) {
+                    announceSingle(request.event)
                 } else {
-                    return announceSingle(request.event)
+                    false
                 }
             }
         }
         return false
+    }
+
+    private suspend fun isPaymentEligible(event: PaymentEvent): Boolean {
+        if (!preferences.isSoundboxActive.first()) return false
+        if (event.amountPaise < preferences.minAmountPaise.first()) return false
+        return !isInsideQuietHours()
     }
 
     private suspend fun announceSingle(event: PaymentEvent): Boolean {

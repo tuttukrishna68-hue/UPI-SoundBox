@@ -10,11 +10,13 @@ import android.os.PowerManager
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,14 +29,23 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.BatteryChargingFull
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsNone
+import androidx.compose.material.icons.filled.RecordVoiceOver
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Sms
+import androidx.compose.material.icons.filled.Settings as SettingsIcon
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -52,6 +63,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
@@ -62,10 +77,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.upisoundbox.core.data.preferences.SoundboxPreferences
-import com.upisoundbox.core.design.R
-import com.upisoundbox.core.design.component.ChipStatus
 import com.upisoundbox.core.design.component.PillButton
-import com.upisoundbox.core.design.component.StatusChip
 import com.upisoundbox.core.design.theme.LocalSoundboxColors
 import com.upisoundbox.core.tts.AnnouncementEngine
 import com.upisoundbox.core.tts.AnnouncementQueue
@@ -161,37 +173,61 @@ fun SetupWizardScreen(
     }
 
     val allEssentialReady = hasNotificationAccess && hasPostNotificationPermission && hasBatteryExemption
+    val requiredPermissionCount = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) 3 else 2
+    val readyPermissionCount = listOf(
+        hasNotificationAccess,
+        hasPostNotificationPermission,
+        hasBatteryExemption
+    ).count { it }
+    val setupProgress = (readyPermissionCount.toFloat() / requiredPermissionCount.toFloat()).coerceIn(0f, 1f)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.paper)
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        colors.paper,
+                        Color(0xFF071A12),
+                        colors.paper
+                    )
+                )
+            )
             .statusBarsPadding()
             .navigationBarsPadding()
-            .padding(horizontal = 24.dp, vertical = 12.dp)
+            .padding(horizontal = 18.dp, vertical = 12.dp)
             .verticalScroll(scrollState)
     ) {
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text(
-            text = "Setup Soundbox",
-            style = MaterialTheme.typography.displaySmall,
-            color = colors.ink
-        )
-
         Spacer(modifier = Modifier.height(8.dp))
 
+        SetupProgressHeader(
+            readyCount = readyPermissionCount,
+            totalCount = requiredPermissionCount,
+            progress = setupProgress
+        )
+
+        Spacer(modifier = Modifier.height(22.dp))
+
         Text(
-            text = "Follow these simple steps so your phone announces UPI payments without interruption.",
-            style = MaterialTheme.typography.bodyMedium,
+            text = "Required access",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = colors.ink
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = "Connect the essentials so every payment is detected and announced reliably.",
+            style = MaterialTheme.typography.bodySmall,
             color = colors.muted
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Step 1: Notification Listener Access
         WizardItemCard(
-            title = "1. Notification Access",
+            icon = Icons.Default.Notifications,
+            stepLabel = "01 · CORE ACCESS",
+            title = "Notification access",
             description = "Allows detecting incoming payment alerts from allow-listed UPI apps.",
             isCompleted = hasNotificationAccess,
             buttonText = if (hasNotificationAccess) "Granted" else "Enable",
@@ -210,7 +246,9 @@ fun SetupWizardScreen(
         // Step 2: Post Notifications (Android 13+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             WizardItemCard(
-                title = "2. Notification Permission",
+                icon = Icons.Default.NotificationsNone,
+                stepLabel = "02 · CORE ACCESS",
+                title = "Notification permission",
                 description = "Required to keep the Soundbox active in the background.",
                 isCompleted = hasPostNotificationPermission,
                 buttonText = if (hasPostNotificationPermission) "Granted" else "Allow",
@@ -223,7 +261,9 @@ fun SetupWizardScreen(
 
         // Step 3: Battery Optimization Exemption
         WizardItemCard(
-            title = "3. Battery Optimization",
+            icon = Icons.Default.BatteryChargingFull,
+            stepLabel = "03 · CORE ACCESS",
+            title = "Battery optimization",
             description = "Exempt Soundbox so Android doesn't kill it during screen-off sleep.",
             isCompleted = hasBatteryExemption,
             buttonText = if (hasBatteryExemption) "Exempted" else "Fix",
@@ -246,7 +286,9 @@ fun SetupWizardScreen(
 
         // Step 4: OEM Background Guide
         WizardItemCard(
-            title = "4. Autostart & OEM Settings",
+            icon = Icons.Default.SettingsIcon,
+            stepLabel = "04 · RECOMMENDED",
+            title = "Autostart & OEM settings",
             description = "Configure autostart on Xiaomi, Samsung, Vivo, Oppo, Realme devices.",
             isCompleted = false,
             buttonText = "Open Guide",
@@ -257,7 +299,9 @@ fun SetupWizardScreen(
 
         // Step 5: TTS Voice Check
         WizardItemCard(
-            title = "5. Speech Voice Data",
+            icon = Icons.Default.RecordVoiceOver,
+            stepLabel = "05 · AUDIO",
+            title = "Speech voice data",
             description = "Verifies voice synthesis for your selected language ($languageTag).",
             isCompleted = hasVoiceInstalled,
             buttonText = if (hasVoiceInstalled) "Ready" else "Install Voice",
@@ -271,72 +315,98 @@ fun SetupWizardScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Step 6: Optional SMS Detection
-        Card(
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = colors.surface),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "6. Bank SMS Detection (Optional)",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = colors.ink
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Backup detection for incoming bank credits when notifications are delayed.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.muted
-                        )
-                    }
-                    Switch(
-                        checked = isSmsEnabled,
-                        onCheckedChange = { checked ->
-                            if (checked) {
-                                showSmsDisclosureDialog = true
-                            } else {
-                                scope.launch { preferences.setSmsSourceEnabled(false) }
-                            }
-                        },
-                        colors = SwitchDefaults.colors(checkedThumbColor = colors.accentOrange)
+        GlassPanel(accent = colors.accentOrange) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                PermissionIcon(
+                    icon = Icons.Default.Sms,
+                    accent = colors.accentOrange,
+                    isCompleted = isSmsEnabled
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Optional backup",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.accentOrange
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Bank SMS detection",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.ink
+                    )
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Text(
+                        text = "A private backup when payment notifications arrive late.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.muted
                     )
                 }
+                Switch(
+                    checked = isSmsEnabled,
+                    onCheckedChange = { checked ->
+                        if (checked) {
+                            showSmsDisclosureDialog = true
+                        } else {
+                            scope.launch { preferences.setSmsSourceEnabled(false) }
+                        }
+                    },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = colors.accentOrange,
+                        checkedTrackColor = colors.accentOrange.copy(alpha = 0.28f),
+                        uncheckedThumbColor = colors.muted,
+                        uncheckedTrackColor = colors.background
+                    )
+                )
             }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
         // Step 7: Test Payment Announcement
-        Card(
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = colors.orangeTint.copy(alpha = 0.35f)),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+        GlassPanel(accent = colors.success) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "🔊 Test Announcement",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.ink
+                PermissionIcon(
+                    icon = Icons.Default.VolumeUp,
+                    accent = colors.success,
+                    isCompleted = isTestSuccessful == true
                 )
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "Test your volume and speech engine right now. Does not affect today's ledger.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.muted,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "FINAL CHECK",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.success
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Test the announcement",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.ink
+                    )
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Text(
+                        text = "Confirm your phone can speak a payment clearly.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.muted
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(14.dp))
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.End
+            ) {
                 Button(
                     onClick = {
                         scope.launch {
@@ -344,21 +414,35 @@ fun SetupWizardScreen(
                             isTestSuccessful = announcementQueue.enqueueAndAwait(AnnouncementRequest.Test())
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = colors.accentOrange),
-                    shape = RoundedCornerShape(50)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.accentOrange,
+                        contentColor = Color(0xFF04281A)
+                    ),
+                    shape = RoundedCornerShape(14.dp),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                        horizontal = 16.dp,
+                        vertical = 10.dp
+                    )
                 ) {
-                    Text(text = "Play Test Payment (₹100)")
+                    Text(text = "Play test", fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    androidx.compose.material3.Icon(
+                        imageVector = Icons.Default.ArrowForward,
+                        contentDescription = null,
+                        modifier = Modifier.size(17.dp)
+                    )
                 }
                 if (isTestSuccessful != null) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = if (isTestSuccessful == true) {
-                            "✓ Test announcement played"
+                            "Test announcement played"
                         } else {
                             "Audio test failed — check Text-to-Speech settings"
                         },
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (isTestSuccessful == true) colors.success else colors.error
+                        color = if (isTestSuccessful == true) colors.success else colors.error,
+                        textAlign = TextAlign.End
                     )
                 }
             }
@@ -498,7 +582,185 @@ fun SetupWizardScreen(
 }
 
 @Composable
+private fun SetupProgressHeader(
+    readyCount: Int,
+    totalCount: Int,
+    progress: Float
+) {
+    val colors = LocalSoundboxColors.current
+    val shape = RoundedCornerShape(28.dp)
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(
+                Brush.linearGradient(
+                    listOf(
+                        Color(0xFF123C2A).copy(alpha = 0.86f),
+                        colors.surface.copy(alpha = 0.86f),
+                        Color(0xFF0B2117).copy(alpha = 0.92f)
+                    )
+                )
+            )
+            .border(BorderStroke(1.dp, colors.accentOrange.copy(alpha = 0.24f)), shape)
+            .padding(18.dp)
+    ) {
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(13.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                PermissionIcon(
+                    icon = Icons.Default.Security,
+                    accent = colors.accentOrange,
+                    isCompleted = readyCount == totalCount
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "SOUND BOX SETUP",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.accentOrange
+                    )
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Text(
+                        text = if (readyCount == totalCount) "You're all set" else "Connect your essentials",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.ink
+                    )
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Text(
+                        text = "Private, reliable payment announcements",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.muted
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Core access",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.muted
+                )
+                Text(
+                    text = "$readyCount of $totalCount ready",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (readyCount == totalCount) colors.success else colors.ink
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp)
+                    .clip(CircleShape)
+                    .background(colors.background.copy(alpha = 0.72f))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(progress)
+                        .height(6.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(colors.accentOrange.copy(alpha = 0.72f), colors.accentOrange)
+                            )
+                        )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun GlassPanel(
+    modifier: Modifier = Modifier,
+    accent: Color,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    val colors = LocalSoundboxColors.current
+    val shape = RoundedCornerShape(24.dp)
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(
+                Brush.linearGradient(
+                    listOf(
+                        colors.surface.copy(alpha = 0.86f),
+                        colors.background.copy(alpha = 0.68f),
+                        colors.pillBackground.copy(alpha = 0.32f)
+                    )
+                )
+            )
+            .border(BorderStroke(1.dp, accent.copy(alpha = 0.16f)), shape)
+            .padding(16.dp),
+        content = content
+    )
+}
+
+@Composable
+private fun PermissionIcon(
+    icon: ImageVector,
+    accent: Color,
+    isCompleted: Boolean
+) {
+    val colors = LocalSoundboxColors.current
+    Box(
+        modifier = Modifier
+            .size(50.dp)
+            .clip(RoundedCornerShape(17.dp))
+            .background(
+                Brush.linearGradient(
+                    listOf(accent.copy(alpha = 0.34f), colors.background.copy(alpha = 0.72f))
+                )
+            )
+            .border(BorderStroke(1.dp, accent.copy(alpha = 0.44f)), RoundedCornerShape(17.dp)),
+        contentAlignment = Alignment.Center
+    ) {
+        androidx.compose.material3.Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = accent,
+            modifier = Modifier.size(25.dp)
+        )
+        if (isCompleted) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .size(18.dp)
+                    .clip(CircleShape)
+                    .background(colors.success),
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.material3.Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    tint = Color(0xFF04281A),
+                    modifier = Modifier.size(14.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun WizardItemCard(
+    icon: ImageVector,
+    stepLabel: String,
     title: String,
     description: String,
     isCompleted: Boolean,
@@ -508,71 +770,85 @@ private fun WizardItemCard(
     helpLabel: String? = null
 ) {
     val colors = LocalSoundboxColors.current
+    val accent = if (isCompleted) colors.success else colors.accentOrange
 
-    Card(
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = colors.surface),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+    GlassPanel(accent = accent) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            PermissionIcon(icon = icon, accent = accent, isCompleted = isCompleted)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stepLabel,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = accent
+                )
+                Spacer(modifier = Modifier.height(3.dp))
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = colors.ink,
-                    modifier = Modifier.weight(1f)
+                    fontWeight = FontWeight.Bold,
+                    color = colors.ink
                 )
-                StatusChip(
-                    label = if (isCompleted) "Active" else "Pending",
-                    status = if (isCompleted) ChipStatus.OK else ChipStatus.Warning
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.muted
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(15.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (onHelp != null && helpLabel != null) {
+                Text(
+                    text = helpLabel,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.accentOrange,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.clickable { onHelp() }
+                )
+            } else {
+                Text(
+                    text = if (isCompleted) "Ready to use" else "Action needed",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (isCompleted) colors.success else colors.muted,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.muted
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Button(
+                onClick = onAction,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isCompleted) colors.pillBackground else colors.accentOrange,
+                    contentColor = if (isCompleted) colors.pillText else Color(0xFF04281A)
+                ),
+                shape = RoundedCornerShape(14.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    horizontal = 15.dp,
+                    vertical = 9.dp
+                )
             ) {
-                if (onHelp != null && helpLabel != null) {
-                    Text(
-                        text = helpLabel,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.accentOrange,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.clickable { onHelp() }
-                    )
-                } else {
-                    Spacer(modifier = Modifier.width(1.dp))
-                }
-
-                Button(
-                    onClick = onAction,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isCompleted) colors.bubbleGrey else colors.ink,
-                        contentColor = if (isCompleted) colors.ink else colors.paper
-                    ),
-                    shape = RoundedCornerShape(50),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 18.dp, vertical = 8.dp)
-                ) {
-                    Text(
-                        text = buttonText,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold
+                Text(
+                    text = buttonText,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                if (!isCompleted) {
+                    Spacer(modifier = Modifier.width(6.dp))
+                    androidx.compose.material3.Icon(
+                        imageVector = Icons.Default.ArrowForward,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }

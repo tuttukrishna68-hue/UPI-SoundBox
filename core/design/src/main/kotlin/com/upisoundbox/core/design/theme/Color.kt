@@ -7,8 +7,7 @@ import androidx.compose.ui.graphics.Color
 /**
  * Soundbox color tokens matching the reference emerald fintech design.
  *
- * Light: MintBackground #F7FAF8, Ink #0F172A, Emerald #10B981, MintPill #DCFCE7 / #15803D.
- * Dark:  Obsidian #090D0B, Text #FFFFFF, DarkEmerald #0E1511 / #1B2B21, Neon #34D399.
+ * Dark-only palette: Obsidian #090D0B, Text #FFFFFF, DarkEmerald #0E1511 / #1B2B21, Neon #34D399.
  */
 object SoundboxColors {
     // Light tokens
@@ -95,31 +94,6 @@ data class SoundboxColorScheme(
     val ink: Color get() = textPrimary
     val muted: Color get() = textMuted
 }
-
-val LightSoundboxColorScheme = SoundboxColorScheme(
-    background = SoundboxColors.MintBackground,
-    surface = SoundboxColors.CardBackgroundLight,
-    textPrimary = SoundboxColors.Ink,
-    textMuted = SoundboxColors.Muted,
-    cardBackground = SoundboxColors.CardBackgroundLight,
-    cardBorder = SoundboxColors.CardBorderLight,
-    emeraldGreen = SoundboxColors.EmeraldGreen,
-    pillBackground = SoundboxColors.MintPillBgLight,
-    pillText = SoundboxColors.MintPillTextLight,
-    heroGradientStart = SoundboxColors.HeroLightGradientStart,
-    heroGradientEnd = SoundboxColors.HeroLightGradientEnd,
-    heroBorder = SoundboxColors.HeroLightBorder,
-    statIconBg = SoundboxColors.MintPillBgLight,
-    statIconTint = SoundboxColors.MintPillTextLight,
-    divider = Color(0xFFF1F5F9),
-    accentOrange = SoundboxColors.EmeraldGreen,
-    orangeTint = SoundboxColors.MintPillBgLight,
-    bubbleGrey = SoundboxColors.BubbleGreyLight,
-    success = SoundboxColors.EmeraldGreen,
-    warning = SoundboxColors.Warning,
-    error = SoundboxColors.Error,
-    isDark = false
-)
 
 val DarkSoundboxColorScheme = SoundboxColorScheme(
     background = SoundboxColors.BackgroundDark,

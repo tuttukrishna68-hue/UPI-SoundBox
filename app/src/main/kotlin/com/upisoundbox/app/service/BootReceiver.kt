@@ -21,11 +21,8 @@ class BootReceiver : BroadcastReceiver() {
             val startWork = OneTimeWorkRequestBuilder<WatchdogWorker>().build()
             WorkManager.getInstance(context).enqueue(startWork)
 
-            try {
-                SoundboxService.start(context)
-            } catch (_: Exception) {
-                // If restricted, the WatchdogWorker will start or bind the service cleanly
-            }
+            // The worker owns the restart so Android's background-start limits
+            // are respected and the service is not started before onboarding.
         }
     }
 }

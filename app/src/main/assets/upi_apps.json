@@ -35,7 +35,6 @@
     "verified": true
   },
   {
-    "net.one97.paytm": "Paytm",
     "packageId": "net.one97.paytm",
     "displayName": "Paytm",
     "enabled": true,

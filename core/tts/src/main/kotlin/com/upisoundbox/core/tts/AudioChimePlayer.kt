@@ -60,7 +60,7 @@ class AudioChimePlayer {
                 if (audioTrack.state != AudioTrack.STATE_INITIALIZED) return@withContext
 
                 val written = audioTrack.write(buffer, 0, buffer.size)
-                if (written < 0) return@withContext
+                if (written != buffer.size) return@withContext
 
                 audioTrack.play()
                 kotlinx.coroutines.delay(durationMs.toLong() + 50)

@@ -11,6 +11,7 @@ import com.upisoundbox.core.parser.SmsParser
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -21,46 +22,52 @@ class SmsSource : BroadcastReceiver() {
     @Inject
     lateinit var preferences: SoundboxPreferences
 
+    @Inject
+    lateinit var paymentProcessor: PaymentProcessor
+
     private val smsParser = SmsParser()
-    private val scope = CoroutineScope(Dispatchers.Default)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION) return
 
+        val pendingResult = goAsync()
         scope.launch {
-            // Check if SMS source is enabled by user
-            val isEnabled = preferences.isSmsSourceEnabled.first()
-            if (!isEnabled) return@launch
+            try {
+                // Check if SMS source is enabled by user
+                val isEnabled = preferences.isSmsSourceEnabled.first()
+                if (!isEnabled) return@launch
 
-            val allowedSenders = preferences.allowedSmsSenders.first()
-                .split(",")
-                .map { it.trim().uppercase() }
-                .filter { it.isNotEmpty() }
+                val allowedSenders = preferences.allowedSmsSenders.first()
+                    .split(",")
+                    .map { it.trim().uppercase() }
+                    .filter { it.isNotEmpty() }
 
-            val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent) ?: return@launch
-            for (sms in messages) {
-                val sender = sms.originatingAddress ?: continue
-                val senderUpper = sender.uppercase()
+                val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent) ?: return@launch
+                for (sms in messages) {
+                    val sender = sms.originatingAddress ?: continue
+                    val senderUpper = sender.uppercase()
 
-                // Check sender ID allow-list (e.g. HDFCBK, SBIINB, VK-HDFCBK)
-                val matchesSender = allowedSenders.any { allowed ->
-                    senderUpper.contains(allowed)
-                }
-                if (!matchesSender) continue
-
-                val body = sms.messageBody ?: continue
-                val rawSms = RawSms(
-                    sender = sender,
-                    body = body,
-                    receivedAt = sms.timestampMillis
-                )
-
-                when (val result = smsParser.parse(rawSms)) {
-                    is ParseResult.Success -> {
-                        SoundboxService.handlePayment(context, result.event)
+                    // Check sender ID allow-list (e.g. HDFCBK, SBIINB, VK-HDFCBK)
+                    val matchesSender = allowedSenders.any { allowed ->
+                        senderUpper.contains(allowed)
                     }
-                    else -> {}
+                    if (!matchesSender) continue
+
+                    val body = sms.messageBody ?: continue
+                    val rawSms = RawSms(
+                        sender = sender,
+                        body = body,
+                        receivedAt = sms.timestampMillis
+                    )
+
+                    when (val result = smsParser.parse(rawSms)) {
+                        is ParseResult.Success -> paymentProcessor.process(result.event)
+                        else -> Unit
+                    }
                 }
+            } finally {
+                pendingResult.finish()
             }
         }
     }

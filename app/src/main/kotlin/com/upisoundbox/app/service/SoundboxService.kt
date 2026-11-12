@@ -15,18 +15,14 @@ import com.upisoundbox.app.MainActivity
 import com.upisoundbox.core.data.preferences.SoundboxPreferences
 import com.upisoundbox.core.data.repository.PaymentRepository
 import com.upisoundbox.core.parser.AmountParser
-import com.upisoundbox.core.parser.PaymentDeduplicator
-import com.upisoundbox.core.parser.PaymentEvent
-import com.upisoundbox.core.tts.AnnouncementQueue
-import com.upisoundbox.core.tts.AnnouncementRequest
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import java.util.Calendar
 import javax.inject.Inject
 
 /**
@@ -49,11 +45,7 @@ class SoundboxService : Service() {
     @Inject
     lateinit var preferences: SoundboxPreferences
 
-    @Inject
-    lateinit var announcementQueue: AnnouncementQueue
-
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private val deduplicator = PaymentDeduplicator()
 
     override fun onCreate() {
         super.onCreate()
@@ -63,10 +55,14 @@ class SoundboxService : Service() {
 
         // Observe today's collection to keep persistent notification updated
         serviceScope.launch {
-            repository.getTodayTotal().collect { total ->
-                val count = repository.getTodayCount().first()
-                val isPaused = !preferences.isSoundboxActive.first()
-                updateNotification(total ?: 0L, count, isPaused)
+            combine(
+                repository.getTodayTotal(),
+                repository.getTodayCount(),
+                preferences.isSoundboxActive
+            ) { total, count, active ->
+                Triple(total ?: 0L, count, !active)
+            }.collect { (total, count, isPaused) ->
+                updateNotification(total, count, isPaused)
             }
         }
     }
@@ -89,35 +85,8 @@ class SoundboxService : Service() {
                     updateNotification(total, count, isPaused = false)
                 }
             }
-            ACTION_PROCESS_PAYMENT -> {
-                val eventJson = intent.getStringExtra(EXTRA_PAYMENT_EVENT)
-                if (eventJson != null) {
-                    try {
-                        val event = kotlinx.serialization.json.Json.decodeFromString<PaymentEvent>(eventJson)
-                        onPaymentReceived(event)
-                    } catch (_: Exception) {}
-                }
-            }
         }
         return START_STICKY
-    }
-
-    private fun onPaymentReceived(event: PaymentEvent) {
-        serviceScope.launch {
-            // Check cross-source deduplication (90s window or same UPI ref)
-            if (deduplicator.isDuplicate(event)) {
-                return@launch
-            }
-
-            // Save to encrypted Room database
-            repository.recordPayment(event, announced = true)
-
-            // Emit to event bus for real-time UI feed
-            SoundboxEventBus.emitPayment(event)
-
-            // Enqueue for sequential voice announcement with audio focus
-            announcementQueue.enqueue(AnnouncementRequest.Payment(event))
-        }
     }
 
     private fun createNotificationChannel() {
@@ -204,8 +173,6 @@ class SoundboxService : Service() {
 
         const val ACTION_PAUSE = "com.upisoundbox.action.PAUSE"
         const val ACTION_RESUME = "com.upisoundbox.action.RESUME"
-        const val ACTION_PROCESS_PAYMENT = "com.upisoundbox.action.PROCESS_PAYMENT"
-        const val EXTRA_PAYMENT_EVENT = "extra_payment_event"
 
         @Volatile
         var isRunning = false
@@ -220,23 +187,6 @@ class SoundboxService : Service() {
             }
         }
 
-        fun handlePayment(context: Context, event: PaymentEvent) {
-            val json = kotlinx.serialization.json.Json.encodeToString(PaymentEvent.serializer(), event)
-            val intent = Intent(context, SoundboxService::class.java).apply {
-                action = ACTION_PROCESS_PAYMENT
-                putExtra(EXTRA_PAYMENT_EVENT, json)
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                try {
-                    context.startForegroundService(intent)
-                } catch (_: Exception) {
-                    // If started from background receiver where FGS is restricted, fallback to direct dispatch
-                    SoundboxEventBus.emitPayment(event)
-                }
-            } else {
-                context.startService(intent)
-            }
-        }
     }
 }
 

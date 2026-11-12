@@ -38,7 +38,8 @@ abstract class BaseNotificationParser(
                     rejectedKeyword.contains("declined") ||
                     rejectedKeyword.contains("cancelled") ||
                     rejectedKeyword.contains("bill due") ||
-                    rejectedKeyword.contains("otp")
+                    rejectedKeyword.contains("otp") ||
+                    rejectedKeyword.contains("summary")
             if (isDebitOrFailure || (!hasAppSpecificCreditIntent(notification) && keywordMatcher.findCreditKeywords(fullText).isEmpty())) {
                 return ParseResult.Rejected(
                     reason = "Matched debit/noise keyword: '$rejectedKeyword'",
@@ -105,6 +106,12 @@ class GooglePayParser : BaseNotificationParser("google_pay") {
         val title = notification.title ?: ""
         val text = notification.text ?: ""
         val bigText = notification.bigText ?: ""
+        val baseInfo = payerParser.extract(fullText)
+
+        // Preserve privacy masking for VPAs. The name regex below intentionally
+        // excludes '@', so without this guard "anand@oksbi" could be reduced to
+        // the unmasked name "anand".
+        if (baseInfo.payer?.contains("@") == true) return baseInfo
 
         // 1. Check "<Payer> paid you" or "<Payer> sent you" in title, text, or bigText
         for (candidate in listOf(title, text, bigText)) {
@@ -112,7 +119,6 @@ class GooglePayParser : BaseNotificationParser("google_pay") {
             if (m != null) {
                 val payerName = PayerParser.cleanPayerName(m.groupValues[1])
                 if (!payerName.isNullOrBlank() && !payerName.equals("google pay", ignoreCase = true) && !payerName.equals("gpay", ignoreCase = true)) {
-                    val baseInfo = payerParser.extract(fullText)
                     return baseInfo.copy(payer = payerName)
                 }
             }
@@ -124,7 +130,6 @@ class GooglePayParser : BaseNotificationParser("google_pay") {
             if (m != null) {
                 val payerName = PayerParser.cleanPayerName(m.groupValues[1])
                 if (!payerName.isNullOrBlank() && !payerName.equals("google pay", ignoreCase = true) && !payerName.equals("gpay", ignoreCase = true)) {
-                    val baseInfo = payerParser.extract(fullText)
                     return baseInfo.copy(payer = payerName)
                 }
             }
@@ -138,7 +143,6 @@ class GooglePayParser : BaseNotificationParser("google_pay") {
             !title.contains("₹") && !title.contains("Rs", ignoreCase = true)) {
             val cleaned = PayerParser.cleanPayerName(title)
             if (!cleaned.isNullOrBlank()) {
-                val baseInfo = payerParser.extract(fullText)
                 return baseInfo.copy(payer = cleaned)
             }
         }
@@ -160,12 +164,13 @@ class GooglePayBusinessParser : BaseNotificationParser("google_pay_business") {
     override fun extractPayerInfo(notification: RawNotification, fullText: String): ExtractedPayerInfo {
         val text = notification.text ?: ""
         val bigText = notification.bigText ?: ""
+        val baseInfo = payerParser.extract(fullText)
+        if (baseInfo.payer?.contains("@") == true) return baseInfo
         for (candidate in listOf(text, bigText, notification.title ?: "")) {
             val m = Regex("(?:from|by)\\s+([A-Za-z\\s]{2,30})", RegexOption.IGNORE_CASE).find(candidate)
             if (m != null) {
                 val payerName = PayerParser.cleanPayerName(m.groupValues[1])
                 if (!payerName.isNullOrBlank() && !payerName.contains("google pay", ignoreCase = true)) {
-                    val baseInfo = payerParser.extract(fullText)
                     return baseInfo.copy(payer = payerName)
                 }
             }

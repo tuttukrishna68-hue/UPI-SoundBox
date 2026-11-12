@@ -34,18 +34,18 @@ abstract class SoundboxDatabase : RoomDatabase() {
 
         private fun buildDatabase(context: Context, useEncryption: Boolean): SoundboxDatabase {
             val dbName = if (useEncryption) DB_NAME else "soundbox_unencrypted.db"
+            // Never silently wipe a merchant's ledger during an app update.
+            // Schema changes must ship with an explicit Room migration.
             val builder = Room.databaseBuilder(context, SoundboxDatabase::class.java, dbName)
-                .fallbackToDestructiveMigration()
 
             if (useEncryption) {
-                try {
-                    val keyManager = DatabaseKeyManager(context)
-                    val passphrase = keyManager.getOrCreatePassphrase()
-                    val factory = SupportOpenHelperFactory(passphrase)
-                    builder.openHelperFactory(factory)
-                } catch (_: Throwable) {
-                    // If KeyManager or factory fails, proceed with default helper
-                }
+                // Fail this build if encryption cannot be configured. The caller
+                // then makes an explicit, separately named fallback database;
+                // never create an ordinary SQLite file under the encrypted name.
+                val keyManager = DatabaseKeyManager(context)
+                val passphrase = keyManager.getOrCreatePassphrase()
+                val factory = SupportOpenHelperFactory(passphrase)
+                builder.openHelperFactory(factory)
             }
 
             return builder.build()

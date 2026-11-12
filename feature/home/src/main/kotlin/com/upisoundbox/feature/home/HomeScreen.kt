@@ -57,6 +57,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -71,6 +72,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -85,6 +87,8 @@ import com.upisoundbox.core.design.util.AppLogoProvider
 import com.upisoundbox.core.parser.AmountParser
 import com.upisoundbox.core.tts.AnnouncementEngine
 import com.upisoundbox.core.tts.AnnouncementQueue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import kotlinx.coroutines.launch
 
 @Composable
@@ -115,17 +119,21 @@ fun HomeScreen(
         it > lastSeenPaymentAt
     } ?: false
 
-    val isNotificationAccessGranted = remember {
-        androidx.core.app.NotificationManagerCompat.getEnabledListenerPackages(context).contains(context.packageName)
-    }
-
-    androidx.compose.runtime.LaunchedEffect(Unit) {
-        try {
-            val intent = android.content.Intent("com.upisoundbox.action.RESUME").apply {
-                setPackage(context.packageName)
+    var isNotificationAccessGranted by remember { mutableStateOf(false) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                isNotificationAccessGranted = androidx.core.app.NotificationManagerCompat
+                    .getEnabledListenerPackages(context)
+                    .contains(context.packageName)
             }
-            context.startService(intent)
-        } catch (_: Exception) {}
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        isNotificationAccessGranted = androidx.core.app.NotificationManagerCompat
+            .getEnabledListenerPackages(context)
+            .contains(context.packageName)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     // Font size multiplier based on user preference

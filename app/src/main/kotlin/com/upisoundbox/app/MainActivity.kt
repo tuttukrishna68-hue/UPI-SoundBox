@@ -8,9 +8,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
@@ -62,22 +59,17 @@ class MainActivity : FragmentActivity() {
         }
 
         setContent {
-            val themeMode by preferences.themeMode.collectAsState(initial = "dark")
-            val isSystemDark = isSystemInDarkTheme()
-            val isDark = when (themeMode.lowercase()) {
-                "light" -> false
-                "system" -> isSystemDark
-                else -> true // Dark theme default
-            }
-
-            SoundboxTheme(darkTheme = isDark) {
+            SoundboxTheme {
                 val navController = rememberNavController()
                 SoundboxNavGraph(
                     navController = navController,
                     repository = repository,
                     preferences = preferences,
                     announcementQueue = announcementQueue,
-                    announcementEngine = announcementEngine
+                    announcementEngine = announcementEngine,
+                    onRequestBiometricConfirmation = { onSuccess ->
+                        showBiometricPromptForSecurityChange(onSuccess)
+                    }
                 )
             }
         }
@@ -98,24 +90,51 @@ class MainActivity : FragmentActivity() {
     }
 
     private fun showBiometricPrompt() {
-        val executor = ContextCompat.getMainExecutor(this)
-        val prompt = BiometricPrompt(this, executor, object : BiometricPrompt.AuthenticationCallback() {
-            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                super.onAuthenticationSucceeded(result)
-                isAppLocked = true
-            }
-
-            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                super.onAuthenticationError(errorCode, errString)
+        showBiometricPrompt(
+            title = "Unlock UPI Soundbox",
+            subtitle = "Authenticate to view your merchant payment ledger",
+            onSuccess = { isAppLocked = true },
+            onError = { errorCode, _ ->
                 if (errorCode == BiometricPrompt.ERROR_USER_CANCELED || errorCode == BiometricPrompt.ERROR_NEGATIVE_BUTTON) {
                     finish()
                 }
             }
+        )
+    }
+
+    private fun showBiometricPromptForSecurityChange(onSuccess: () -> Unit) {
+        showBiometricPrompt(
+            title = "Confirm security change",
+            subtitle = "Verify your fingerprint or device PIN to change this lock",
+            onSuccess = onSuccess,
+            onError = { _, _ ->
+                // A cancelled or failed confirmation leaves the existing setting intact.
+            }
+        )
+    }
+
+    private fun showBiometricPrompt(
+        title: String,
+        subtitle: String,
+        onSuccess: () -> Unit,
+        onError: (errorCode: Int, message: CharSequence) -> Unit
+    ) {
+        val executor = ContextCompat.getMainExecutor(this)
+        val prompt = BiometricPrompt(this, executor, object : BiometricPrompt.AuthenticationCallback() {
+            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                super.onAuthenticationSucceeded(result)
+                onSuccess()
+            }
+
+            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                super.onAuthenticationError(errorCode, errString)
+                onError(errorCode, errString)
+            }
         })
 
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Unlock UPI Soundbox")
-            .setSubtitle("Authenticate to view your merchant payment ledger")
+            .setTitle(title)
+            .setSubtitle(subtitle)
             .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL)
             .build()
 

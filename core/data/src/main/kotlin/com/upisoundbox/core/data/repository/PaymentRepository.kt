@@ -17,6 +17,8 @@ interface PaymentRepository {
     fun getLastPayment(): Flow<PaymentEntity?>
     fun getRecentPayments(limit: Int = 50): Flow<List<PaymentEntity>>
     fun getAllPayments(): Flow<List<PaymentEntity>>
+    suspend fun getPaymentById(id: String): PaymentEntity?
+    suspend fun getPaymentByUpiRef(upiRef: String): PaymentEntity?
     fun getFilteredPayments(
         query: String? = null,
         dateFrom: Long? = null,
@@ -77,6 +79,10 @@ class PaymentRepositoryImpl(
     override fun getRecentPayments(limit: Int): Flow<List<PaymentEntity>> = paymentDao.getRecentPayments(limit)
 
     override fun getAllPayments(): Flow<List<PaymentEntity>> = paymentDao.getAllPayments()
+
+    override suspend fun getPaymentById(id: String): PaymentEntity? = paymentDao.getById(id)
+
+    override suspend fun getPaymentByUpiRef(upiRef: String): PaymentEntity? = paymentDao.getByUpiRef(upiRef)
 
     override fun getFilteredPayments(
         query: String?,

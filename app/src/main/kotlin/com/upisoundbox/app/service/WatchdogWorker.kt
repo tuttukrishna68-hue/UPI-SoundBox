@@ -16,6 +16,8 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.upisoundbox.app.MainActivity
+import com.upisoundbox.core.data.preferences.SoundboxPreferences
+import kotlinx.coroutines.flow.first
 import java.util.concurrent.TimeUnit
 
 class WatchdogWorker(
@@ -24,6 +26,16 @@ class WatchdogWorker(
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
+        val preferences = SoundboxPreferences(context)
+        // Do not nag a fresh install or restart background services while the
+        // merchant has intentionally paused the soundbox.
+        if (!preferences.isOnboardingCompleted.first() ||
+            !preferences.isSoundboxActive.first()
+        ) {
+            NotificationManagerCompat.from(context).cancel(2001)
+            return Result.success()
+        }
+
         val issues = mutableListOf<String>()
 
         // 1. Notification access enabled
@@ -65,6 +77,9 @@ class WatchdogWorker(
         // Post high-priority alert if critical issues are found
         if (issues.isNotEmpty()) {
             postAlertNotification(issues.first())
+        } else {
+            // Clear a stale reliability warning as soon as the system is healthy again.
+            NotificationManagerCompat.from(context).cancel(2001)
         }
 
         return Result.success()

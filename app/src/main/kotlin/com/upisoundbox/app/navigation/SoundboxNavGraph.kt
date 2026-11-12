@@ -51,6 +51,7 @@ fun SoundboxNavGraph(
     preferences: SoundboxPreferences,
     announcementQueue: AnnouncementQueue,
     announcementEngine: AnnouncementEngine,
+    onRequestBiometricConfirmation: (onSuccess: () -> Unit) -> Unit,
     modifier: Modifier = Modifier,
     startDestination: String = Screen.Splash.route
 ) {
@@ -148,6 +149,7 @@ fun SoundboxNavGraph(
         }
         composable(Screen.UpiApps.route) {
             UpiAppsScreen(
+                preferences = preferences,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
@@ -155,6 +157,7 @@ fun SoundboxNavGraph(
             SettingsScreen(
                 preferences = preferences,
                 announcementQueue = announcementQueue,
+                onRequestBiometricConfirmation = onRequestBiometricConfirmation,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateVoiceSettings = { navController.navigate(Screen.VoiceSettings.route) },
                 onNavigateUpiApps = { navController.navigate(Screen.UpiApps.route) },

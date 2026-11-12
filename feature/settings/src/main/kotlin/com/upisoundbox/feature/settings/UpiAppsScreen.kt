@@ -44,10 +44,12 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,21 +63,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.upisoundbox.core.design.theme.LocalSoundboxColors
 import com.upisoundbox.core.design.util.AppLogoProvider
+import com.upisoundbox.core.data.preferences.SoundboxPreferences
 import com.upisoundbox.core.parser.AmountParser
 import com.upisoundbox.core.parser.ParseResult
 import com.upisoundbox.core.tts.AnnouncementEngine
 import com.upisoundbox.core.parser.ParserRouter
 import com.upisoundbox.core.parser.RawNotification
 import com.upisoundbox.core.parser.UpiAppConfig
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
 @Composable
 fun UpiAppsScreen(
+    preferences: SoundboxPreferences,
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
     val colors = LocalSoundboxColors.current
     val packageManager = context.packageManager
+    val scope = rememberCoroutineScope()
+    val disabledUpiPackages by preferences.disabledUpiPackages.collectAsState(initial = emptySet())
 
     var appList by remember { mutableStateOf<List<UpiAppConfig>>(emptyList()) }
     val appEnabledMap = remember { mutableStateMapOf<String, Boolean>() }
@@ -101,7 +108,6 @@ fun UpiAppsScreen(
             val configs = Json.decodeFromString<List<UpiAppConfig>>(jsonString)
             appList = configs
             configs.forEach { app ->
-                appEnabledMap[app.packageId] = app.enabled
                 appInstalledMap[app.packageId] = try {
                     packageManager.getPackageInfo(app.packageId, 0)
                     true
@@ -110,6 +116,12 @@ fun UpiAppsScreen(
                 }
             }
         } catch (_: Exception) {}
+    }
+
+    LaunchedEffect(appList, disabledUpiPackages) {
+        appList.forEach { app ->
+            appEnabledMap[app.packageId] = app.enabled && app.packageId !in disabledUpiPackages
+        }
     }
 
     Column(
@@ -256,7 +268,12 @@ fun UpiAppsScreen(
 
                         Switch(
                             checked = isEnabled,
-                            onCheckedChange = { appEnabledMap[app.packageId] = it },
+                            onCheckedChange = { enabled ->
+                                appEnabledMap[app.packageId] = enabled
+                                scope.launch {
+                                    preferences.setUpiAppEnabled(app.packageId, enabled)
+                                }
+                            },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.White,
                                 checkedTrackColor = Color(0xFF10B981),

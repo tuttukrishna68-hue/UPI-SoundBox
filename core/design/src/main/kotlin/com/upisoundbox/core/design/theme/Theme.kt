@@ -1,33 +1,11 @@
 package com.upisoundbox.core.design.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
-
-private val LightColorScheme = lightColorScheme(
-    primary = SoundboxColors.EmeraldGreen,
-    onPrimary = Color.White,
-    primaryContainer = SoundboxColors.MintPillBgLight,
-    onPrimaryContainer = SoundboxColors.MintPillTextLight,
-    secondary = SoundboxColors.EmeraldDark,
-    onSecondary = Color.White,
-    secondaryContainer = SoundboxColors.BubbleGreyLight,
-    onSecondaryContainer = SoundboxColors.Ink,
-    background = SoundboxColors.MintBackground,
-    onBackground = SoundboxColors.Ink,
-    surface = Color.White,
-    onSurface = SoundboxColors.Ink,
-    surfaceVariant = SoundboxColors.BubbleGreyLight,
-    onSurfaceVariant = SoundboxColors.Muted,
-    outline = SoundboxColors.CardBorderLight,
-    error = SoundboxColors.Error,
-    onError = Color.White
-)
 
 private val DarkColorScheme = darkColorScheme(
     primary = SoundboxColors.NeonGreen,
@@ -51,19 +29,15 @@ private val DarkColorScheme = darkColorScheme(
 
 @Composable
 fun SoundboxTheme(
-    darkTheme: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val soundboxColors = if (darkTheme) DarkSoundboxColorScheme else LightSoundboxColorScheme
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
-
     CompositionLocalProvider(
-        LocalSoundboxColors provides soundboxColors,
+        LocalSoundboxColors provides DarkSoundboxColorScheme,
         LocalSoundboxTypography provides SoundboxTypography,
         LocalSoundboxSpacing provides SoundboxSpacing()
     ) {
         MaterialTheme(
-            colorScheme = colorScheme,
+            colorScheme = DarkColorScheme,
             typography = SoundboxTypography,
             shapes = MaterialShapes,
             content = content

@@ -6,20 +6,18 @@ import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import com.upisoundbox.core.data.preferences.SoundboxPreferences
-import com.upisoundbox.core.data.repository.PaymentRepository
 import com.upisoundbox.core.parser.AmountParser
 import com.upisoundbox.core.parser.KeywordMatcher
 import com.upisoundbox.core.parser.ParseResult
 import com.upisoundbox.core.parser.ParserRouter
-import com.upisoundbox.core.parser.PaymentDeduplicator
 import com.upisoundbox.core.parser.RawNotification
 import com.upisoundbox.core.parser.UpiAppConfig
-import com.upisoundbox.core.tts.AnnouncementQueue
-import com.upisoundbox.core.tts.AnnouncementRequest
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -33,21 +31,23 @@ class NotificationSource : NotificationListenerService() {
     lateinit var preferences: SoundboxPreferences
 
     @Inject
-    lateinit var repository: PaymentRepository
-
-    @Inject
-    lateinit var announcementQueue: AnnouncementQueue
+    lateinit var paymentProcessor: PaymentProcessor
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val processedKeys = Collections.synchronizedSet(LinkedHashSet<String>())
-    private val deduplicator = PaymentDeduplicator()
     private val parserRouter = ParserRouter()
     private val keywordMatcher = KeywordMatcher()
     private val amountParser = AmountParser()
 
+    @Volatile
+    private var disabledUpiPackages: Set<String> = emptySet()
+
     override fun onCreate() {
         super.onCreate()
         loadAllowListFromAssets()
+        serviceScope.launch {
+            preferences.disabledUpiPackages.collect { disabledUpiPackages = it }
+        }
     }
 
     override fun onListenerConnected() {
@@ -117,8 +117,9 @@ class NotificationSource : NotificationListenerService() {
             isOngoing = isOngoing
         )
 
-        // Check allow-list
-        val isAllowed = parserRouter.isAllowed(pkg)
+        // Check allow-list and the merchant's per-app toggle.
+        val isDisabled = pkg in disabledUpiPackages
+        val isAllowed = !isDisabled && parserRouter.isAllowed(pkg)
         if (!isAllowed) {
             // Check if Unknown-App Learning mode is active (opt-in 5 min)
             serviceScope.launch {
@@ -143,15 +144,12 @@ class NotificationSource : NotificationListenerService() {
             is ParseResult.Success -> {
                 val event = result.event
                 serviceScope.launch {
-                    if (!deduplicator.isDuplicate(event)) {
-                        // Direct recording and announcement to ensure payment is NEVER missed
-                        repository.recordPayment(event, announced = true)
-                        SoundboxEventBus.emitPayment(event)
-                        announcementQueue.enqueue(AnnouncementRequest.Payment(event))
-                    }
-                    // Also forward to foreground service if running to update persistent notification
+                    // All sources share one application-scoped processor so a
+                    // notification and SMS for the same payment cannot double count.
+                    paymentProcessor.process(event)
                     try {
-                        SoundboxService.handlePayment(this@NotificationSource, event)
+                        // Keep the persistent service alive for its live status notification.
+                        SoundboxService.start(this@NotificationSource)
                     } catch (_: Exception) {}
                 }
             }
@@ -169,6 +167,12 @@ class NotificationSource : NotificationListenerService() {
         } catch (_: Exception) {
             // Fall back to default allow-list
         }
+    }
+
+    override fun onDestroy() {
+        serviceScope.cancel()
+        isListening = false
+        super.onDestroy()
     }
 
     companion object {

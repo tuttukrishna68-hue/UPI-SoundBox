@@ -37,6 +37,9 @@ interface PaymentDao {
     @Query("SELECT * FROM payments WHERE id = :id")
     suspend fun getById(id: String): PaymentEntity?
 
+    @Query("SELECT * FROM payments WHERE upiRef = :upiRef LIMIT 1")
+    suspend fun getByUpiRef(upiRef: String): PaymentEntity?
+
     @Query("SELECT SUM(amountPaise) FROM payments WHERE receivedAt >= :startOfDayTimestamp")
     fun getTodayTotal(startOfDayTimestamp: Long): Flow<Long?>
 

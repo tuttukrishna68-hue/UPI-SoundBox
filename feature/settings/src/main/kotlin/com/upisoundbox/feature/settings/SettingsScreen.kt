@@ -35,7 +35,6 @@ import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.FormatSize
-import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
@@ -81,6 +80,7 @@ import kotlinx.coroutines.launch
 fun SettingsScreen(
     preferences: SoundboxPreferences,
     announcementQueue: AnnouncementQueue,
+    onRequestBiometricConfirmation: (onSuccess: () -> Unit) -> Unit,
     onNavigateBack: () -> Unit,
     onNavigateVoiceSettings: () -> Unit,
     onNavigateUpiApps: () -> Unit,
@@ -92,7 +92,6 @@ fun SettingsScreen(
     val colors = LocalSoundboxColors.current
     val scope = rememberCoroutineScope()
 
-    val currentTheme by preferences.themeMode.collectAsState(initial = "dark")
     val currentFontScale by preferences.fontScale.collectAsState(initial = "compact")
     val userName by preferences.userName.collectAsState(initial = SoundboxPreferences.DEFAULT_USER_NAME)
     val currentLang by preferences.languageTag.collectAsState(initial = "en-IN")
@@ -236,30 +235,9 @@ fun SettingsScreen(
 
             SettingsSectionTitle(
                 title = "Preferences",
-                subtitle = "Appearance and readability"
+                subtitle = "Text size and readability"
             )
             SettingsGroup {
-                SettingsRow(
-                    icon = Icons.Default.DarkMode,
-                    title = "Theme",
-                    subtitle = when (currentTheme.lowercase()) {
-                        "light" -> "Light mode"
-                        "system" -> "Follow device"
-                        else -> "Dark mode"
-                    }
-                )
-                SettingsChoiceRow(
-                    options = listOf("Dark", "Light", "System"),
-                    selected = when (currentTheme.lowercase()) {
-                        "light" -> "Light"
-                        "system" -> "System"
-                        else -> "Dark"
-                    },
-                    onSelected = { choice ->
-                        scope.launch { preferences.setThemeMode(choice.lowercase()) }
-                    }
-                )
-                SettingsDivider()
                 SettingsRow(
                     icon = Icons.Default.FormatSize,
                     title = "Text size",
@@ -407,7 +385,13 @@ fun SettingsScreen(
                     title = "Biometric / PIN lock",
                     subtitle = "Require authentication before viewing history",
                     checked = isAppLock,
-                    onCheckedChange = { scope.launch { preferences.setAppLock(it) } }
+                    onCheckedChange = { requestedState ->
+                        // Never change the lock state before the user confirms the
+                        // security change with the device biometric/PIN prompt.
+                        onRequestBiometricConfirmation {
+                            scope.launch { preferences.setAppLock(requestedState) }
+                        }
+                    }
                 )
                 SettingsDivider()
                 SettingsToggleRow(

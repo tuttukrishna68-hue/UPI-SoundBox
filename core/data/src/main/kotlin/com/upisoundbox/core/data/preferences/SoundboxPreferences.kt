@@ -47,6 +47,14 @@ class SoundboxPreferences(private val context: Context) {
     val isSmsSourceEnabled: Flow<Boolean> = dataStore.data.map { it[KEY_SMS_ENABLED] ?: false }
     val allowedSmsSenders: Flow<String> = dataStore.data.map { it[KEY_SMS_SENDERS] ?: DEFAULT_SMS_SENDERS }
     val unknownAppLearningExpiry: Flow<Long> = dataStore.data.map { it[KEY_UNKNOWN_APP_EXPIRY] ?: 0L }
+    val disabledUpiPackages: Flow<Set<String>> = dataStore.data.map { preferences ->
+        preferences[KEY_DISABLED_UPI_PACKAGES]
+            .orEmpty()
+            .split(',')
+            .map(String::trim)
+            .filter(String::isNotEmpty)
+            .toSet()
+    }
 
     // Security & Business
     val isAppLockEnabled: Flow<Boolean> = dataStore.data.map { it[KEY_APP_LOCK] ?: false }
@@ -54,16 +62,11 @@ class SoundboxPreferences(private val context: Context) {
     val myUpiId: Flow<String> = dataStore.data.map { it[KEY_MY_UPI_ID] ?: "" }
     val myShopName: Flow<String> = dataStore.data.map { it[KEY_MY_SHOP_NAME] ?: "" }
     val userName: Flow<String> = dataStore.data.map { it[KEY_USER_NAME] ?: DEFAULT_USER_NAME }
-    val themeMode: Flow<String> = dataStore.data.map { it[KEY_THEME_MODE] ?: "dark" }
     val fontScale: Flow<String> = dataStore.data.map { it[KEY_FONT_SCALE] ?: "compact" }
     val lastSeenPaymentAt: Flow<Long> = dataStore.data.map { it[KEY_LAST_SEEN_PAYMENT_AT] ?: 0L }
 
     // Onboarding
     val isOnboardingCompleted: Flow<Boolean> = dataStore.data.map { it[KEY_ONBOARDING_DONE] ?: false }
-
-    suspend fun setThemeMode(mode: String) {
-        dataStore.edit { it[KEY_THEME_MODE] = mode }
-    }
 
     suspend fun setFontScale(scale: String) {
         dataStore.edit { it[KEY_FONT_SCALE] = scale }
@@ -117,6 +120,32 @@ class SoundboxPreferences(private val context: Context) {
 
     suspend fun setUnknownAppLearningExpiry(expiryMs: Long) {
         dataStore.edit { it[KEY_UNKNOWN_APP_EXPIRY] = expiryMs }
+    }
+
+    suspend fun setUpiAppEnabled(packageId: String, enabled: Boolean) {
+        val normalizedPackageId = packageId.trim()
+        if (normalizedPackageId.isEmpty()) return
+
+        dataStore.edit { preferences ->
+            val disabled = preferences[KEY_DISABLED_UPI_PACKAGES]
+                .orEmpty()
+                .split(',')
+                .map(String::trim)
+                .filter(String::isNotEmpty)
+                .toMutableSet()
+
+            if (enabled) {
+                disabled.remove(normalizedPackageId)
+            } else {
+                disabled.add(normalizedPackageId)
+            }
+
+            if (disabled.isEmpty()) {
+                preferences.remove(KEY_DISABLED_UPI_PACKAGES)
+            } else {
+                preferences[KEY_DISABLED_UPI_PACKAGES] = disabled.sorted().joinToString(",")
+            }
+        }
     }
 
     suspend fun setMyQrDetails(upiId: String, shopName: String) {
@@ -180,13 +209,13 @@ class SoundboxPreferences(private val context: Context) {
         private val KEY_SMS_ENABLED = booleanPreferencesKey("sms_source_enabled")
         private val KEY_SMS_SENDERS = stringPreferencesKey("allowed_sms_senders")
         private val KEY_UNKNOWN_APP_EXPIRY = longPreferencesKey("unknown_app_expiry")
+        private val KEY_DISABLED_UPI_PACKAGES = stringPreferencesKey("disabled_upi_packages")
 
         private val KEY_APP_LOCK = booleanPreferencesKey("app_lock")
         private val KEY_SECURE_SCREEN = booleanPreferencesKey("secure_screen")
         private val KEY_MY_UPI_ID = stringPreferencesKey("my_upi_id")
         private val KEY_MY_SHOP_NAME = stringPreferencesKey("my_shop_name")
         private val KEY_USER_NAME = stringPreferencesKey("user_name")
-        private val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
         private val KEY_FONT_SCALE = stringPreferencesKey("font_scale")
         private val KEY_LAST_SEEN_PAYMENT_AT = longPreferencesKey("last_seen_payment_at")
         private val KEY_ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")

@@ -35,6 +35,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -56,6 +58,8 @@ import com.upisoundbox.core.design.component.StatusChip
 import com.upisoundbox.core.design.theme.LocalSoundboxColors
 import com.upisoundbox.core.parser.AmountParser
 import com.upisoundbox.core.parser.PaymentEvent
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -78,17 +82,29 @@ fun DiagnosticsScreen(
     val learningExpiry by preferences.unknownAppLearningExpiry.collectAsState(initial = 0L)
     val isLearningActive = System.currentTimeMillis() < learningExpiry
 
-    // Health checks
-    val isNotificationAccessEnabled = remember {
-        NotificationManagerCompat.getEnabledListenerPackages(context).contains(context.packageName)
-    }
+    // Health checks refresh when the merchant returns from Android Settings.
     val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
-    val isBatteryExempt = remember {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && powerManager != null) {
-            powerManager.isIgnoringBatteryOptimizations(context.packageName)
-        } else {
-            true
+    var isNotificationAccessEnabled by remember { mutableStateOf(false) }
+    var isBatteryExempt by remember { mutableStateOf(true) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        fun refreshHealth() {
+            isNotificationAccessEnabled = NotificationManagerCompat
+                .getEnabledListenerPackages(context)
+                .contains(context.packageName)
+            isBatteryExempt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && powerManager != null) {
+                powerManager.isIgnoringBatteryOptimizations(context.packageName)
+            } else {
+                true
+            }
         }
+
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) refreshHealth()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        refreshHealth()
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     var selectedPaymentForExport by remember { mutableStateOf<PaymentEvent?>(null) }
@@ -106,11 +122,9 @@ fun DiagnosticsScreen(
                     put("note", "Exported redacted user fixture")
                     put("package", p.appPackage)
                     put("title", "Payment of ${AmountParser.formatPaise(p.amountPaise)} received")
-                    put("text", "Received from ${p.payer ?: "[REDACTED]"}. Ref: ${p.upiRef ?: "N/A"}")
+                    put("text", "Received from [REDACTED]. Ref: [REDACTED]")
                     put("shouldParse", true)
                     put("expectedAmountPaise", p.amountPaise)
-                    put("expectedPayer", p.payer)
-                    put("expectedUpiRef", p.upiRef)
                 }.toString()
 
                 try {

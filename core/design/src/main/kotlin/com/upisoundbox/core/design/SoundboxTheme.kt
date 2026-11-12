@@ -5,8 +5,7 @@ import com.upisoundbox.core.design.theme.SoundboxTheme as InternalSoundboxTheme
 
 @Composable
 fun SoundboxTheme(
-    darkTheme: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    InternalSoundboxTheme(darkTheme = darkTheme, content = content)
+    InternalSoundboxTheme(content = content)
 }

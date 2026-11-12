@@ -154,6 +154,12 @@ class AnnouncementEngine(
         playChime: Boolean = true,
         waitCalls: Boolean = true
     ): Boolean = withContext(Dispatchers.Main) {
+        var audioFocusRequest: AudioFocusRequest? = null
+        var audioFocusRequested = false
+        var focusStreamType: Int? = null
+        var changedVolumeStream: Int? = null
+        var originalVolume: Int? = null
+
         try {
             val ready = ensureReady()
             if (!ready) {
@@ -180,6 +186,7 @@ class AnnouncementEngine(
 
             // Target audio usage & stream
             val streamType = if (useAlarmStream) AudioManager.STREAM_ALARM else AudioManager.STREAM_MUSIC
+            focusStreamType = streamType
             // MEDIA is honoured consistently by OEM speakers and Bluetooth routes.
             // ACCESSIBILITY is ignored or muted by several merchant-phone builds.
             val audioUsage = if (useAlarmStream) AudioAttributes.USAGE_ALARM else AudioAttributes.USAGE_MEDIA
@@ -200,7 +207,7 @@ class AnnouncementEngine(
                 Locale("en", "IN")
             }
 
-            var textToSpeak = text
+            val textToSpeak = text
             val setLangResult = try {
                 engine.setLanguage(targetLocale)
             } catch (_: Exception) {
@@ -230,17 +237,16 @@ class AnnouncementEngine(
                     } catch (_: Exception) {
                         try { engine.setLanguage(Locale.ENGLISH) } catch (_: Exception) {}
                     }
-                    // If text contains Indic characters, English TTS cannot articulate them.
-                    // Provide guaranteed spoken fallback in English:
-                    if (containsIndicScript(text)) {
-                        textToSpeak = "Received 500 rupees on PhonePe from Rahul Sharma"
-                    }
                 }
             }
 
             // Audio focus
-            val focusRequest = buildAudioFocusRequest(audioUsage)
-            try { requestAudioFocus(focusRequest, streamType) } catch (_: Exception) {}
+            audioFocusRequest = buildAudioFocusRequest(audioUsage)
+            audioFocusRequested = try {
+                requestAudioFocus(audioFocusRequest, streamType)
+            } catch (_: Exception) {
+                false
+            }
 
             // Play pleasant audio chime after focus is granted so it is not dropped by the OS.
             if (playChime) {
@@ -251,12 +257,14 @@ class AnnouncementEngine(
                 } catch (_: Exception) {}
             }
 
-            // Volume management: Ensure soundbox is loud and clear (>= 85%)
+            // Volume management: boost only when explicitly enabled, then restore
+            // the merchant's original volume after speech completes.
             try {
-                val maxVolume = audioManager.getStreamMaxVolume(streamType)
-                val currentVolume = audioManager.getStreamVolume(streamType)
-                val audibleVolume = (maxVolume * 0.85f).toInt().coerceAtLeast(1)
-                if (volumeBoost || currentVolume < audibleVolume) {
+                if (volumeBoost) {
+                    val maxVolume = audioManager.getStreamMaxVolume(streamType)
+                    originalVolume = audioManager.getStreamVolume(streamType)
+                    changedVolumeStream = streamType
+                    val audibleVolume = (maxVolume * 0.85f).toInt().coerceAtLeast(1)
                     audioManager.setStreamVolume(streamType, audibleVolume, 0)
                 }
             } catch (_: Exception) {}
@@ -300,25 +308,21 @@ class AnnouncementEngine(
 
             // Grace period so hardware speaker finishes physical output buffer
             delay(350L)
-            try { abandonAudioFocus(focusRequest, streamType) } catch (_: Exception) {}
 
             return@withContext success
         } catch (_: Exception) {
             return@withContext false
-        }
-    }
-
-    private fun containsIndicScript(text: String): Boolean {
-        return text.any { ch ->
-            val block = Character.UnicodeBlock.of(ch)
-            block == Character.UnicodeBlock.DEVANAGARI ||
-                    block == Character.UnicodeBlock.MALAYALAM ||
-                    block == Character.UnicodeBlock.TAMIL ||
-                    block == Character.UnicodeBlock.TELUGU ||
-                    block == Character.UnicodeBlock.KANNADA ||
-                    block == Character.UnicodeBlock.BENGALI ||
-                    block == Character.UnicodeBlock.GUJARATI ||
-                    block == Character.UnicodeBlock.GURMUKHI
+        } finally {
+            if (audioFocusRequested) {
+                try {
+                    abandonAudioFocus(audioFocusRequest, focusStreamType ?: AudioManager.STREAM_MUSIC)
+                } catch (_: Exception) {}
+            }
+            if (originalVolume != null && changedVolumeStream != null) {
+                try {
+                    audioManager.setStreamVolume(changedVolumeStream!!, originalVolume!!, 0)
+                } catch (_: Exception) {}
+            }
         }
     }
 
