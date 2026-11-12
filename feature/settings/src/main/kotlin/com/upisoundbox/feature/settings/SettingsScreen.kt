@@ -2,8 +2,11 @@ package com.upisoundbox.feature.settings
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -192,8 +195,22 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(18.dp)) {
-                    Text(text = "Version 1.0.0 (Open Source)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = colors.ink)
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Image(
+                            painter = painterResource(id = com.upisoundbox.core.design.R.drawable.ic_app_logo),
+                            contentDescription = "App Logo",
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                        )
+                        Spacer(modifier = Modifier.width(14.dp))
+                        Column {
+                            Text(text = "UPI Soundbox", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = colors.ink)
+                            Text(text = "Version 1.0.0 (Open Source)", style = MaterialTheme.typography.bodySmall, color = colors.muted)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
                     Text(text = "Built with Jetpack Compose & Kotlin. Distributed via GitHub Releases.", style = MaterialTheme.typography.bodySmall, color = colors.muted)
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -201,7 +218,7 @@ fun SettingsScreen(
                     PillButton(
                         text = "Check for Updates (GitHub)",
                         onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/upisoundbox/soundbox/releases")).apply {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/tuttukrishna/upi-soundbox/releases")).apply {
                                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
                             }
                             try { context.startActivity(intent) } catch (_: Exception) {}

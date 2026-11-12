@@ -5,6 +5,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -66,9 +68,11 @@ fun SplashScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Image(
-                painter = painterResource(id = R.drawable.ic_illust_shopkeeper),
+                painter = painterResource(id = R.drawable.ic_app_logo),
                 contentDescription = "Soundbox",
-                modifier = Modifier.size(200.dp)
+                modifier = Modifier
+                    .size(130.dp)
+                    .clip(RoundedCornerShape(30.dp))
             )
             Spacer(modifier = Modifier.height(24.dp))
             Text(
