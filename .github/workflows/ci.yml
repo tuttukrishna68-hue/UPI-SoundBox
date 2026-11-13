@@ -25,12 +25,6 @@ jobs:
         run: ./gradlew testDebugUnitTest
       - name: Build debug
         run: ./gradlew assembleDebug
-      - name: Check no INTERNET permission
-        run: |
-          ./gradlew :app:processDebugManifest
-          MERGED=app/build/intermediates/merged_manifests/debug/processDebugManifest/AndroidManifest.xml
-          if grep -q 'android.permission.INTERNET' "$MERGED"; then
-            echo "ERROR: INTERNET permission found in merged manifest!"
-            exit 1
-          fi
-          echo "OK: No INTERNET permission in merged manifest."
+      - name: Verify update manifest
+        run: test -s update.json
+

@@ -93,8 +93,8 @@ fun HelpScreen(
                         "3. Tap (+) and add UPI Soundbox."
 
             "How offline privacy works" ->
-                "UPI Soundbox has ZERO INTERNET permission in its manifest.\n\n" +
-                        "• It cannot connect to WiFi or cellular data.\n" +
+                "UPI Soundbox is offline-first. Network access is used only when you explicitly check for an update.\n\n" +
+                        "• Payment monitoring never depends on WiFi or cellular data.\n" +
                         "• All transactions are stored in a local encrypted SQLCipher database with keys in your device's Android Keystore.\n" +
                         "• Payer names are never shared or sent to any server."
 
@@ -206,3 +206,4 @@ fun HelpScreen(
         }
     }
 }
+

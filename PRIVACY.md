@@ -23,12 +23,15 @@ All stored data is **encrypted on device** using SQLCipher, with encryption keys
 
 ## What NEVER Leaves Your Phone
 
-**Everything.** UPI Soundbox has **no INTERNET permission** — this is enforced at build time by our CI pipeline. The app is physically incapable of making network requests. Specifically:
+**Your payment and personal data.** UPI Soundbox has network access only when you explicitly tap **Check for updates**. That request reads a public version manifest from the project repository; payment data is never included, uploaded or transmitted. Specifically:
 
-- ❌ No data is transmitted to any server
+- ❌ No payment data is transmitted to any server
 - ❌ No data is shared with any third party
 - ❌ No data is uploaded to any cloud service
 - ❌ No crash reports are sent anywhere
+
+The update check is manual and optional. Payment monitoring, parsing, storage and
+on-device TTS continue to work without network access.
 
 ## What Is NOT Collected
 
@@ -56,10 +59,11 @@ All stored data is **encrypted on device** using SQLCipher, with encryption keys
 | **Battery Optimisation Exemption** | Requested so the announcement service keeps running reliably in the background |
 | **Boot Completed** | To restart the notification listener after device reboot |
 | **Foreground Service** | To keep the TTS announcement service running while the app is in the background |
+| **Internet** | Only for the explicit GitHub update check; never for payment data |
 
 ## Open Source
 
-UPI Soundbox is open source. You can audit the entire codebase to verify these privacy claims. The absence of INTERNET permission is verifiable in the merged Android manifest and enforced by automated CI checks on every build.
+UPI Soundbox is open source. You can audit the entire codebase to verify these privacy claims. The update checker is limited to the public manifest URL in `UpdateChecker.kt` and is never run in the background.
 
 ## Changes to This Policy
 
@@ -68,3 +72,4 @@ Any changes to this privacy policy will be documented in the [CHANGELOG](CHANGEL
 ---
 
 *Last updated: 2024-12-01*
+

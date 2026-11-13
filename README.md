@@ -10,7 +10,7 @@ UPI Soundbox announces incoming UPI payments aloud within about one second. It w
 - 📱 Works with Google Pay, PhonePe, Paytm, BHIM, Amazon Pay, CRED and more
 - 🌐 10 Indian languages with customisable phrases
 - 📊 Daily/weekly/monthly reports with app-wise breakdown
-- 🔒 Fully offline — no internet permission, all data stays on device
+- 🔒 Offline-first payments — no payment data leaves the device
 - 📋 QR code generation for your UPI ID
 - 🔋 Survives screen off, reboot, and battery optimisation
 
@@ -24,12 +24,12 @@ UPI Soundbox announces incoming UPI payments aloud within about one second. It w
 
 ## Updates
 
-The `main` branch is the source of truth for the app. Every push runs the Android
-build and unit tests in GitHub Actions and publishes a downloadable APK artifact.
-Stable APKs, when published, are attached to [GitHub Releases](https://github.com/tuttukrishna68-hue/UPI-SoundBox/releases).
+The `main` branch is the source of truth for the app. The Settings screen checks
+the version manifest in this repository when you explicitly tap **Check for updates**.
+If a newer version is available, it provides a direct APK download link.
 
-To get the newest development build, open the latest successful workflow run under
-[Actions](https://github.com/tuttukrishna68-hue/UPI-SoundBox/actions) and download its `upi-soundbox-debug-apk` artifact.
+Payment monitoring, parsing, storage and TTS remain fully on-device. Network access
+is used only for the manual update check and never for payment data.
 
 ## Build from Source
 
@@ -58,7 +58,7 @@ Jetpack Compose, MVVM, Hilt, Room, WorkManager, Coroutines/Flow.
 
 ## Privacy
 
-- No INTERNET permission — enforced by CI
+- INTERNET permission is used only for the explicit GitHub update check; payment data is never uploaded
 - All data encrypted on device (SQLCipher + Android Keystore)
 - No analytics, ads, or crash reporting
 - See [PRIVACY.md](PRIVACY.md) for full details
@@ -70,3 +70,4 @@ Issues and PRs welcome. For parser improvements, please use the **Parser Request
 ## License
 
 TBD — see [LICENSE](LICENSE)
+

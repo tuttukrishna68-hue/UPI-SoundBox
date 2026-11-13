@@ -267,7 +267,7 @@ fun OnboardingScreen(
                             )
                             Spacer(modifier = Modifier.height(14.dp))
                             Text(
-                                text = "No internet permission, zero cloud uploads. Your payment transactions stay encrypted right on your phone.",
+                                text = "No payment data uploads, optional update checks. Your payment transactions stay encrypted right on your phone.",
                                 style = MaterialTheme.typography.bodyMedium,
                                 textAlign = TextAlign.Center,
                                 color = Color(0xFF94A3B8),
@@ -709,3 +709,4 @@ private fun OnboardingVisualSlide3() {
         }
     }
 }
+
