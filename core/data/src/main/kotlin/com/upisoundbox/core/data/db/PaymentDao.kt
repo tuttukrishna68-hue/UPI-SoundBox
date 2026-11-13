@@ -40,6 +40,17 @@ interface PaymentDao {
     @Query("SELECT * FROM payments WHERE upiRef = :upiRef LIMIT 1")
     suspend fun getByUpiRef(upiRef: String): PaymentEntity?
 
+    @Query("""
+        SELECT * FROM payments
+        WHERE id = :id
+           OR (:upiRef IS NOT NULL AND upiRef = :upiRef)
+        LIMIT 1
+    """)
+    suspend fun findDuplicate(id: String, upiRef: String?): PaymentEntity?
+
+    @Query("UPDATE payments SET appPackage = :appPackage WHERE id = :id")
+    suspend fun updateAppPackage(id: String, appPackage: String): Int
+
     @Query("SELECT SUM(amountPaise) FROM payments WHERE receivedAt >= :startOfDayTimestamp")
     fun getTodayTotal(startOfDayTimestamp: Long): Flow<Long?>
 

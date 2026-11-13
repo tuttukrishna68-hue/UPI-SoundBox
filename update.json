@@ -1,6 +1,6 @@
 {
-  "versionCode": 4,
-  "versionName": "0.4.0",
-  "downloadUrl": "https://github.com/tuttukrishna68-hue/UPI-SoundBox/releases/download/v0.4.0/UPI-Soundbox-v0.4.0-4.apk",
-  "releaseNotes": "Refined the home dashboard with a true-black header area and restored solid legacy shortcut tiles for My QR, Reports, History, and Counter."
+  "versionCode": 5,
+  "versionName": "0.5.0",
+  "downloadUrl": "https://github.com/tuttukrishna68-hue/UPI-SoundBox/releases/download/v0.5.0/UPI-Soundbox-v0.5.0-5.apk",
+  "releaseNotes": "Added professional chime controls, faster background announcements, maximum announcement volume, Malayalam voice support, corrected GPay branding, cleaner history, and a customer-facing standee QR screen."
 }

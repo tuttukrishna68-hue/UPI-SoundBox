@@ -26,7 +26,7 @@ class SmsSource : BroadcastReceiver() {
     lateinit var paymentProcessor: PaymentProcessor
 
     private val smsParser = SmsParser()
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION) return

@@ -68,7 +68,6 @@ import com.upisoundbox.core.data.preferences.SoundboxPreferences
 import com.upisoundbox.core.data.repository.PaymentRepository
 import com.upisoundbox.core.design.component.AmountDisplay
 import com.upisoundbox.core.design.component.AmountSize
-import com.upisoundbox.core.design.component.AppChip
 import com.upisoundbox.core.design.theme.LocalSoundboxColors
 import com.upisoundbox.core.design.util.AppLogoProvider
 import com.upisoundbox.core.parser.AmountParser
@@ -690,8 +689,6 @@ private fun PaymentHistoryCard(
                         fontWeight = FontWeight.SemiBold,
                         color = colors.textPrimary
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    AppChip(appName = appName)
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))

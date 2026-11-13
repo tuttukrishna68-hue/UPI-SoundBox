@@ -18,7 +18,9 @@ object TtsModule {
 
     @Provides
     @Singleton
-    fun provideAudioChimePlayer(): AudioChimePlayer = AudioChimePlayer()
+    fun provideAudioChimePlayer(
+        @ApplicationContext context: Context
+    ): AudioChimePlayer = AudioChimePlayer(context)
 
     @Provides
     @Singleton

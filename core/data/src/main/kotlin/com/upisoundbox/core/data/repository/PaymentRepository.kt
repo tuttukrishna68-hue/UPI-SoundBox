@@ -19,6 +19,8 @@ interface PaymentRepository {
     fun getAllPayments(): Flow<List<PaymentEntity>>
     suspend fun getPaymentById(id: String): PaymentEntity?
     suspend fun getPaymentByUpiRef(upiRef: String): PaymentEntity?
+    suspend fun findDuplicate(id: String, upiRef: String?): PaymentEntity?
+    suspend fun updateAppPackage(paymentId: String, appPackage: String)
     fun getFilteredPayments(
         query: String? = null,
         dateFrom: Long? = null,
@@ -83,6 +85,13 @@ class PaymentRepositoryImpl(
     override suspend fun getPaymentById(id: String): PaymentEntity? = paymentDao.getById(id)
 
     override suspend fun getPaymentByUpiRef(upiRef: String): PaymentEntity? = paymentDao.getByUpiRef(upiRef)
+
+    override suspend fun findDuplicate(id: String, upiRef: String?): PaymentEntity? =
+        paymentDao.findDuplicate(id, upiRef)
+
+    override suspend fun updateAppPackage(paymentId: String, appPackage: String) {
+        paymentDao.updateAppPackage(paymentId, appPackage)
+    }
 
     override fun getFilteredPayments(
         query: String?,

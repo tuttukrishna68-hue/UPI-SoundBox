@@ -33,7 +33,7 @@ class NotificationSource : NotificationListenerService() {
     @Inject
     lateinit var paymentProcessor: PaymentProcessor
 
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val processedKeys = Collections.synchronizedSet(LinkedHashSet<String>())
     private val parserRouter = ParserRouter()
     private val keywordMatcher = KeywordMatcher()
@@ -42,11 +42,17 @@ class NotificationSource : NotificationListenerService() {
     @Volatile
     private var disabledUpiPackages: Set<String> = emptySet()
 
+    @Volatile
+    private var unknownAppLearningExpiry: Long = 0L
+
     override fun onCreate() {
         super.onCreate()
         loadAllowListFromAssets()
         serviceScope.launch {
             preferences.disabledUpiPackages.collect { disabledUpiPackages = it }
+        }
+        serviceScope.launch {
+            preferences.unknownAppLearningExpiry.collect { unknownAppLearningExpiry = it }
         }
     }
 
@@ -68,6 +74,23 @@ class NotificationSource : NotificationListenerService() {
         super.onNotificationPosted(sbn)
         if (sbn == null) return
 
+        // Avoid scheduling work for the phone's ordinary notifications. The
+        // allow-listed UPI packages take the fast path; unknown packages are
+        // still admitted while the opt-in learning window is active.
+        val packageName = sbn.packageName ?: return
+        if (!parserRouter.isAllowed(packageName) &&
+            System.currentTimeMillis() >= unknownAppLearningExpiry
+        ) return
+
+        // NotificationListener callbacks share a system-managed binder thread.
+        // Move parsing and persistence off it immediately so a slow SMS/regex/
+        // database operation cannot delay the next notification update.
+        serviceScope.launch {
+            processNotification(sbn)
+        }
+    }
+
+    private suspend fun processNotification(sbn: StatusBarNotification) {
         val pkg = sbn.packageName ?: return
         val notification = sbn.notification ?: return
 
@@ -105,8 +128,10 @@ class NotificationSource : NotificationListenerService() {
             return // Exact notification update was already parsed
         }
         if (processedKeys.size > 1000) {
-            val iterator = processedKeys.iterator()
-            repeat(200) { if (iterator.hasNext()) { iterator.next(); iterator.remove() } }
+            synchronized(processedKeys) {
+                val iterator = processedKeys.iterator()
+                repeat(200) { if (iterator.hasNext()) { iterator.next(); iterator.remove() } }
+            }
         }
 
         val rawNotification = RawNotification(
@@ -127,17 +152,15 @@ class NotificationSource : NotificationListenerService() {
         val isAllowed = !isDisabled && parserRouter.isAllowed(pkg)
         if (!isAllowed) {
             // Check if Unknown-App Learning mode is active (opt-in 5 min)
-            serviceScope.launch {
-                val expiry = preferences.unknownAppLearningExpiry.first()
-                if (System.currentTimeMillis() < expiry) {
-                    val full = rawNotification.fullText()
-                    // If it looks like a payment (has credit keyword and amount)
-                    if (keywordMatcher.hasRejectKeyword(full) == null &&
-                        keywordMatcher.findCreditKeywords(full).isNotEmpty() &&
-                        amountParser.findAllAmounts(full).isNotEmpty()
-                    ) {
-                        SoundboxEventBus.emitUnknownNotification(rawNotification)
-                    }
+            val expiry = preferences.unknownAppLearningExpiry.first()
+            if (System.currentTimeMillis() < expiry) {
+                val full = rawNotification.fullText()
+                // If it looks like a payment (has credit keyword and amount)
+                if (keywordMatcher.hasRejectKeyword(full) == null &&
+                    keywordMatcher.findCreditKeywords(full).isNotEmpty() &&
+                    amountParser.findAllAmounts(full).isNotEmpty()
+                ) {
+                    SoundboxEventBus.emitUnknownNotification(rawNotification)
                 }
             }
             // Discard all other notifications immediately without storing
@@ -148,12 +171,13 @@ class NotificationSource : NotificationListenerService() {
         when (val result = parserRouter.parse(rawNotification)) {
             is ParseResult.Success -> {
                 val event = result.event
-                serviceScope.launch {
-                    // All sources share one application-scoped processor so a
-                    // notification and SMS for the same payment cannot double count.
-                    paymentProcessor.process(event)
+                // All sources share one application-scoped processor so a
+                // notification and SMS for the same payment cannot double count.
+                if (paymentProcessor.process(event)) {
                     try {
                         // Keep the persistent service alive for its live status notification.
+                        // SoundboxService.start() is guarded, so repeated notification
+                        // updates do not repeatedly start the foreground service.
                         SoundboxService.start(this@NotificationSource)
                     } catch (_: Exception) {}
                 }

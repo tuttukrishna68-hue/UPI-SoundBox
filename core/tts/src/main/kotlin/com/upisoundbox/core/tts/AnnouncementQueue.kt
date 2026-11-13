@@ -57,7 +57,12 @@ class AnnouncementQueue(
 
     suspend fun replayLast(): Boolean {
         val text = lastAnnouncedText ?: return false
-        return engine.speak(text = text, languageTag = lastAnnouncedLang)
+        val chime = preferences.isChimeEnabled.first()
+        return engine.speak(
+            text = text,
+            languageTag = lastAnnouncedLang,
+            playChime = chime
+        )
     }
 
     private suspend fun processQueue() {
@@ -92,21 +97,11 @@ class AnnouncementQueue(
         }
 
         if (burstEnabled) {
-            val windowMs = try {
-                preferences.burstWindowSeconds.first().coerceIn(1, 60) * 1000L
-            } catch (_: Exception) {
-                10_000L
-            }
-            val deadline = System.currentTimeMillis() + windowMs
-
+            // Drain only payments that are already waiting. Waiting for a burst
+            // window made a single payment appear in history immediately while
+            // holding its announcement for up to ten seconds.
             while (requests.size < threshold) {
-                val remainingMs = deadline - System.currentTimeMillis()
-                if (remainingMs <= 0L) break
-
-                val next = withTimeoutOrNull(remainingMs) {
-                    queueChannel.receive()
-                } ?: break
-
+                val next = queueChannel.tryReceive().getOrNull() ?: break
                 if (next.request is AnnouncementRequest.Payment) {
                     requests += next
                 } else {
@@ -143,7 +138,12 @@ class AnnouncementQueue(
             is AnnouncementRequest.Custom -> {
                 lastAnnouncedText = request.text
                 lastAnnouncedLang = request.languageTag
-                return engine.speak(request.text, request.languageTag)
+                val chime = preferences.isChimeEnabled.first()
+                return engine.speak(
+                    text = request.text,
+                    languageTag = request.languageTag,
+                    playChime = chime
+                )
             }
 
             is AnnouncementRequest.Payment -> {

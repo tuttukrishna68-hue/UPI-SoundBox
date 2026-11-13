@@ -6,12 +6,15 @@ import com.upisoundbox.core.design.R
 object AppLogoProvider {
     @DrawableRes
     fun getLogoForPackage(pkg: String): Int {
-        val lower = pkg.lowercase()
+        val lower = pkg.trim().lowercase()
         return when {
-            lower.contains("nbu.paisa") -> R.drawable.ic_brand_gpay
+            lower.contains("nbu.paisa") ||
+                    lower.contains("google pay") ||
+                    lower.contains("googlepay") ||
+                    lower.contains("gpay") -> R.drawable.ic_brand_gpay
             lower.contains("phonepe") -> R.drawable.ic_brand_phonepe
             lower.contains("paytm") || lower.contains("net.one97") -> R.drawable.ic_brand_paytm
-            lower.contains("npci.upiapp") || lower.contains("bhim") -> R.drawable.ic_brand_bhim
+            lower == "in.org.npci.upiapp" || lower.contains("bhim") -> R.drawable.ic_brand_bhim
             lower.contains("amazon") -> R.drawable.ic_brand_amazonpay
             lower.contains("dreamplug") || lower.contains("cred") -> R.drawable.ic_brand_cred
             lower.contains("naviapp") || lower.contains("navi") -> R.drawable.ic_brand_navi
@@ -23,7 +26,7 @@ object AppLogoProvider {
             lower.contains("fampay") || lower.contains("famapp") -> R.drawable.ic_brand_famapp
             lower.contains("nextbillion.groww") || lower.contains("groww") -> R.drawable.ic_brand_groww
             lower.contains("myairtelapp") || lower.contains("airtel") -> R.drawable.ic_brand_airtel
-            else -> R.drawable.ic_brand_bhim
+            else -> R.drawable.ic_app_logo
         }
     }
 }

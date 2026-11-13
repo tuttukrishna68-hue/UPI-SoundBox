@@ -3,11 +3,7 @@ package com.upisoundbox.feature.home
 import android.text.format.DateUtils
 import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -144,18 +140,6 @@ fun HomeScreen(
         "standard" -> 1.05f
         else -> 1.0f // compact default (matching the reference image perfectly)
     }
-
-    // Pulsing animation for the green listening indicator dot
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-    val dotPulse by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.35f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1100),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "dotPulse"
-    )
 
     // Keep the upper dashboard edge true black so the header stays calm and
     // high-contrast. Emerald color belongs to the content surfaces, not the
@@ -416,7 +400,7 @@ fun HomeScreen(
                             .fillMaxWidth()
                             .padding(horizontal = 18.dp, vertical = 18.dp)
                     ) {
-                        // Header Row: "Today's Collection" + Live Telemetry Badge
+                        // Header Row: "Today's Collection"
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -430,35 +414,6 @@ fun HomeScreen(
                                 fontSize = (13 * scaleMultiplier).sp,
                                 letterSpacing = 0.2.sp
                             )
-
-                            // Telemetry Live badge
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(Color(0x66111820))
-                                    .border(
-                                        BorderStroke(0.5.dp, Color(0xFFFF4D5D).copy(alpha = 0.55f)),
-                                        RoundedCornerShape(6.dp)
-                                    )
-                                    .padding(horizontal = 7.dp, vertical = 3.dp)
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(5.dp)
-                                            .scale(dotPulse)
-                                            .background(Color(0xFFFF4D5D), CircleShape)
-                                    )
-                                    Spacer(modifier = Modifier.width(5.dp))
-                                    Text(
-                                        text = "LIVE",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 9.sp,
-                                        letterSpacing = 0.8.sp,
-                                        color = Color.White
-                                    )
-                                }
-                            }
                         }
 
                         Spacer(modifier = Modifier.height(4.dp))

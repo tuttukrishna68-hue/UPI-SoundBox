@@ -75,4 +75,4 @@ jobs:
           gh release create "$TAG" \
             "release/UPI-Soundbox-v${VERSION_NAME}-${VERSION_CODE}.apk" \
             --title "UPI Soundbox ${VERSION_NAME}" \
-            --notes "Consecutive payment capture, resilient audio checks, and the frost-glass dashboard redesign."
+            --notes "Professional payment chime controls, faster background announcements, corrected GPay branding, cleaner history, and customer-facing standee QR display."

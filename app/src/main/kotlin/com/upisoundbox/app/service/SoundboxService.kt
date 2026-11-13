@@ -23,6 +23,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 /**
@@ -49,6 +50,7 @@ class SoundboxService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        startInProgress.set(false)
         isRunning = true
         createNotificationChannel()
         startForegroundWithNotification(0L, 0, isPaused = false)
@@ -162,6 +164,7 @@ class SoundboxService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         isRunning = false
+        startInProgress.set(false)
         serviceScope.cancel()
     }
 
@@ -178,12 +181,20 @@ class SoundboxService : Service() {
         var isRunning = false
             private set
 
+        private val startInProgress = AtomicBoolean(false)
+
         fun start(context: Context) {
+            if (isRunning || !startInProgress.compareAndSet(false, true)) return
             val intent = Intent(context, SoundboxService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(intent)
+                } else {
+                    context.startService(intent)
+                }
+            } catch (error: Exception) {
+                startInProgress.set(false)
+                throw error
             }
         }
 

@@ -23,7 +23,9 @@ class SoundboxPreferences(private val context: Context) {
 
     // TTS Voice & Audio Settings
     val languageTag: Flow<String> = dataStore.data.map { it[KEY_LANGUAGE_TAG] ?: "en-IN" }
-    val phraseTemplate: Flow<String> = dataStore.data.map { it[KEY_PHRASE_TEMPLATE] ?: DEFAULT_TEMPLATE_EN }
+    val phraseTemplate: Flow<String> = dataStore.data.map { preferences ->
+        normalizeDefaultTemplate(preferences[KEY_PHRASE_TEMPLATE])
+    }
     val repeatCount: Flow<Int> = dataStore.data.map { it[KEY_REPEAT_COUNT] ?: 1 }
     val isVolumeBoostEnabled: Flow<Boolean> = dataStore.data.map { it[KEY_VOLUME_BOOST] ?: true }
     val isAlarmStreamEnabled: Flow<Boolean> = dataStore.data.map { it[KEY_ALARM_STREAM] ?: false }
@@ -177,12 +179,12 @@ class SoundboxPreferences(private val context: Context) {
 
     companion object {
         const val DEFAULT_USER_NAME = "Merchant"
-        const val DEFAULT_TEMPLATE_EN = "Received {amount} on {app} from {payer}"
-        const val DEFAULT_TEMPLATE_HI = "{app} पर {payer} से {amount} प्राप्त हुए"
-        const val DEFAULT_TEMPLATE_ML = "{app} വഴി {payer} ൽ നിന്ന് {amount} ലഭിച്ചു"
-        const val DEFAULT_TEMPLATE_TA = "{app} மூலம் {payer} இடமிருந்து {amount} பெறப்பட்டது"
-        const val DEFAULT_TEMPLATE_TE = "{app} ద్వారా {payer} నుండి {amount} అందింది"
-        const val DEFAULT_TEMPLATE_KN = "{app} ಮೂಲಕ {payer} ರಿಂದ {amount} ಸ್ವೀಕರಿಸಲಾಗಿದೆ"
+        const val DEFAULT_TEMPLATE_EN = "{amount} received on {app}"
+        const val DEFAULT_TEMPLATE_HI = "{app} पर {amount} प्राप्त हुए"
+        const val DEFAULT_TEMPLATE_ML = "{app} വഴി {amount} ലഭിച്ചു"
+        const val DEFAULT_TEMPLATE_TA = "{app} மூலம் {amount} பெறப்பட்டது"
+        const val DEFAULT_TEMPLATE_TE = "{app} ద్వారా {amount} అందింది"
+        const val DEFAULT_TEMPLATE_KN = "{app} ಮೂಲಕ {amount} ಸ್ವೀಕರಿಸಲಾಗಿದೆ"
 
         val DEFAULT_SMS_SENDERS = "HDFCBK,SBIINB,ICICIB,KOTAKB,AXISBK,PNBSMS,BOBTXN,UNIONB,CANBNK,PAYTMB"
 
@@ -219,6 +221,23 @@ class SoundboxPreferences(private val context: Context) {
         private val KEY_FONT_SCALE = stringPreferencesKey("font_scale")
         private val KEY_LAST_SEEN_PAYMENT_AT = longPreferencesKey("last_seen_payment_at")
         private val KEY_ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
+
+        private fun normalizeDefaultTemplate(template: String?): String {
+            return when (template) {
+                null,
+                "Received {amount} on {app} from {payer}" -> DEFAULT_TEMPLATE_EN
+                "{app} पर {payer} से {amount} प्राप्त हुए" -> DEFAULT_TEMPLATE_HI
+                "{app} വഴി {payer} ൽ നിന്ന് {amount} ലഭിച്ചു" -> DEFAULT_TEMPLATE_ML
+                "{app} மூலம் {payer} இடமிருந்து {amount} பெறப்பட்டது" -> DEFAULT_TEMPLATE_TA
+                "{app} ద్వారా {payer} నుండి {amount} అందింది" -> DEFAULT_TEMPLATE_TE
+                "{app} ಮೂಲಕ {payer} ರಿಂದ {amount} ಸ್ವೀಕರಿಸಲಾಗಿದೆ" -> DEFAULT_TEMPLATE_KN
+                "{app} वर {payer} कडून {amount} प्राप्त झाले" -> "{app} वर {amount} प्राप्त झाले"
+                "{app} এ {payer} এর থেকে {amount} পাওয়া গেছে" -> "{app} এ {amount} পাওয়া গেছে"
+                "{app} પર {payer} તરફથી {amount} મળ્યા" -> "{app} પર {amount} મળ્યા"
+                "{app} 'ਤੇ {payer} ਵੱਲੋਂ {amount} ਪ੍ਰਾਪਤ ਹੋਏ" -> "{app} 'ਤੇ {amount} ਪ੍ਰਾਪਤ ਹੋਏ"
+                else -> template
+            }
+        }
     }
 }
 

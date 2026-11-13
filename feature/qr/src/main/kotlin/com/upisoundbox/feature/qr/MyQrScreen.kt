@@ -15,6 +15,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -31,6 +32,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -39,6 +41,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -91,17 +94,21 @@ fun MyQrScreen(
     var shopNameInput by remember { mutableStateOf("") }
     var optionalAmountInput by remember { mutableStateOf("") }
     var qrBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var showEditor by remember { mutableStateOf(false) }
 
     LaunchedEffect(savedUpiId, savedShopName) {
         if (upiIdInput.isEmpty()) upiIdInput = savedUpiId
         if (shopNameInput.isEmpty()) shopNameInput = savedShopName
     }
 
+    val displayUpiId = upiIdInput.ifBlank { savedUpiId }
+    val displayShopName = shopNameInput.ifBlank { savedShopName }
+
     // Regenerate QR on change
-    LaunchedEffect(upiIdInput, shopNameInput, optionalAmountInput) {
-        if (upiIdInput.isNotBlank()) {
-            val uri = buildUpiUri(upiIdInput, shopNameInput, optionalAmountInput)
-            qrBitmap = generateQrCodeBitmap(uri, 512)
+    LaunchedEffect(displayUpiId, displayShopName, optionalAmountInput) {
+        if (displayUpiId.isNotBlank()) {
+            val uri = buildUpiUri(displayUpiId, displayShopName, optionalAmountInput)
+            qrBitmap = generateQrCodeBitmap(uri, 768)
         } else {
             qrBitmap = null
         }
@@ -113,200 +120,396 @@ fun MyQrScreen(
     ) { uri ->
         if (uri != null && qrBitmap != null) {
             scope.launch(Dispatchers.IO) {
-                exportStandeePdf(context, uri, shopNameInput, upiIdInput, qrBitmap!!)
+                exportStandeePdf(context, uri, displayShopName, displayUpiId, qrBitmap!!)
             }
         }
     }
 
-    Column(
+    if (!showEditor && savedUpiId.isNotBlank()) {
+        StandeeQrView(
+            shopName = displayShopName,
+            upiId = displayUpiId,
+            qrBitmap = qrBitmap,
+            onNavigateBack = onNavigateBack,
+            onEdit = { showEditor = true },
+            onShare = {
+                qrBitmap?.let { shareQrImage(context, it, displayShopName) }
+            },
+            onExport = {
+                val filename = "UPI_Standee_${System.currentTimeMillis()}.pdf"
+                exportPdfLauncher.launch(filename)
+            }
+        )
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colors.paper)
+                .statusBarsPadding()
+                .navigationBarsPadding()
+        ) {
+            // App Top Bar
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = {
+                        if (savedUpiId.isNotBlank()) showEditor = false else onNavigateBack()
+                    }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = colors.ink
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (savedUpiId.isNotBlank()) "Edit payment QR" else "My UPI QR & Standee",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = colors.ink
+                    )
+                }
+
+                if (qrBitmap != null) {
+                    IconButton(
+                        onClick = {
+                            shareQrImage(context, qrBitmap!!, displayShopName)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = "Share QR",
+                            tint = colors.accentOrange
+                        )
+                    }
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .verticalScroll(scrollState),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Pill Input with Embedded Black CTA (Reference 1 Pattern!)
+                Text(
+                    text = "YOUR UPI ID (VPA)",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.muted,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                PillInputWithCta(
+                    value = upiIdInput,
+                    onValueChange = { upiIdInput = it.trim() },
+                    placeholder = "e.g. yourname@upi or 9876543210@paytm",
+                    ctaText = "Save",
+                    onCtaClick = {
+                        scope.launch {
+                            preferences.setMyQrDetails(upiIdInput, shopNameInput)
+                            showEditor = false
+                            Toast.makeText(context, "UPI ID saved!", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Shop Name input
+                Text(
+                    text = "SHOP / BUSINESS NAME",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.muted,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                PillInputWithCta(
+                    value = shopNameInput,
+                    onValueChange = { shopNameInput = it },
+                    placeholder = "e.g. Krishna General Store",
+                    ctaText = "Update",
+                    onCtaClick = {
+                        scope.launch {
+                            preferences.setMyQrDetails(upiIdInput, shopNameInput)
+                            showEditor = false
+                            Toast.makeText(context, "Shop name updated!", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // QR Standee Card Preview
+                Card(
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = colors.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = if (displayShopName.isNotBlank()) displayShopName else "Your Shop Name",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.ink,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = "SCAN & PAY WITH ANY UPI APP",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.accentOrange,
+                            letterSpacing = 1.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        if (qrBitmap != null) {
+                            Image(
+                                bitmap = qrBitmap!!.asImageBitmap(),
+                                contentDescription = "UPI QR Code",
+                                modifier = Modifier
+                                    .size(220.dp)
+                                    .background(androidx.compose.ui.graphics.Color.White, RoundedCornerShape(12.dp))
+                                    .padding(8.dp)
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .size(220.dp)
+                                    .background(colors.bubbleGrey, RoundedCornerShape(12.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "Enter UPI ID above\nto generate QR code",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = colors.muted,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = if (displayUpiId.isNotBlank()) displayUpiId else "your-vpa@bank",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colors.ink
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Export Printable Standee as PDF button
+                PillButton(
+                    text = "Export Printable Standee (PDF)",
+                    onClick = {
+                        val filename = "UPI_Standee_${System.currentTimeMillis()}.pdf"
+                        exportPdfLauncher.launch(filename)
+                    },
+                    enabled = qrBitmap != null,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun StandeeQrView(
+    shopName: String,
+    upiId: String,
+    qrBitmap: Bitmap?,
+    onNavigateBack: () -> Unit,
+    onEdit: () -> Unit,
+    onShare: () -> Unit,
+    onExport: () -> Unit
+) {
+    val colors = LocalSoundboxColors.current
+
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.paper)
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
-        // App Top Bar
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = colors.ink
-                    )
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "My UPI QR & Standee",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = colors.ink
-                )
-            }
-
-            if (qrBitmap != null) {
-                IconButton(
-                    onClick = {
-                        shareQrImage(context, qrBitmap!!, shopNameInput)
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Share,
-                        contentDescription = "Share QR",
-                        tint = colors.accentOrange
-                    )
-                }
-            }
-        }
+        val qrSize = minOf(maxWidth - 72.dp, 320.dp)
 
         Column(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .verticalScroll(scrollState),
+                .fillMaxSize()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = colors.ink
+                        )
+                    }
+                    Text(
+                        text = "Payment QR",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = colors.ink
+                    )
+                }
+
+                Row {
+                    IconButton(onClick = onEdit) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit QR details",
+                            tint = colors.ink
+                        )
+                    }
+                    IconButton(onClick = onShare, enabled = qrBitmap != null) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = "Share QR",
+                            tint = colors.accentOrange
+                        )
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Pill Input with Embedded Black CTA (Reference 1 Pattern!)
-            Text(
-                text = "YOUR UPI ID (VPA)",
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                color = colors.muted,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            PillInputWithCta(
-                value = upiIdInput,
-                onValueChange = { upiIdInput = it.trim() },
-                placeholder = "e.g. yourname@upi or 9876543210@paytm",
-                ctaText = "Save",
-                onCtaClick = {
-                    scope.launch {
-                        preferences.setMyQrDetails(upiIdInput, shopNameInput)
-                        Toast.makeText(context, "UPI ID saved!", Toast.LENGTH_SHORT).show()
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Shop Name input
-            Text(
-                text = "SHOP / BUSINESS NAME",
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                color = colors.muted,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            PillInputWithCta(
-                value = shopNameInput,
-                onValueChange = { shopNameInput = it },
-                placeholder = "e.g. Krishna General Store",
-                ctaText = "Update",
-                onCtaClick = {
-                    scope.launch {
-                        preferences.setMyQrDetails(upiIdInput, shopNameInput)
-                        Toast.makeText(context, "Shop name updated!", Toast.LENGTH_SHORT).show()
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // QR Standee Card Preview
             Card(
-                shape = RoundedCornerShape(24.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                shape = RoundedCornerShape(28.dp),
                 colors = CardDefaults.cardColors(containerColor = colors.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier.fillMaxWidth()
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .fillMaxSize()
+                        .padding(horizontal = 20.dp, vertical = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = if (shopNameInput.isNotBlank()) shopNameInput else "Your Shop Name",
-                        style = MaterialTheme.typography.headlineSmall,
+                        text = shopName.ifBlank { "YOUR SHOP" },
+                        style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = colors.ink,
                         textAlign = TextAlign.Center
                     )
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "SCAN & PAY WITH ANY UPI APP",
+                        text = "SCAN TO PAY",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = colors.accentOrange,
+                        letterSpacing = 2.sp
+                    )
+                    Text(
+                        text = "WITH ANY UPI APP",
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
-                        color = colors.accentOrange,
+                        color = colors.muted,
                         letterSpacing = 1.sp
                     )
-
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
                     if (qrBitmap != null) {
                         Image(
-                            bitmap = qrBitmap!!.asImageBitmap(),
-                            contentDescription = "UPI QR Code",
+                            bitmap = qrBitmap.asImageBitmap(),
+                            contentDescription = "Scan this UPI QR code to pay",
                             modifier = Modifier
-                                .size(220.dp)
-                                .background(androidx.compose.ui.graphics.Color.White, RoundedCornerShape(12.dp))
-                                .padding(8.dp)
+                                .size(qrSize)
+                                .background(androidx.compose.ui.graphics.Color.White, RoundedCornerShape(16.dp))
+                                .padding(12.dp)
                         )
                     } else {
                         Box(
                             modifier = Modifier
-                                .size(220.dp)
-                                .background(colors.bubbleGrey, RoundedCornerShape(12.dp)),
+                                .size(qrSize)
+                                .background(colors.bubbleGrey, RoundedCornerShape(16.dp)),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "Enter UPI ID above\nto generate QR code",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = colors.muted,
-                                textAlign = TextAlign.Center
+                                text = "Preparing QR code…",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = colors.muted
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
+                    Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = if (upiIdInput.isNotBlank()) upiIdInput else "your-vpa@bank",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.ink
+                        text = upiId,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.ink,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Scan • Pay • Get instant confirmation",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.muted,
+                        textAlign = TextAlign.Center
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Export Printable Standee as PDF button
-            PillButton(
-                text = "Export Printable Standee (PDF)",
-                onClick = {
-                    val filename = "UPI_Standee_${System.currentTimeMillis()}.pdf"
-                    exportPdfLauncher.launch(filename)
-                },
-                enabled = qrBitmap != null,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Button(
+                    onClick = onEdit,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.ink)
+                ) {
+                    Icon(Icons.Default.Edit, contentDescription = null)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Edit")
+                }
+                OutlinedButton(
+                    onClick = onExport,
+                    enabled = qrBitmap != null,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Print")
+                }
+            }
         }
     }
 }

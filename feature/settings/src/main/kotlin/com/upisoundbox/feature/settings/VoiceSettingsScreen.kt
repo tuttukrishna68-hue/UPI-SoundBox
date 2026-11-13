@@ -71,10 +71,10 @@ val SUPPORTED_LANGUAGES = listOf(
     LanguageOption("ta-IN", "Tamil (தமிழ்)", SoundboxPreferences.DEFAULT_TEMPLATE_TA),
     LanguageOption("te-IN", "Telugu (తెలుగు)", SoundboxPreferences.DEFAULT_TEMPLATE_TE),
     LanguageOption("kn-IN", "Kannada (ಕನ್ನಡ)", SoundboxPreferences.DEFAULT_TEMPLATE_KN),
-    LanguageOption("mr-IN", "Marathi (मराठी)", "{app} वर {payer} कडून {amount} प्राप्त झाले"),
-    LanguageOption("bn-IN", "Bengali (বাংলা)", "{app} এ {payer} এর থেকে {amount} পাওয়া গেছে"),
-    LanguageOption("gu-IN", "Gujarati (ગુજરાતી)", "{app} પર {payer} તરફથી {amount} મળ્યા"),
-    LanguageOption("pa-IN", "Punjabi (ਪੰਜਾਬੀ)", "{app} 'ਤੇ {payer} ਵੱਲੋਂ {amount} ਪ੍ਰਾਪਤ ਹੋਏ")
+    LanguageOption("mr-IN", "Marathi (मराठी)", "{app} वर {amount} प्राप्त झाले"),
+    LanguageOption("bn-IN", "Bengali (বাংলা)", "{app} এ {amount} পাওয়া গেছে"),
+    LanguageOption("gu-IN", "Gujarati (ગુજરાતી)", "{app} પર {amount} મળ્યા"),
+    LanguageOption("pa-IN", "Punjabi (ਪੰਜਾਬੀ)", "{app} 'ਤੇ {amount} ਪ੍ਰਾਪਤ ਹੋਏ")
 )
 
 @Composable
@@ -179,7 +179,7 @@ fun VoiceSettingsScreen(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Placeholders: {amount}, {payer}, {app}",
+                text = "Placeholders: {amount}, {app} (optional: {payer})",
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.muted
             )
@@ -250,7 +250,7 @@ fun VoiceSettingsScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(text = "Volume Boost", style = MaterialTheme.typography.titleMedium, color = colors.ink)
-                            Text(text = "Temporarily boosts volume during speech and restores it.", style = MaterialTheme.typography.bodySmall, color = colors.muted)
+                            Text(text = "Sets the announcement stream to maximum and restores it afterwards.", style = MaterialTheme.typography.bodySmall, color = colors.muted)
                         }
                         Switch(
                             checked = isVolumeBoost,
@@ -287,8 +287,16 @@ fun VoiceSettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "Play Chime Sound", style = MaterialTheme.typography.titleMedium, color = colors.ink)
-                            Text(text = "Plays a pleasant tone before announcing payment.", style = MaterialTheme.typography.bodySmall, color = colors.muted)
+                            Text(text = "Chime before announcement", style = MaterialTheme.typography.titleMedium, color = colors.ink)
+                            Text(
+                                text = if (isChimeEnabled) {
+                                    "ON • Plays the tune before announcements."
+                                } else {
+                                    "OFF • Announces payment without the tune."
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.muted
+                            )
                         }
                         Switch(
                             checked = isChimeEnabled,

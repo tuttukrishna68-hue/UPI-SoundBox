@@ -12,9 +12,12 @@ import android.speech.tts.UtteranceProgressListener
 import com.upisoundbox.core.parser.AmountParser
 import com.upisoundbox.core.parser.NumberToWords
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -24,7 +27,7 @@ import java.util.Locale
 
 class AnnouncementEngine(
     private val context: Context,
-    private val chimePlayer: AudioChimePlayer = AudioChimePlayer()
+    private val chimePlayer: AudioChimePlayer
 ) : TextToSpeech.OnInitListener {
 
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -33,13 +36,16 @@ class AnnouncementEngine(
     private var isTtsReady = false
     private val initMutex = Mutex()
     private val speakMutex = Mutex()
+    private val lifecycleScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var initDeferred = CompletableDeferred<Boolean>()
     @Volatile
     private var lastFailureReason: String? = null
 
     init {
-        // Kick off asynchronous initialization on Main Looper
-        CoroutineScope(Dispatchers.Main).launch {
+        // Start TTS as soon as the application creates the singleton. This
+        // removes the cold-start initialization pause from the first payment,
+        // including when the activity is later minimized.
+        lifecycleScope.launch {
             ensureReady()
         }
     }
@@ -101,9 +107,11 @@ class AnnouncementEngine(
             }
             lastFailureReason = null
             return true
-        } catch (_: Exception) {
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
             isTtsReady = false
-            lastFailureReason = "The phone's Text-to-Speech engine could not be opened."
+            lastFailureReason = "TTS initialization failed: ${error.message ?: error.javaClass.simpleName}"
             if (!initDeferred.isCompleted) initDeferred.complete(false)
             return false
         }
@@ -137,16 +145,16 @@ class AnnouncementEngine(
 
     fun getDefaultTemplateForLanguage(languageTag: String): String {
         return when (languageTag.lowercase().replace("_", "-")) {
-            "hi-in", "hi" -> "{app} पर {payer} से {amount} प्राप्त हुए"
-            "ml-in", "ml" -> "{app} വഴി {payer} ൽ നിന്ന് {amount} ലഭിച്ചു"
-            "ta-in", "ta" -> "{app} மூலம் {payer} இடமிருந்து {amount} பெறப்பட்டது"
-            "te-in", "te" -> "{app} ద్వారా {payer} నుండి {amount} అందింది"
-            "kn-in", "kn" -> "{app} ಮೂಲಕ {payer} ರಿಂದ {amount} ಸ್ವೀಕರಿಸಲಾಗಿದೆ"
-            "mr-in", "mr" -> "{app} वर {payer} कडून {amount} प्राप्त झाले"
-            "bn-in", "bn" -> "{app} এ {payer} এর থেকে {amount} পাওয়া গেছে"
-            "gu-in", "gu" -> "{app} પર {payer} તરફથી {amount} મળ્યા"
-            "pa-in", "pa" -> "{app} 'ਤੇ {payer} ਵੱਲੋਂ {amount} ਪ੍ਰਾਪਤ ਹੋਏ"
-            else -> "Received {amount} on {app} from {payer}"
+            "hi-in", "hi" -> "{app} पर {amount} प्राप्त हुए"
+            "ml-in", "ml" -> "{app} വഴി {amount} ലഭിച്ചു"
+            "ta-in", "ta" -> "{app} மூலம் {amount} பெறப்பட்டது"
+            "te-in", "te" -> "{app} ద్వారా {amount} అందింది"
+            "kn-in", "kn" -> "{app} ಮೂಲಕ {amount} ಸ್ವೀಕರಿಸಲಾಗಿದೆ"
+            "mr-in", "mr" -> "{app} वर {amount} प्राप्त झाले"
+            "bn-in", "bn" -> "{app} এ {amount} পাওয়া গেছে"
+            "gu-in", "gu" -> "{app} પર {amount} મળ્યા"
+            "pa-in", "pa" -> "{app} 'ਤੇ {amount} ਪ੍ਰਾਪਤ ਹੋਏ"
+            else -> "{amount} received on {app}"
         }
     }
 
@@ -183,8 +191,11 @@ class AnnouncementEngine(
             var focusStreamType: Int? = null
             var changedVolumeStream: Int? = null
             var originalVolume: Int? = null
+            var failureStage = "starting"
+            var playbackErrorCode: Int? = null
 
             try {
+                failureStage = "initializing TTS"
                 if (!ensureReady()) {
                     playFallbackChime(useAlarmStream, playChime)
                     return@withContext false
@@ -196,6 +207,7 @@ class AnnouncementEngine(
                 }
 
                 if (waitCalls) {
+                    failureStage = "checking phone-call state"
                     var callWaitCount = 0
                     while (isPhoneCallActive() && callWaitCount < 10) {
                         delay(1000)
@@ -206,6 +218,7 @@ class AnnouncementEngine(
                 val streamType = if (useAlarmStream) AudioManager.STREAM_ALARM else AudioManager.STREAM_MUSIC
                 focusStreamType = streamType
                 val audioUsage = if (useAlarmStream) AudioAttributes.USAGE_ALARM else AudioAttributes.USAGE_MEDIA
+                failureStage = "configuring audio output"
                 try {
                     engine.setAudioAttributes(
                         AudioAttributes.Builder()
@@ -228,6 +241,7 @@ class AnnouncementEngine(
                     text
                 }
 
+                failureStage = "requesting audio focus"
                 audioFocusRequest = buildAudioFocusRequest(audioUsage)
                 audioFocusRequested = try {
                     requestAudioFocus(audioFocusRequest, streamType)
@@ -235,22 +249,26 @@ class AnnouncementEngine(
                     false
                 }
 
-                if (playChime) {
-                    try {
-                        withTimeoutOrNull(700L) { chimePlayer.playChime(useAlarmStream) }
-                    } catch (_: Exception) {}
-                }
-
+                failureStage = "boosting output volume"
                 try {
                     if (volumeBoost) {
                         val maxVolume = audioManager.getStreamMaxVolume(streamType)
                         originalVolume = audioManager.getStreamVolume(streamType)
                         changedVolumeStream = streamType
-                        val audibleVolume = (maxVolume * 0.85f).toInt().coerceAtLeast(1)
-                        audioManager.setStreamVolume(streamType, audibleVolume, 0)
+                        audioManager.setStreamVolume(streamType, maxVolume, 0)
                     }
                 } catch (_: Exception) {}
 
+                if (playChime) {
+                    failureStage = "playing notification chime"
+                    try {
+                        // Let the bundled tune finish before starting speech,
+                        // but never allow a broken media file to block audio.
+                        withTimeoutOrNull(2500L) { chimePlayer.playChime(useAlarmStream) }
+                    } catch (_: Exception) {}
+                }
+
+                failureStage = "preparing speech callback"
                 val speechCompletion = CompletableDeferred<Boolean>()
                 val utteranceId = "soundbox_${System.currentTimeMillis()}"
 
@@ -266,35 +284,37 @@ class AnnouncementEngine(
                     @Suppress("DEPRECATION")
                     override fun onError(id: String?) {
                         if ((id == null || id == utteranceId) && !speechCompletion.isCompleted) {
+                            playbackErrorCode = null
                             speechCompletion.complete(false)
                         }
                     }
 
                     override fun onError(id: String?, errorCode: Int) {
                         if ((id == null || id == utteranceId) && !speechCompletion.isCompleted) {
+                            playbackErrorCode = errorCode
                             speechCompletion.complete(false)
                         }
                     }
                 })
 
-                val normalParams = Bundle().apply {
-                    putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f)
-                }
+                // Keep the first request as close as possible to Android's own
+                // TTS sample. Some OEM engines reject the legacy volume bundle
+                // even though the same voice works from system settings.
+                failureStage = "starting speech"
                 var speakResult = try {
-                    engine.speak(textToSpeak, TextToSpeech.QUEUE_FLUSH, normalParams, utteranceId)
+                    engine.speak(textToSpeak, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
                 } catch (_: Exception) {
                     TextToSpeech.ERROR
                 }
 
-                // A few OEM engines reject a request after AudioAttributes are set unless
-                // the legacy stream key is also present. Retry once with that compatibility
-                // parameter before declaring the speaker unavailable.
+                // A few OEM engines need the legacy stream parameter. Retry once
+                // without the modern-only volume parameter before declaring failure.
                 if (speakResult != TextToSpeech.SUCCESS) {
+                    failureStage = "retrying speech with audio stream compatibility"
                     try {
                         engine.stop()
                         val compatibilityParams = Bundle().apply {
                             putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, streamType)
-                            putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f)
                         }
                         speakResult = engine.speak(
                             textToSpeak,
@@ -308,20 +328,24 @@ class AnnouncementEngine(
                 }
 
                 if (speakResult != TextToSpeech.SUCCESS) {
-                    lastFailureReason = "The Text-to-Speech engine rejected the speech request."
+                    lastFailureReason = "TTS rejected the speech request (result $speakResult)."
                     speechCompletion.complete(false)
                 }
 
+                failureStage = "waiting for speech playback"
                 val completionResult = withTimeoutOrNull(7000L) {
                     speechCompletion.await()
                 }
 
-                delay(350L)
-
                 return@withContext when {
                     speakResult != TextToSpeech.SUCCESS -> false
-                    completionResult == false -> {
-                        lastFailureReason = "The Text-to-Speech engine could not play this voice."
+                    completionResult != true -> {
+                        val code = playbackErrorCode?.let { " (error code $it)" }.orEmpty()
+                        lastFailureReason = if (completionResult == false) {
+                            "TTS playback failed$code."
+                        } else {
+                            "TTS playback timed out before the engine reported completion."
+                        }
                         false
                     }
                     else -> {
@@ -329,8 +353,12 @@ class AnnouncementEngine(
                         true
                     }
                 }
-            } catch (_: Exception) {
-                lastFailureReason = "The Text-to-Speech engine could not play audio."
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                val detail = error.message?.takeIf { it.isNotBlank() }
+                    ?: error.javaClass.simpleName
+                lastFailureReason = "TTS failed during $failureStage: $detail"
                 return@withContext false
             } finally {
                 if (audioFocusRequested) {
@@ -432,7 +460,10 @@ class AnnouncementEngine(
                         .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                         .build()
                 )
-                .setAcceptsDelayedFocusGain(true)
+                // Android requires a listener when an AudioFocusRequest is
+                // built. We do not use delayed focus, so keep the listener a
+                // no-op and only proceed when focus is granted immediately.
+                .setOnAudioFocusChangeListener { }
                 .build()
         } else {
             null
@@ -458,6 +489,7 @@ class AnnouncementEngine(
     }
 
     fun shutdown() {
+        lifecycleScope.cancel()
         try {
             tts?.stop()
             tts?.shutdown()
@@ -468,24 +500,34 @@ class AnnouncementEngine(
 
     companion object {
         fun mapPackageToDisplayName(pkg: String): String {
-            return when (pkg) {
-                "com.google.android.apps.nbu.paisa.user" -> "Google Pay"
-                "com.google.android.apps.nbu.paisa.merchant" -> "Google Pay Business"
-                "com.phonepe.app", "com.phonepe.business", "com.phonepe.app.business" -> "PhonePe"
-                "net.one97.paytm", "net.one97.paytm.merchant", "com.paytm.business" -> "Paytm"
-                "in.org.npci.upiapp" -> "BHIM"
-                "in.amazon.mShop.android.shopping" -> "Amazon Pay"
-                "com.dreamplug.androidapp" -> "CRED"
-                "com.naviapp" -> "Navi"
-                "money.super.payments" -> "super.money"
-                "com.whatsapp" -> "WhatsApp Pay"
-                "com.mobikwik_new" -> "MobiKwik"
-                "com.popclub.android" -> "POP"
-                "indwin.c3.shareapp" -> "slice"
-                "com.fampay.in" -> "FamApp"
-                "com.nextbillion.groww" -> "Groww"
-                "com.myairtelapp" -> "Airtel"
-                else -> if (pkg.startsWith("VK-") || pkg.startsWith("AX-") || pkg.startsWith("AD-")) "Bank SMS" else "UPI"
+            val normalized = pkg.trim().lowercase()
+            return when {
+                normalized.contains("nbu.paisa") ||
+                        normalized.contains("google pay") ||
+                        normalized.contains("googlepay") ||
+                        normalized.contains("gpay") -> {
+                    if (normalized.contains("merchant") || normalized.contains("business")) {
+                        "Google Pay Business"
+                    } else {
+                        "Google Pay"
+                    }
+                }
+                normalized.contains("phonepe") -> "PhonePe"
+                normalized.contains("paytm") || normalized.contains("net.one97") -> "Paytm"
+                normalized == "in.org.npci.upiapp" || normalized.contains("bhim") -> "BHIM"
+                normalized.contains("amazon") -> "Amazon Pay"
+                normalized.contains("dreamplug") || normalized.contains("cred") -> "CRED"
+                normalized.contains("naviapp") || normalized == "navi" -> "Navi"
+                normalized.contains("super.payments") || normalized.contains("supermoney") -> "super.money"
+                normalized.contains("whatsapp") -> "WhatsApp Pay"
+                normalized.contains("mobikwik") -> "MobiKwik"
+                normalized.contains("popclub") || normalized == "pop" -> "POP"
+                normalized.contains("shareapp") || normalized.contains("slice") -> "slice"
+                normalized.contains("fampay") || normalized.contains("famapp") -> "FamApp"
+                normalized.contains("nextbillion.groww") || normalized.contains("groww") -> "Groww"
+                normalized.contains("myairtelapp") || normalized.contains("airtel") -> "Airtel"
+                normalized.startsWith("vk-") || normalized.startsWith("ax-") || normalized.startsWith("ad-") -> "Bank SMS"
+                else -> "UPI"
             }
         }
 

@@ -12,19 +12,20 @@ class KeywordMatcher(
         ?: loadLinesFromResource("reject_keywords.txt")
         ?: defaultRejectKeywords
 
+    private val creditKeywordRegexes: List<Regex> = creditKeywords.map(::keywordRegex)
+    private val rejectKeywordRegexes: List<Regex> = rejectKeywords.map(::keywordRegex)
+
     fun hasRejectKeyword(text: String): String? {
         val lower = text.lowercase()
-        return rejectKeywords.firstOrNull { keyword ->
-            val regex = Regex("(?:^|[^a-z0-9])${Regex.escape(keyword)}(?:$|[^a-z0-9])")
+        return rejectKeywords.zip(rejectKeywordRegexes).firstOrNull { (_, regex) ->
             regex.containsMatchIn(lower)
-        }
+        }?.first
     }
 
     fun findCreditKeywords(text: String): List<MatchResult> {
         val lower = text.lowercase()
         val matches = mutableListOf<MatchResult>()
-        for (kw in creditKeywords) {
-            val regex = Regex("(?:^|[^a-z0-9])${Regex.escape(kw)}(?:$|[^a-z0-9])")
+        for (regex in creditKeywordRegexes) {
             var match = regex.find(lower)
             while (match != null) {
                 matches.add(match)
@@ -32,6 +33,10 @@ class KeywordMatcher(
             }
         }
         return matches
+    }
+
+    private fun keywordRegex(keyword: String): Regex {
+        return Regex("(?:^|[^a-z0-9])${Regex.escape(keyword)}(?:$|[^a-z0-9])")
     }
 
     companion object {
