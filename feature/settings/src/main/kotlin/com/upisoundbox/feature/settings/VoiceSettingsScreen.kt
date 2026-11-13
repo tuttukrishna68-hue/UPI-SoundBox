@@ -38,6 +38,7 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -100,6 +101,7 @@ fun VoiceSettingsScreen(
 
     var editableTemplate by remember(currentTemplate) { mutableStateOf(currentTemplate) }
     var minAmountText by remember(minPaise) { mutableStateOf((minPaise / 100).toString()) }
+    var audioCheckError by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier
@@ -329,13 +331,37 @@ fun VoiceSettingsScreen(
                         val message = if (success) {
                             "Audio check played ($currentLangTag)"
                         } else {
-                            "Audio unavailable. Check the phone's Text-to-Speech engine."
+                            announcementEngine.getLastFailureReason()
                         }
+                        audioCheckError = if (success) null else message
                         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
             )
+
+            if (audioCheckError != null) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = audioCheckError!!,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.error,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                TextButton(
+                    onClick = {
+                        try {
+                            context.startActivity(announcementEngine.getTtsSettingsIntent())
+                        } catch (_: Exception) {
+                            // Keep the diagnostics message visible if this OEM has no
+                            // dedicated Text-to-Speech settings activity.
+                        }
+                    },
+                    contentPadding = PaddingValues(horizontal = 0.dp, vertical = 4.dp)
+                ) {
+                    Text("Open Text-to-Speech settings", color = colors.accentOrange)
+                }
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
         }

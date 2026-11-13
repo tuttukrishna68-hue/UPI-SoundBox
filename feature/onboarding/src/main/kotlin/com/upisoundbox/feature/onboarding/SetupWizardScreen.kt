@@ -307,8 +307,17 @@ fun SetupWizardScreen(
             buttonText = if (hasVoiceInstalled) "Ready" else "Install Voice",
             onAction = {
                 try {
-                    context.startActivity(announcementEngine.getVoiceInstallIntent())
-                } catch (_: Exception) {}
+                    val installIntent = announcementEngine.getVoiceInstallIntent()
+                    if (installIntent.resolveActivity(context.packageManager) != null) {
+                        context.startActivity(installIntent)
+                    } else {
+                        context.startActivity(announcementEngine.getTtsSettingsIntent())
+                    }
+                } catch (_: Exception) {
+                    try {
+                        context.startActivity(announcementEngine.getTtsSettingsIntent())
+                    } catch (_: Exception) {}
+                }
             }
         )
 
@@ -443,12 +452,27 @@ fun SetupWizardScreen(
                         text = if (isTestSuccessful == true) {
                             "Test announcement played"
                         } else {
-                            "Audio test failed — check Text-to-Speech settings"
+                            "${announcementEngine.getLastFailureReason()} Tap to open Text-to-Speech settings."
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = if (isTestSuccessful == true) colors.success else colors.error,
                         textAlign = TextAlign.End
                     )
+                    if (isTestSuccessful == false) {
+                        TextButton(
+                            onClick = {
+                                try {
+                                    context.startActivity(announcementEngine.getTtsSettingsIntent())
+                                } catch (_: Exception) {}
+                            },
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                                horizontal = 0.dp,
+                                vertical = 2.dp
+                            )
+                        ) {
+                            Text("Open TTS settings", color = colors.accentOrange)
+                        }
+                    }
                 }
             }
         }
