@@ -92,6 +92,8 @@ fun SettingsScreen(
         .firstOrNull { it.tag.equals(currentLang, ignoreCase = true) }
         ?.name
         ?: currentLang
+    var updateState by remember { mutableStateOf<UpdateCheckResult>(UpdateCheckResult.Idle) }
+    val currentVersionName = remember { UpdateChecker.currentVersionName(context) }
 
     Column(
         modifier = Modifier
@@ -332,34 +334,90 @@ fun SettingsScreen(
                             )
                         }
                         Text(
-                            text = "v1.0.0",
+                            text = "v$currentVersionName",
                             color = colors.textMuted,
                             fontSize = 11.sp
                         )
                     }
                     Spacer(modifier = Modifier.height(11.dp))
                     Text(
-                        text = "Your payment data stays on this phone. No cloud uploads and no internet permission.",
+                        text = "Payment data stays on this phone. Update checks are optional and connect only to GitHub.",
                         color = colors.textMuted,
                         fontSize = 11.sp,
                         lineHeight = 17.sp
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     PillButton(
-                        text = "Check for updates",
+                        text = if (updateState is UpdateCheckResult.Checking) "Checking…" else "Check for updates",
                         onClick = {
-                            val intent = Intent(
-                                Intent.ACTION_VIEW,
-                                Uri.parse("https://github.com/tuttukrishna68-hue/UPI-SoundBox/releases")
-                            ).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }
-                            try {
-                                context.startActivity(intent)
-                            } catch (_: Exception) {
-                                // Keep the offline app usable if a browser is unavailable.
+                            if (updateState !is UpdateCheckResult.Checking) {
+                                scope.launch {
+                                    updateState = UpdateCheckResult.Checking
+                                    updateState = UpdateChecker.check(context)
+                                }
                             }
                         },
                         modifier = Modifier.fillMaxWidth()
                     )
+                    when (val state = updateState) {
+                        UpdateCheckResult.Idle,
+                        UpdateCheckResult.Checking -> Unit
+
+                        is UpdateCheckResult.UpToDate -> {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                text = "You're up to date · v${state.currentVersionName}",
+                                color = colors.success,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+
+                        is UpdateCheckResult.Available -> {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                text = "Update available · v${state.info.versionName}",
+                                color = colors.success,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            if (state.info.releaseNotes.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = state.info.releaseNotes,
+                                    color = colors.textMuted,
+                                    fontSize = 11.sp,
+                                    lineHeight = 16.sp
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(10.dp))
+                            PillButton(
+                                text = "Download v${state.info.versionName}",
+                                onClick = {
+                                    val intent = Intent(
+                                        Intent.ACTION_VIEW,
+                                        Uri.parse(state.info.downloadUrl)
+                                    ).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }
+                                    try {
+                                        context.startActivity(intent)
+                                    } catch (_: Exception) {
+                                        // Keep the app usable if a browser is unavailable.
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+
+                        is UpdateCheckResult.Failed -> {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                text = state.message,
+                                color = colors.warning,
+                                fontSize = 11.sp,
+                                lineHeight = 16.sp
+                            )
+                        }
+                    }
                 }
             }
 

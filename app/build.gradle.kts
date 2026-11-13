@@ -15,8 +15,8 @@ android {
         applicationId = "com.upisoundbox.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = System.getenv("CI_BUILD_NUMBER")?.toIntOrNull() ?: 1
-        versionName = System.getenv("CI_GIT_TAG") ?: "0.1.0-dev"
+        versionCode = System.getenv("CI_BUILD_NUMBER")?.toIntOrNull() ?: 2
+        versionName = System.getenv("CI_GIT_TAG") ?: "0.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

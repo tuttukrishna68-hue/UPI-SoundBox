@@ -533,7 +533,7 @@ fun SetupWizardScreen(
                     Text(
                         text = "• What we read: Incoming SMS from verified bank sender IDs (e.g. HDFCBK, SBIINB) matching incoming credit keywords only.\n\n" +
                                 "• What we store: Only the payment amount, payer name/VPA and timestamp in your encrypted local database.\n\n" +
-                                "• What never leaves your phone: EVERYTHING. This app has zero INTERNET permission. No SMS text is ever uploaded or shared.",
+                                "• What never leaves your phone: payment data. Network access is used only for an optional manual update check. No SMS text is ever uploaded or shared.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.ink
                     )
