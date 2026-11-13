@@ -157,12 +157,14 @@ fun HomeScreen(
         label = "dotPulse"
     )
 
-    // The dashboard is intentionally dark-only: a layered emerald glow behind
-    // translucent surfaces creates the frosted-glass depth without fake cards.
+    // Keep the upper dashboard edge true black so the header stays calm and
+    // high-contrast. Emerald color belongs to the content surfaces, not the
+    // status-bar corner behind the controls.
     val backgroundBrush = Brush.verticalGradient(
         listOf(
+            Color.Black,
+            Color.Black,
             Color(0xFF050907),
-            Color(0xFF09130E),
             Color(0xFF07100B),
             Color(0xFF040706)
         )
@@ -173,21 +175,6 @@ fun HomeScreen(
             .fillMaxSize()
             .background(backgroundBrush)
     ) {
-        Box(
-            modifier = Modifier
-                .size(360.dp)
-                .offset(x = 190.dp, y = (-92).dp)
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(
-                            Color(0xFF1BC47D).copy(alpha = 0.20f),
-                            Color(0xFF0B5E3A).copy(alpha = 0.08f),
-                            Color.Transparent
-                        )
-                    ),
-                    CircleShape
-                )
-        )
         Box(
             modifier = Modifier
                 .size(290.dp)
@@ -862,20 +849,10 @@ private fun QuickActionButton(
     Surface(
         modifier = modifier
             .height(72.dp)
-            .background(
-                Brush.linearGradient(
-                    listOf(
-                        Color.White.copy(alpha = 0.075f),
-                        Color(0xFF0C3322).copy(alpha = 0.30f),
-                        Color.White.copy(alpha = 0.035f)
-                    )
-                ),
-                RoundedCornerShape(16.dp)
-            )
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
-        color = Color.Transparent,
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
+        color = colors.surface,
+        border = BorderStroke(1.dp, colors.cardBorder),
         shadowElevation = 0.dp
     ) {
         Column(
@@ -887,9 +864,9 @@ private fun QuickActionButton(
                 modifier = Modifier
                     .size(32.dp)
                     .clip(RoundedCornerShape(9.dp))
-                    .background(Color.White.copy(alpha = 0.06f))
+                    .background(colors.pillBackground)
                     .border(
-                        BorderStroke(0.5.dp, Color.White.copy(alpha = 0.12f)),
+                        BorderStroke(0.5.dp, colors.cardBorder),
                         RoundedCornerShape(9.dp)
                     ),
                 contentAlignment = Alignment.Center
@@ -1052,4 +1029,3 @@ private fun FrostGlassSurface(
         )
     }
 }
-
