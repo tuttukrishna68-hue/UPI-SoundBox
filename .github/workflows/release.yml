@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - "v*"
+    branches:
+      - "release/**"
   workflow_dispatch:
     inputs:
       version_name:
@@ -38,6 +40,10 @@ jobs:
         run: |
           if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
             VERSION_NAME="${GITHUB_REF_NAME#v}"
+            VERSION_CODE="$(grep -oE ': [0-9]+' app/build.gradle.kts | tail -1 | tr -d ': ')"
+          elif [[ "$GITHUB_REF_TYPE" == "branch" && "$GITHUB_REF_NAME" == release/* ]]; then
+            VERSION_NAME="${GITHUB_REF_NAME#release/}"
+            VERSION_NAME="${VERSION_NAME#v}"
             VERSION_CODE="$(grep -oE ': [0-9]+' app/build.gradle.kts | tail -1 | tr -d ': ')"
           else
             VERSION_NAME="${{ inputs.version_name }}"
