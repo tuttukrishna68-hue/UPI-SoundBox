@@ -1,7 +1,6 @@
 {
-  "versionCode": 2,
-  "versionName": "0.2.0",
-  "downloadUrl": "https://github.com/tuttukrishna68-hue/UPI-SoundBox/releases/download/v0.2.0/UPI-Soundbox-v0.2.0-2.apk",
-  "releaseNotes": "Consecutive payments are captured reliably, audio checks are more resilient, and the Home dashboard has a modern frost-glass redesign."
+  "versionCode": 3,
+  "versionName": "0.3.0",
+  "downloadUrl": "https://github.com/tuttukrishna68-hue/UPI-SoundBox/releases/download/v0.3.0/UPI-Soundbox-v0.3.0-3.apk",
+  "releaseNotes": "Hardened Text-to-Speech playback for consecutive payment announcements, added voice fallback selection, and added actionable TTS diagnostics."
 }
-
