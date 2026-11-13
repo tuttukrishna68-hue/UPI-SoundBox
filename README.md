@@ -25,8 +25,10 @@ UPI Soundbox announces incoming UPI payments aloud within about one second. It w
 ## Updates
 
 The `main` branch is the source of truth for the app. The Settings screen checks
-the version manifest in this repository when you explicitly tap **Check for updates**.
-If a newer version is available, it provides a direct APK download link.
+the latest public GitHub Release when you explicitly tap **Check for updates**.
+If a newer version is available, it provides the versioned APK release asset. The
+release workflow builds and publishes an APK automatically for `v*` tags (and
+`release/*` trigger branches).
 
 Payment monitoring, parsing, storage and TTS remain fully on-device. Network access
 is used only for the manual update check and never for payment data.

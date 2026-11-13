@@ -1,7 +1,7 @@
 {
   "versionCode": 2,
   "versionName": "0.2.0",
-  "downloadUrl": "https://raw.githubusercontent.com/tuttukrishna68-hue/UPI-SoundBox/main/UPI-Soundbox.apk",
+  "downloadUrl": "https://github.com/tuttukrishna68-hue/UPI-SoundBox/releases/download/v0.2.0/UPI-Soundbox-v0.2.0-2.apk",
   "releaseNotes": "Consecutive payments are captured reliably, audio checks are more resilient, and the Home dashboard has a modern frost-glass redesign."
 }
 
