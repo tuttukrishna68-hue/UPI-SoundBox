@@ -82,16 +82,6 @@ class NotificationSource : NotificationListenerService() {
         }
         if (isGroupSummary) return
 
-        // Idempotency check: sbn.key + postTime
-        val idempotencyKey = "${sbn.key}_${sbn.postTime}"
-        if (!processedKeys.add(idempotencyKey)) {
-            return // Already processed
-        }
-        if (processedKeys.size > 1000) {
-            val iterator = processedKeys.iterator()
-            repeat(200) { if (iterator.hasNext()) { iterator.next(); iterator.remove() } }
-        }
-
         // Extract raw notification fields
         val extras = notification.extras
         val title = extras?.getString(Notification.EXTRA_TITLE)
@@ -103,6 +93,21 @@ class NotificationSource : NotificationListenerService() {
         val textLines = mutableListOf<String>()
         val linesArray = extras?.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
         linesArray?.forEach { textLines.add(it.toString()) }
+
+        // Some UPI apps reuse a notification id and update the same notification
+        // object for a later payment. Include the visible content in the
+        // idempotency key so a changed payment is not mistaken for the first one.
+        val contentFingerprint = listOf(title, text, bigText, subText, textLines.joinToString("\u001F"))
+            .joinToString("\u001E")
+            .hashCode()
+        val idempotencyKey = "${sbn.key}_${sbn.postTime}_$contentFingerprint"
+        if (!processedKeys.add(idempotencyKey)) {
+            return // Exact notification update was already parsed
+        }
+        if (processedKeys.size > 1000) {
+            val iterator = processedKeys.iterator()
+            repeat(200) { if (iterator.hasNext()) { iterator.next(); iterator.remove() } }
+        }
 
         val rawNotification = RawNotification(
             key = sbn.key,
@@ -181,3 +186,4 @@ class NotificationSource : NotificationListenerService() {
             private set
     }
 }
+

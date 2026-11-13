@@ -21,9 +21,16 @@ class PaymentDeduplicator(
             seenUpiRefs[ref] = currentTimeMs
         }
 
-        // 2. Check (amount + payer) inside dedupe window
-        val payerKey = event.payer?.trim()?.lowercase() ?: "unknown"
-        val signature = "${event.amountPaise}_$payerKey"
+        // 2. Check a conservative fallback signature inside the dedupe window.
+        // A missing payer is common in UPI notifications. Treating every such
+        // payment as "unknown" made two real payments of the same amount look
+        // like one transaction. Without a payer or UPI reference there is no
+        // reliable business identity to dedupe, so let the event through.
+        val payerKey = event.payer?.trim()?.lowercase() ?: return false
+        if (payerKey.isBlank() || payerKey in UNIDENTIFIED_PAYERS) {
+            return false
+        }
+        val signature = "${event.source.name}:${event.appPackage.lowercase()}:${event.amountPaise}_$payerKey"
 
         val lastSeen = recentPayments[signature]
         if (lastSeen != null && (currentTimeMs - lastSeen) <= dedupeWindowMs) {
@@ -50,6 +57,8 @@ class PaymentDeduplicator(
 
     companion object {
         const val DEFAULT_WINDOW_MS = 90_000L // 90 seconds per spec
+        private val UNIDENTIFIED_PAYERS = setOf("unknown", "customer", "payer")
     }
 }
+
 

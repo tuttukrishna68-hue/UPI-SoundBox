@@ -166,7 +166,7 @@ class AnnouncementEngine(
                 // Still give the merchant an audible signal when speech data is unavailable.
                 if (playChime) {
                     try {
-                        withTimeoutOrNull(700L) {
+                        withTimeoutOrNull(900L) {
                             chimePlayer.playChime(useAlarmStream)
                         }
                     } catch (_: Exception) {}
@@ -301,15 +301,21 @@ class AnnouncementEngine(
                 speechCompletion.complete(false)
             }
 
-            // Await speech completion with a 6-second timeout
-            val success = withTimeoutOrNull(6000L) {
+            // Await speech completion with a 6-second timeout. Some OEM TTS engines
+            // successfully enqueue audio but never deliver onDone; a timeout after a
+            // successful enqueue must not be reported as an unavailable speaker.
+            val completionResult = withTimeoutOrNull(6000L) {
                 speechCompletion.await()
-            } ?: false
+            }
 
             // Grace period so hardware speaker finishes physical output buffer
             delay(350L)
 
-            return@withContext success
+            return@withContext when {
+                speakResult != TextToSpeech.SUCCESS -> false
+                completionResult == false -> false
+                else -> true
+            }
         } catch (_: Exception) {
             return@withContext false
         } finally {
@@ -409,3 +415,4 @@ class AnnouncementEngine(
         }
     }
 }
+

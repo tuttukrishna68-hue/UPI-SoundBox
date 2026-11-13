@@ -48,7 +48,11 @@ class AnnouncementQueue(
     suspend fun enqueueAndAwait(request: AnnouncementRequest): Boolean {
         val completion = CompletableDeferred<Boolean>()
         queueChannel.send(QueuedRequest(request, completion))
-        return completion.await()
+        // Keep settings screens responsive if a vendor TTS engine hangs while
+        // initializing or never completes an utterance.
+        return withTimeoutOrNull(12_000L) {
+            completion.await()
+        } ?: false
     }
 
     suspend fun replayLast(): Boolean {
@@ -252,3 +256,4 @@ class AnnouncementQueue(
         }
     }
 }
+
