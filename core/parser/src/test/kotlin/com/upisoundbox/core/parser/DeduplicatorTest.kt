@@ -30,11 +30,11 @@ class DeduplicatorTest {
     }
 
     @Test
-    fun dedupesSameAmountAndPayerInsideWindow() {
+    fun dedupesCrossSourceSameAmountAndPayerInsideWindow() {
         val event1 = PaymentEvent(
             id = "event_1",
-            source = PaymentSource.NOTIFICATION,
-            appPackage = "com.phonepe.app",
+            source = PaymentSource.SMS,
+            appPackage = "VK-HDFCBK",
             amountPaise = 10000L,
             payer = "Suresh"
         )
@@ -69,6 +69,21 @@ class DeduplicatorTest {
             amountPaise = 10000L,
             payer = "Pooja"
         )
+
+        assertThat(deduplicator.isDuplicate(event1, 1000L)).isFalse()
+        assertThat(deduplicator.isDuplicate(event2, 2000L)).isFalse()
+    }
+
+    @Test
+    fun allowsSeparatePaymentsWithSameAmountAndPayerFromSameSource() {
+        val event1 = PaymentEvent(
+            id = "event_1",
+            source = PaymentSource.NOTIFICATION,
+            appPackage = "com.google.android.apps.nbu.paisa.user",
+            amountPaise = 10000L,
+            payer = "Suresh"
+        )
+        val event2 = event1.copy(id = "event_2")
 
         assertThat(deduplicator.isDuplicate(event1, 1000L)).isFalse()
         assertThat(deduplicator.isDuplicate(event2, 2000L)).isFalse()

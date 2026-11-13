@@ -6,7 +6,13 @@ class PaymentDeduplicator(
     var dedupeWindowMs: Long = DEFAULT_WINDOW_MS
 ) {
     private val seenUpiRefs = ConcurrentHashMap<String, Long>()
-    private val recentPayments = ConcurrentHashMap<String, Long>()
+    private data class RecentPayment(
+        val timestamp: Long,
+        val source: PaymentSource,
+        val appPackage: String
+    )
+
+    private val recentPayments = ConcurrentHashMap<String, RecentPayment>()
 
     @Synchronized
     fun isDuplicate(event: PaymentEvent, currentTimeMs: Long = System.currentTimeMillis()): Boolean {
@@ -30,14 +36,26 @@ class PaymentDeduplicator(
         if (payerKey.isBlank() || payerKey in UNIDENTIFIED_PAYERS) {
             return false
         }
-        val signature = "${event.source.name}:${event.appPackage.lowercase()}:${event.amountPaise}_$payerKey"
+        val signature = "${event.amountPaise}_$payerKey"
 
         val lastSeen = recentPayments[signature]
-        if (lastSeen != null && (currentTimeMs - lastSeen) <= dedupeWindowMs) {
+        val isLikelyCrossSourceDuplicate = lastSeen != null &&
+                (currentTimeMs - lastSeen.timestamp) <= dedupeWindowMs &&
+                (lastSeen.source != event.source ||
+                        !lastSeen.appPackage.equals(event.appPackage, ignoreCase = true))
+        if (isLikelyCrossSourceDuplicate) {
             return true
         }
 
-        recentPayments[signature] = currentTimeMs
+        // Same-source events are allowed: two customers can legitimately pay
+        // the same amount, and the notification id/database check handles an
+        // exact repeated callback. The fallback is only for notification/SMS
+        // copies of the same payment when a UPI reference is unavailable.
+        recentPayments[signature] = RecentPayment(
+            timestamp = currentTimeMs,
+            source = event.source,
+            appPackage = event.appPackage
+        )
         return false
     }
 
@@ -49,7 +67,7 @@ class PaymentDeduplicator(
 
     private fun prune(currentTimeMs: Long) {
         val expiryTime = currentTimeMs - (dedupeWindowMs * 2)
-        recentPayments.entries.removeIf { it.value < expiryTime }
+        recentPayments.entries.removeIf { it.value.timestamp < expiryTime }
         // Keep UPI refs a bit longer (e.g. 10 minutes)
         val refExpiry = currentTimeMs - (10 * 60 * 1000L)
         seenUpiRefs.entries.removeIf { it.value < refExpiry }
