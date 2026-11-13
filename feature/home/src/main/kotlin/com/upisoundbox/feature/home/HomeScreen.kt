@@ -17,6 +17,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -70,6 +71,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -155,30 +157,52 @@ fun HomeScreen(
         label = "dotPulse"
     )
 
-    // Background gradient matching the reference designs
-    val backgroundBrush = if (colors.isDark) {
-        Brush.verticalGradient(
-            listOf(
-                Color(0xFF090D0B),
-                Color(0xFF0C130F),
-                Color(0xFF090D0B)
-            )
+    // The dashboard is intentionally dark-only: a layered emerald glow behind
+    // translucent surfaces creates the frosted-glass depth without fake cards.
+    val backgroundBrush = Brush.verticalGradient(
+        listOf(
+            Color(0xFF050907),
+            Color(0xFF09130E),
+            Color(0xFF07100B),
+            Color(0xFF040706)
         )
-    } else {
-        Brush.verticalGradient(
-            listOf(
-                Color(0xFFEBF7F0),
-                Color(0xFFF7FAF8),
-                Color(0xFFEBF7F0)
-            )
-        )
-    }
+    )
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(backgroundBrush)
     ) {
+        Box(
+            modifier = Modifier
+                .size(360.dp)
+                .offset(x = 190.dp, y = (-92).dp)
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            Color(0xFF1BC47D).copy(alpha = 0.20f),
+                            Color(0xFF0B5E3A).copy(alpha = 0.08f),
+                            Color.Transparent
+                        )
+                    ),
+                    CircleShape
+                )
+        )
+        Box(
+            modifier = Modifier
+                .size(290.dp)
+                .offset(x = (-125).dp, y = 530.dp)
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            Color(0xFF0C8A58).copy(alpha = 0.18f),
+                            Color(0xFF0B5E3A).copy(alpha = 0.05f),
+                            Color.Transparent
+                        )
+                    ),
+                    CircleShape
+                )
+        )
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -237,8 +261,8 @@ fun HomeScreen(
                             modifier = Modifier
                                 .size(38.dp)
                                 .clip(CircleShape)
-                                .background(colors.cardBackground)
-                                .border(BorderStroke(1.dp, colors.cardBorder), CircleShape)
+                                .background(Color.White.copy(alpha = 0.055f))
+                                .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.13f)), CircleShape)
                                 .clickable {
                                     scope.launch {
                                         recentPayments.firstOrNull()?.receivedAt?.let {
@@ -272,8 +296,8 @@ fun HomeScreen(
                             modifier = Modifier
                                 .size(38.dp)
                                 .clip(CircleShape)
-                                .background(colors.cardBackground)
-                                .border(BorderStroke(1.dp, colors.cardBorder), CircleShape)
+                                .background(Color.White.copy(alpha = 0.055f))
+                                .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.13f)), CircleShape)
                                 .clickable { onNavigateSettings() },
                             contentAlignment = Alignment.Center
                         ) {
@@ -294,9 +318,9 @@ fun HomeScreen(
                     Card(
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = if (colors.isDark) Color(0xFF26190F) else Color(0xFFFFF7ED)
+                            containerColor = Color(0xFF2A1A10).copy(alpha = 0.82f)
                         ),
-                        border = BorderStroke(1.dp, Color(0xFFF97316)),
+                        border = BorderStroke(1.dp, Color(0xFFFFA45B).copy(alpha = 0.72f)),
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
@@ -372,34 +396,30 @@ fun HomeScreen(
 
             // 3. Hero Card: "Today's Collection" + Real Ledger Data (Ultra-High-End Fintech Architecture)
             item {
-                val heroBackgroundBrush = if (colors.isDark) {
-                    Brush.radialGradient(
-                        colors = listOf(
-                            Color(0xFF13422C).copy(alpha = 0.45f),
-                            Color(0xFF0C2419),
-                            Color(0xFF07140E)
-                        ),
-                        center = Offset(800f, -100f),
-                        radius = 900f
-                    )
-                } else {
-                    Brush.linearGradient(
-                        colors = listOf(
-                            Color(0xFFF0FDF4),
-                            Color(0xFFE4F8EB),
-                            Color(0xFFDCFCE7).copy(alpha = 0.6f)
-                        )
-                    )
-                }
+                val heroBackgroundBrush = Brush.radialGradient(
+                    colors = listOf(
+                        Color(0xFF1E9B68).copy(alpha = 0.30f),
+                        Color(0xFF10442D).copy(alpha = 0.32f),
+                        Color(0xFF08110D).copy(alpha = 0.90f)
+                    ),
+                    center = Offset(820f, -120f),
+                    radius = 920f
+                )
 
                 Surface(
                     shape = RoundedCornerShape(22.dp),
                     color = Color.Transparent,
                     border = BorderStroke(
                         1.dp,
-                        if (colors.isDark) Color(0xFF1F4D35) else Color(0xFFB9F1CD)
+                        Brush.linearGradient(
+                            listOf(
+                                Color.White.copy(alpha = 0.18f),
+                                Color(0xFF35E6A1).copy(alpha = 0.30f),
+                                Color.White.copy(alpha = 0.06f)
+                            )
+                        )
                     ),
-                    shadowElevation = if (colors.isDark) 0.dp else 2.dp,
+                    shadowElevation = 0.dp,
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(heroBackgroundBrush, RoundedCornerShape(22.dp))
@@ -515,13 +535,11 @@ fun HomeScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(16.dp))
-                                .background(
-                                    if (colors.isDark) Color(0x261A4A32) else Color(0xB8FFFFFF)
-                                )
+                                .background(Color.White.copy(alpha = 0.065f))
                                 .border(
                                     BorderStroke(
                                         1.dp,
-                                        if (colors.isDark) Color(0x332FE89E) else Color(0xFFD7F2E0)
+                                        Color.White.copy(alpha = 0.10f)
                                     ),
                                     RoundedCornerShape(16.dp)
                                 )
@@ -639,11 +657,8 @@ fun HomeScreen(
 
             // 6. Live Payment Feed Rows (Clean, Real Data Only)
             item {
-                Card(
+                FrostGlassSurface(
                     shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(containerColor = colors.cardBackground),
-                    border = BorderStroke(1.dp, colors.cardBorder),
-                    elevation = CardDefaults.cardElevation(defaultElevation = if (colors.isDark) 0.dp else 1.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     if (recentPayments.isNotEmpty()) {
@@ -716,15 +731,15 @@ private fun SpeakerToggle(
     val colors = LocalSoundboxColors.current
     val trackColor by animateColorAsState(
         targetValue = if (checked) {
-            if (colors.isDark) Color(0xFF123D2B) else Color(0xFFD7F8E7)
+            Color(0xFF0E4A32).copy(alpha = 0.78f)
         } else {
-            colors.cardBackground
+            Color.White.copy(alpha = 0.055f)
         },
         animationSpec = tween(220),
         label = "speakerTrack"
     )
     val thumbColor by animateColorAsState(
-        targetValue = if (checked) colors.emeraldGreen else colors.textMuted.copy(alpha = 0.9f),
+        targetValue = if (checked) Color(0xFF36E9A0) else Color(0xFF718178),
         animationSpec = tween(220),
         label = "speakerThumb"
     )
@@ -736,23 +751,23 @@ private fun SpeakerToggle(
 
     Box(
         modifier = Modifier
-            .width(60.dp)
-            .height(34.dp)
-            .clip(RoundedCornerShape(17.dp))
+            .width(64.dp)
+            .height(36.dp)
+            .clip(RoundedCornerShape(18.dp))
             .background(trackColor)
             .border(
                 BorderStroke(
                     1.dp,
-                    if (checked) colors.emeraldGreen.copy(alpha = 0.7f) else colors.cardBorder
+                    if (checked) Color(0xFF35E6A1).copy(alpha = 0.72f) else Color.White.copy(alpha = 0.13f)
                 ),
-                RoundedCornerShape(17.dp)
+                RoundedCornerShape(18.dp)
             )
             .clickable { onCheckedChange(!checked) },
         contentAlignment = Alignment.CenterStart
     ) {
         Box(
             modifier = Modifier
-                .offset(x = thumbOffset)
+                .offset(x = if (checked) 31.dp else 4.dp)
                 .size(28.dp)
                 .clip(CircleShape)
                 .background(thumbColor),
@@ -761,7 +776,7 @@ private fun SpeakerToggle(
             Icon(
                 imageVector = if (checked) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
                 contentDescription = if (checked) "Speaker on" else "Speaker off",
-                tint = if (checked) Color(0xFF062719) else colors.background,
+                tint = if (checked) Color(0xFF062719) else Color(0xFFB5C1BA),
                 modifier = Modifier.size(16.dp)
             )
         }
@@ -847,11 +862,21 @@ private fun QuickActionButton(
     Surface(
         modifier = modifier
             .height(72.dp)
+            .background(
+                Brush.linearGradient(
+                    listOf(
+                        Color.White.copy(alpha = 0.075f),
+                        Color(0xFF0C3322).copy(alpha = 0.30f),
+                        Color.White.copy(alpha = 0.035f)
+                    )
+                ),
+                RoundedCornerShape(16.dp)
+            )
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
-        color = colors.cardBackground,
-        border = BorderStroke(1.dp, colors.cardBorder),
-        shadowElevation = if (colors.isDark) 0.dp else 1.dp
+        color = Color.Transparent,
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
+        shadowElevation = 0.dp
     ) {
         Column(
             modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
@@ -862,9 +887,9 @@ private fun QuickActionButton(
                 modifier = Modifier
                     .size(32.dp)
                     .clip(RoundedCornerShape(9.dp))
-                    .background(if (colors.isDark) Color(0xFF131F18) else Color(0xFFF1F5F9))
+                    .background(Color.White.copy(alpha = 0.06f))
                     .border(
-                        BorderStroke(0.5.dp, if (colors.isDark) Color(0xFF1C3626) else Color(0xFFE2E8F0)),
+                        BorderStroke(0.5.dp, Color.White.copy(alpha = 0.12f)),
                         RoundedCornerShape(9.dp)
                     ),
                 contentAlignment = Alignment.Center
@@ -917,9 +942,9 @@ private fun PaymentFeedRow(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(if (colors.isDark) Color(0xFF14231A) else Color(0xFFF1F5F9))
+                    .background(Color.White.copy(alpha = 0.055f))
                     .border(
-                        BorderStroke(0.5.dp, if (colors.isDark) Color(0xFF1F3D2C) else Color(0xFFE2E8F0)),
+                        BorderStroke(0.5.dp, Color.White.copy(alpha = 0.10f)),
                         RoundedCornerShape(10.dp)
                     ),
                 contentAlignment = Alignment.Center
@@ -980,5 +1005,50 @@ private fun PaymentFeedRow(
                 )
             }
         }
+    }
+}
+
+/**
+ * Shared translucent surface for the dashboard. The two soft gradients and
+ * hairline highlight give the surface a frosted appearance on the dark glow
+ * background while keeping the ledger data easy to scan.
+ */
+@Composable
+private fun FrostGlassSurface(
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(20.dp),
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Surface(
+        modifier = modifier,
+        shape = shape,
+        color = Color.Transparent,
+        border = BorderStroke(
+            1.dp,
+            Brush.linearGradient(
+                listOf(
+                    Color.White.copy(alpha = 0.16f),
+                    Color(0xFF35E6A1).copy(alpha = 0.14f),
+                    Color.White.copy(alpha = 0.055f)
+                )
+            )
+        ),
+        shadowElevation = 0.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.linearGradient(
+                        listOf(
+                            Color.White.copy(alpha = 0.065f),
+                            Color(0xFF0B3524).copy(alpha = 0.28f),
+                            Color.Black.copy(alpha = 0.16f)
+                        )
+                    ),
+                    shape
+                ),
+            content = content
+        )
     }
 }

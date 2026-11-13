@@ -7,6 +7,8 @@ import com.upisoundbox.core.parser.PaymentEvent
 import com.upisoundbox.core.tts.AnnouncementQueue
 import com.upisoundbox.core.tts.AnnouncementRequest
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -24,8 +26,9 @@ class PaymentProcessor @Inject constructor(
     private val announcementQueue: AnnouncementQueue
 ) {
     private val deduplicator = PaymentDeduplicator()
+    private val processMutex = Mutex()
 
-    suspend fun process(event: PaymentEvent): Boolean {
+    suspend fun process(event: PaymentEvent): Boolean = processMutex.withLock {
         // The in-memory window covers a running process; the database check
         // also prevents a replay after the listener/service is recreated.
         if (repository.getPaymentById(event.id) != null) return false
@@ -33,7 +36,13 @@ class PaymentProcessor @Inject constructor(
         if (upiRef.isNotEmpty() && repository.getPaymentByUpiRef(upiRef) != null) return false
         if (deduplicator.isDuplicate(event)) return false
 
-        repository.recordPayment(event, announced = true)
+        try {
+            repository.recordPayment(event, announced = true)
+        } catch (_: Exception) {
+            // Do not announce a payment that was not persisted. The next source
+            // callback can retry it instead of creating a voice-only payment.
+            return false
+        }
         SoundboxEventBus.emitPayment(event)
 
         // Pausing the speaker stops audio while the ledger continues to retain

@@ -14,7 +14,7 @@ import kotlin.math.sin
  */
 class AudioChimePlayer {
 
-    suspend fun playChime(useAlarmStream: Boolean = false) = withContext(Dispatchers.IO) {
+    suspend fun playChime(useAlarmStream: Boolean = false): Boolean = withContext(Dispatchers.IO) {
         try {
             val sampleRate = 44100
             val durationMs = 280
@@ -57,13 +57,15 @@ class AudioChimePlayer {
                 .build()
 
             try {
-                if (audioTrack.state != AudioTrack.STATE_INITIALIZED) return@withContext
+                if (audioTrack.state != AudioTrack.STATE_INITIALIZED) return@withContext false
 
                 val written = audioTrack.write(buffer, 0, buffer.size)
-                if (written != buffer.size) return@withContext
+                if (written != buffer.size) return@withContext false
 
                 audioTrack.play()
+                val started = audioTrack.playState == AudioTrack.PLAYSTATE_PLAYING
                 kotlinx.coroutines.delay(durationMs.toLong() + 50)
+                return@withContext started
             } finally {
                 try {
                     if (audioTrack.playState == AudioTrack.PLAYSTATE_PLAYING) {
@@ -74,6 +76,7 @@ class AudioChimePlayer {
             }
         } catch (_: Exception) {
             // Ignore if audio device is unavailable
+            return@withContext false
         }
     }
 }
